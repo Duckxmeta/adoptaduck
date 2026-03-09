@@ -1,34 +1,68 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth, useUser } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const { toast } = useToast();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      router.push('/admin');
+    }
+  }, [user, isUserLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (!auth) return;
     
-    // Simulating Firebase Auth login
-    setTimeout(() => {
-      setLoading(false);
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Access Granted",
+        description: "Welcome back, Manager.",
+      });
       router.push('/admin');
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: "Invalid credentials or insufficient permissions.",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-      <Link href="/" className="mb-8 flex items-center gap-2 text-primary hover:underline font-bold">
+      <Link href="/" className="mb-8 flex items-center gap-2 text-primary hover:underline font-bold text-xs tracking-widest uppercase">
         <ArrowLeft className="h-4 w-4" /> BACK TO SANCTUARY
       </Link>
       
@@ -37,8 +71,8 @@ export default function AdminLogin() {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-2">
             <ShieldAlert className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-headline font-black uppercase">Admin Access</CardTitle>
-          <CardDescription>Enter your credentials to manage the sanctuary residents.</CardDescription>
+          <CardTitle className="text-3xl font-headline font-black uppercase">Manager Access</CardTitle>
+          <CardDescription>Enter secure credentials to manage residents.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
@@ -65,15 +99,15 @@ export default function AdminLogin() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-primary text-primary-foreground font-bold h-12" disabled={loading}>
-              {loading ? 'AUTHENTICATING...' : 'ACCESS DASHBOARD'}
+            <Button type="submit" className="w-full bg-primary text-primary-foreground font-black h-12 text-lg rounded-xl shadow-lg" disabled={loading}>
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'ACCESS DASHBOARD'}
             </Button>
           </form>
         </CardContent>
       </Card>
       
-      <p className="mt-8 text-xs text-muted-foreground uppercase tracking-widest font-bold">
-        Unauthorized access is strictly monitored
+      <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+        Restricted Sanctuary Operations Area
       </p>
     </div>
   );
