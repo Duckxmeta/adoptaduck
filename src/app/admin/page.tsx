@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
   Plus, 
+  Minus,
   LayoutGrid, 
   LogOut, 
   Image as ImageIcon, 
@@ -22,7 +23,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, serverTimestamp, setDoc, arrayUnion, updateDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, serverTimestamp, setDoc, arrayUnion, updateDoc, increment } from 'firebase/firestore';
 import { Resident, SanctuaryStatistic } from '@/lib/types';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { generateDuckPersonalityAndLore } from '@/ai/flows/generate-duck-personality-and-lore-flow';
@@ -77,23 +78,46 @@ export default function AdminDashboard() {
   const handleAddEgg = (resident: Resident) => {
     if (!firestore) return;
     const birdRef = doc(firestore, 'birds', resident.id);
+    
     updateDocumentNonBlocking(birdRef, {
-      eggCounter: (resident.eggCounter || 0) + 1,
+      eggCounter: increment(1),
       updatedAt: new Date().toISOString()
     });
     
     // Also update global stats
-    if (globalStats) {
+    const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
+    updateDocumentNonBlocking(statsDocRef, {
+      totalEggsRescuedToday: increment(1),
+      lastUpdated: new Date().toISOString()
+    });
+
+    toast({
+      title: "Egg Counter Updated",
+      description: `Successfully added an egg for ${resident.name}.`,
+    });
+  };
+
+  const handleRemoveEgg = (resident: Resident) => {
+    if (!firestore || (resident.eggCounter || 0) <= 0) return;
+    
+    const birdRef = doc(firestore, 'birds', resident.id);
+    updateDocumentNonBlocking(birdRef, {
+      eggCounter: increment(-1),
+      updatedAt: new Date().toISOString()
+    });
+    
+    // Also update global stats if they are positive
+    if (globalStats && globalStats.totalEggsRescuedToday > 0) {
       const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
       updateDocumentNonBlocking(statsDocRef, {
-        totalEggsRescuedToday: (globalStats.totalEggsRescuedToday || 0) + 1,
+        totalEggsRescuedToday: increment(-1),
         lastUpdated: new Date().toISOString()
       });
     }
 
     toast({
       title: "Egg Counter Updated",
-      description: `Successfully added an egg for ${resident.name}.`,
+      description: `Removed an egg for ${resident.name}.`,
     });
   };
 
@@ -189,13 +213,11 @@ export default function AdminDashboard() {
       });
       
       // Update global bird count
-      if (globalStats) {
-        const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
-        updateDocumentNonBlocking(statsDocRef, {
-          totalBirds: (globalStats.totalBirds || 0) + 1,
-          lastUpdated: new Date().toISOString()
-        });
-      }
+      const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
+      updateDocumentNonBlocking(statsDocRef, {
+        totalBirds: increment(1),
+        lastUpdated: new Date().toISOString()
+      });
       
       toast({ title: "Resident Added", description: `${data.name} is now a sanctuary member.` });
     }
@@ -291,14 +313,28 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-4 border-t border-border divide-x divide-border">
+              <div className="grid grid-cols-5 border-t border-border divide-x divide-border">
+                {/* Add Egg Button */}
                 <Button 
                   variant="ghost" 
-                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-primary/10 hover:text-primary transition-colors"
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-emerald-500/10 transition-colors"
+                  style={{ color: '#14F195' }} // Rescue Mint
                   onClick={() => handleAddEgg(bird)}
                 >
-                  <Plus className="h-5 w-5" /> EGG
+                  <Plus className="h-5 w-5" /> ADD
                 </Button>
+
+                {/* Remove Egg Button */}
+                <Button 
+                  variant="ghost" 
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-red-500/10 transition-colors disabled:opacity-20 disabled:grayscale"
+                  style={{ color: '#f87171' }} // Soft Red
+                  onClick={() => handleRemoveEgg(bird)}
+                  disabled={bird.eggCounter <= 0}
+                >
+                  <Minus className="h-5 w-5" /> SUB
+                </Button>
+
                 <Button 
                   variant="ghost" 
                   className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-secondary/10 hover:text-secondary"
