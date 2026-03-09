@@ -1,0 +1,188 @@
+{
+  "entities": {
+    "Bird": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Bird",
+      "type": "object",
+      "description": "Represents a single resident duck or bird in the Decent Ducks Sanctuary, including its profile information, characteristics, and media.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Bird entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name of the resident bird."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The specific breed or type of the bird."
+        },
+        "sex": {
+          "type": "string",
+          "description": "The biological sex of the bird (e.g., 'Male', 'Female', 'Unknown')."
+        },
+        "heritageTree": {
+          "type": "string",
+          "description": "A textual or referential description of the bird's visual lineage or heritage."
+        },
+        "eggCounter": {
+          "type": "number",
+          "description": "A cumulative count of eggs laid or rescued related to this specific bird."
+        },
+        "personalityTraits": {
+          "type": "string",
+          "description": "AI-generated rich and unique personality traits for the bird."
+        },
+        "backstory": {
+          "type": "string",
+          "description": "AI-generated compelling backstory or lore for the bird."
+        },
+        "primaryImageUrl": {
+          "type": "string",
+          "description": "The URL to the primary image displayed for the bird's profile.",
+          "format": "uri"
+        },
+        "galleryImageUrls": {
+          "type": "array",
+          "description": "An array of URLs to additional images for the bird's photo gallery.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the bird's profile was first created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the bird's profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "breed",
+        "sex",
+        "eggCounter",
+        "primaryImageUrl",
+        "createdAt"
+      ]
+    },
+    "HealthLogEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HealthLogEntry",
+      "type": "object",
+      "description": "Records a specific health-related note or event for a resident bird, viewable and manageable by administrators.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HealthLogEntry entity."
+        },
+        "birdId": {
+          "type": "string",
+          "description": "Reference to the Bird entity this health log entry belongs to. (Relationship: Bird 1:N HealthLogEntry)"
+        },
+        "logDate": {
+          "type": "string",
+          "description": "The date and time when this health log entry was recorded.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detailed notes regarding the bird's health condition or treatment."
+        }
+      },
+      "required": [
+        "id",
+        "birdId",
+        "logDate",
+        "notes"
+      ]
+    },
+    "SanctuaryStatistic": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SanctuaryStatistic",
+      "type": "object",
+      "description": "Stores real-time, aggregated statistics about the sanctuary for public display, updated dynamically by admin actions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SanctuaryStatistic entity (e.g., 'global_stats')."
+        },
+        "totalBirds": {
+          "type": "number",
+          "description": "The total number of resident birds currently in the sanctuary."
+        },
+        "totalEggsRescuedToday": {
+          "type": "number",
+          "description": "The total number of eggs counted or rescued globally for the current day."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "Timestamp indicating when these sanctuary statistics were last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "totalBirds",
+        "totalEggsRescuedToday",
+        "lastUpdated"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/adminRoles/{adminUid}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "Stores documents whose existence grants administrative privileges. The document ID is the Firebase Authentication UID of the administrator. Authorization is based on the existence of this document for the `request.auth.uid`."
+        }
+      },
+      {
+        "path": "/birds/{birdId}",
+        "definition": {
+          "entityName": "Bird",
+          "schema": {
+            "$ref": "#/backend/entities/Bird"
+          },
+          "description": "Collection of all resident bird profiles. These documents are publicly readable for all users and admin-writable. Includes fields like `name`, `breed`, `eggCounter`, `primaryImageUrl`, `createdAt`, `updatedAt`."
+        }
+      },
+      {
+        "path": "/birds/{birdId}/healthLogs/{healthLogEntryId}",
+        "definition": {
+          "entityName": "HealthLogEntry",
+          "schema": {
+            "$ref": "#/backend/entities/HealthLogEntry"
+          },
+          "description": "Subcollection storing private health log entries for a specific bird, accessible only by administrators. The `birdId` from the parent path is implicitly linked. Includes fields like `logDate` and `notes`."
+        }
+      },
+      {
+        "path": "/sanctuaryStats/globalStats",
+        "definition": {
+          "entityName": "SanctuaryStatistic",
+          "schema": {
+            "$ref": "#/backend/entities/SanctuaryStatistic"
+          },
+          "description": "A single document (with ID 'globalStats') holding aggregated, real-time statistics for the entire sanctuary. Publicly readable for all users and admin-writable. Includes fields like `totalBirds`, `totalEggsRescuedToday`, and `lastUpdated`."
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, strictly adhering to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL):** Authorization independence is achieved primarily through structural segregation and explicit role storage. For administrator access, a dedicated top-level collection `/adminRoles/{adminUid}` is established. The presence of a document in this collection, where the document ID matches the `request.auth.uid`, grants administrative privileges. This design completely eliminates the need for `get()` calls in security rules to check for user roles, as the authorization check `exists(/databases/$(database)/documents/adminRoles/$(request.auth.uid))` is atomic and independent. For related data like `HealthLogEntry`, which is logically nested under `Bird`, it is implemented as a subcollection at `/birds/{birdId}/healthLogs/{healthLogEntryId}`. This places the `birdId` directly in the path, ensuring that any authorization specific to a bird's health logs (even if only admin-accessible) does not require a `get()` call on the parent `bird` document. All collections, except `adminRoles`, will utilize this `exists()` check to grant write permissions to administrators.\n\n**QAPs (Rules are not Filters):** Secure `list` operations are enabled by ensuring structural segregation, where all documents within a given collection share a homogeneous security posture:\n*   The `/birds` collection holds all public bird profiles. Since all documents in this collection are intended to be publicly readable, a `list` operation on `/birds` is inherently secure, as it does not expose any private data. All visitors can view the full list of sanctuary residents.\n*   The `/sanctuaryStats` collection contains a single document (`globalStats`) that holds aggregate, real-time statistics. This document is publicly readable, meaning that a `get` (or a `list` if it were treated as such for consistency, though it's a single item) operation is secure as its content is designed for public display.\n*   The `/birds/{birdId}/healthLogs` subcollection stores sensitive, admin-only health records. `list` operations on this subcollection are restricted to administrators. Because every document within this subcollection has the same (admin-only) access requirements, a `list` operation will only return data to authorized users, thereby satisfying the QAP principle.\n\n**DBAC (No Custom Claims):** User roles are managed entirely within the database. The `/adminRoles/{adminUid}` collection serves as the source of truth for administrative access. Firebase Authentication `request.auth.uid` is used to check against document IDs in this collection, avoiding reliance on custom claims.\n\n**Structural Segregation:** Each collection and subcollection (`/birds`, `/sanctuaryStats`, `/adminRoles`, `/birds/{birdId}/healthLogs`) is designed to contain documents that share identical security requirements. This simplifies security rules significantly by avoiding complex conditional logic within rules, instead leveraging the inherent access control of the path structure.\n\n**Access Modeling:**\n*   **Private Data:** The `/adminRoles` collection exemplifies path-based ownership for admin users, where the UID directly identifies the admin. `/birds/{birdId}/healthLogs` is private data nested under birds, accessible only by admins.\n*   **Hierarchical Paths for User-Owned Data:** The `/birds/{birdId}/healthLogs` structure demonstrates continuing hierarchy for nested data, maintaining a clear relationship between birds and their health logs while keeping `birdId` in the path for rules clarity.\n*   **Global Roles (DBAC):** The `/adminRoles` collection implements the \"Existence over Content\" principle for global admin roles.\n\n**Data Clarity and Predictability:** The schema adheres to predictable field names (`createdAt`, `updatedAt`, `birdId`) and descriptive wildcards (`{birdId}`, `{healthLogEntryId}`, `{adminUid}`). While the `Bird` entity doesn't explicitly use a `status` field, its default 'resident' state is implicit and consistent across the collection. Consistency is key for maintainability and debuggability."
+  }
+}
