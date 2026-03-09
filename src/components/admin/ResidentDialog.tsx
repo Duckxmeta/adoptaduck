@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +15,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, X } from 'lucide-react';
+import { Bird, Loader2, Camera, X, Upload } from 'lucide-react';
 import Image from 'next/image';
+import { useStorage } from '@/firebase/provider';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResidentDialogProps {
   open: boolean;
@@ -27,6 +29,10 @@ interface ResidentDialogProps {
 }
 
 export function ResidentDialog({ open, onOpenChange, onSave, resident }: ResidentDialogProps) {
+  const storage = useStorage();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState<Partial<Resident>>({
     name: '',
     breed: '',
@@ -37,12 +43,17 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     galleryImageUrls: []
   });
 
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   useEffect(() => {
     if (resident) {
       setFormData({
         ...resident,
         galleryImageUrls: resident.galleryImageUrls || []
       });
+      setPreviewUrl(resident.primaryImageUrl || null);
     } else {
       setFormData({
         name: '',
@@ -53,12 +64,54 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         primaryImageUrl: '',
         galleryImageUrls: []
       });
+      setPreviewUrl(null);
     }
+    setSelectedFile(null);
   }, [resident, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    setUploading(true);
+
+    let finalImageUrl = formData.primaryImageUrl;
+
+    try {
+      if (selectedFile && storage) {
+        toast({
+          title: "Uploading Image...",
+          description: "Sending your photo to the sanctuary storage.",
+        });
+        
+        const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'bird'}-${Date.now()}`;
+        const fileRef = storageRef(storage, `bird_profiles/${fileName}`);
+        
+        const snapshot = await uploadBytes(fileRef, selectedFile);
+        finalImageUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      onSave({
+        ...formData,
+        primaryImageUrl: finalImageUrl
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload Failed",
+        description: "Could not save the image. Please try again.",
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const removeGalleryImage = (index: number) => {
@@ -80,11 +133,45 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground font-medium">
-            Maintain accurate sanctuary records for public transparency.
+            Maintain accurate sanctuary records. SNAP or UPLOAD a profile photo.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Profile Photo Upload Section */}
+          <div className="space-y-4">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Profile Identity</Label>
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex items-center justify-center group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                {previewUrl ? (
+                  <>
+                    <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Camera className="h-8 w-8 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                    <Camera className="h-10 w-10" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Tap to snap or upload</span>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+              </div>
+              {selectedFile && (
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">
+                  New photo ready for upload
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bird Name</Label>
@@ -127,17 +214,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="image" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Profile Image URL</Label>
-            <Input 
-              id="image" 
-              value={formData.primaryImageUrl} 
-              onChange={e => setFormData({...formData, primaryImageUrl: e.target.value})}
-              placeholder="https://..."
-              className="bg-background border-border h-11"
-            />
-          </div>
-
           <div className="space-y-3">
              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Gallery Management</Label>
              <div className="grid grid-cols-4 gap-2">
@@ -154,7 +230,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                  </div>
                ))}
                <div className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center opacity-40">
-                 <Camera className="h-5 w-5" />
+                 <Upload className="h-5 w-5" />
                </div>
              </div>
           </div>
@@ -187,14 +263,17 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               variant="outline" 
               onClick={() => onOpenChange(false)}
               className="flex-1 h-12 border-border font-black uppercase text-xs tracking-widest"
+              disabled={uploading}
             >
               CANCEL
             </Button>
             <Button 
               type="submit" 
               className="flex-1 bg-primary text-primary-foreground font-black h-12 text-xs tracking-widest rounded-xl shadow-lg"
+              disabled={uploading}
             >
-              SAVE CHANGES
+              {uploading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+              {resident ? 'SAVE CHANGES' : 'CREATE RESIDENT'}
             </Button>
           </DialogFooter>
         </form>
