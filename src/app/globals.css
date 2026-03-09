@@ -49,4 +49,13 @@
   .duck-card-hover {
     @apply transition-all duration-300 hover:scale-[1.02] hover:glow-purple border border-transparent hover:border-secondary/30;
   }
+  
+  @keyframes subtle-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+  }
+  
+  .animate-subtle-pulse {
+    animation: subtle-pulse 3s infinite ease-in-out;
+  }
 }

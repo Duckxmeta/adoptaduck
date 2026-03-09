@@ -4,11 +4,14 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Bird, Egg, Heart } from 'lucide-react';
+import { Sparkles, Bird, Egg, Heart, Crown, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Resident, SanctuaryStatistic } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -28,6 +31,11 @@ export default function Home() {
   const { data: stats } = useCollection<SanctuaryStatistic>(statsRef);
   
   const globalStats = stats?.find(s => s.id === 'globalStats');
+
+  // Identify Top Producer (Highest current egg counter as a proxy for activity)
+  const topProducer = birds && birds.length > 0 
+    ? [...birds].sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -109,6 +117,62 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Daily Production Widget */}
+        {topProducer && (
+          <section className="py-20 bg-background relative overflow-hidden">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto">
+                <Card className="bg-card border-2 border-primary/30 rounded-[2rem] overflow-hidden shadow-2xl relative">
+                  <div className="grid grid-cols-1 md:grid-cols-2">
+                    <div className="relative aspect-square md:aspect-auto h-full min-h-[300px]">
+                      <Image 
+                        src={topProducer.primaryImageUrl} 
+                        alt={topProducer.name} 
+                        fill 
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card hidden md:block" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent md:hidden" />
+                    </div>
+                    <CardContent className="p-10 flex flex-col justify-center items-start space-y-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.3em] text-xs">
+                          <TrendingUp className="h-4 w-4" /> DAILY PRODUCTION LEADER
+                        </div>
+                        <h2 className="text-5xl font-headline font-black tracking-tighter leading-none">{topProducer.name}</h2>
+                      </div>
+                      
+                      <Badge className="bg-primary text-primary-foreground font-black px-6 py-2.5 rounded-xl uppercase tracking-widest text-xs animate-subtle-pulse shadow-[0_0_20px_rgba(255,215,0,0.4)] border-none">
+                        <Crown className="h-4 w-4 mr-2" /> Top Producer of the Day!
+                      </Badge>
+                      
+                      <p className="text-muted-foreground text-lg leading-relaxed italic">
+                        "{topProducer.personalityTraits.split(',')[0]} and highly productive! {topProducer.name} has been instrumental in today's sanctuary success."
+                      </p>
+                      
+                      <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-border w-full">
+                         <div className="p-3 bg-primary/10 rounded-xl">
+                            <Egg className="h-6 w-6 text-primary" />
+                         </div>
+                         <div>
+                            <p className="text-2xl font-headline font-black">{topProducer.eggCounter}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Lifetime Rescues</p>
+                         </div>
+                      </div>
+                      
+                      <Button variant="link" className="p-0 text-primary font-black uppercase tracking-widest text-xs group" asChild>
+                        <Link href={`/residents/${topProducer.id}`}>
+                          VIEW FULL PROFILE <TrendingUp className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Resident Grid */}
         <section id="residents" className="py-32 container mx-auto px-4">
