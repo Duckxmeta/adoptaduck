@@ -12,7 +12,7 @@
     --popover-foreground: 0 0% 10%;
     --primary: 51 100% 50%; /* #FFD700 */
     --primary-foreground: 0 0% 10%;
-    --secondary: 267 100% 64%; /* #9945FF */
+    --secondary: 267 100% 64%; /* Sanctuary Deep Purple */
     --secondary-foreground: 45 60% 97%;
     --muted: 0 0% 20%;
     --muted-foreground: 45 30% 80%;
@@ -20,10 +20,10 @@
     --accent-foreground: 45 60% 97%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 267 100% 64%; /* #9945FF for accents */
+    --border: 267 100% 64%;
     --input: 0 0% 20%;
     --ring: 51 100% 50%;
-    --chart-1: 155 88% 51%; /* #14F195 */
+    --chart-1: 155 88% 51%; /* Rescue Mint */
     --chart-2: 267 100% 64%;
     --radius: 0.75rem;
     --success: 155 88% 51%;
@@ -32,7 +32,6 @@
   .dark {
     --background: 0 0% 10%;
     --foreground: 45 60% 97%;
-    /* Keep dark theme consistent with proposal */
   }
 }
 

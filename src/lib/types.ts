@@ -9,7 +9,8 @@ export type Resident = {
   backstory: string;
   image_url: string;
   health_notes: HealthNote[];
-  created_at: number;
+  createdAt: number;
+  updatedAt?: number;
 };
 
 export type HealthNote = {
@@ -17,6 +18,8 @@ export type HealthNote = {
   note: string;
 };
 
-export type SanctuaryInfo = {
-  paypal_email: string;
+export type SanctuaryStats = {
+  totalBirds: number;
+  totalEggsRescuedToday: number;
+  lastUpdated: string;
 };

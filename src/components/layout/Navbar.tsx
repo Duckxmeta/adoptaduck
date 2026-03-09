@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Heart, Menu } from 'lucide-react';
@@ -15,7 +17,7 @@ export function Navbar() {
       <div className="relative w-10 h-10 bg-primary rounded-full flex items-center justify-center overflow-hidden border-2 border-secondary group-hover:scale-110 transition-transform">
         <span className="text-xl font-bold">🦆</span>
       </div>
-      <span className="font-headline font-bold text-xl tracking-tight hidden sm:inline-block">
+      <span className="font-headline font-bold text-xl tracking-tight hidden sm:inline-block uppercase">
         DECENT <span className="text-primary">DUCKS</span>
       </span>
     </Link>
@@ -27,9 +29,9 @@ export function Navbar() {
         <Logo />
 
         <div className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">Residents</Link>
-          <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">Sanctuary</Link>
-          <Link href="/admin" className="text-sm font-medium hover:text-primary transition-colors">Admin</Link>
+          <Link href="/" className="text-sm font-bold uppercase hover:text-primary transition-colors">Residents</Link>
+          <Link href="/about" className="text-sm font-bold uppercase hover:text-primary transition-colors">Our Mission</Link>
+          <Link href="/admin" className="text-sm font-bold uppercase hover:text-primary transition-colors">Manager</Link>
           <Button asChild className="bg-primary text-primary-foreground hover:glow-yellow font-bold">
             <a href={donateUrl} target="_blank" rel="noopener noreferrer">
               <Heart className="mr-2 h-4 w-4 fill-current" />
@@ -52,12 +54,12 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="bg-background border-secondary/20">
               <div className="flex flex-col gap-6 mt-12">
-                <Link href="/" className="text-lg font-headline font-bold">Residents</Link>
-                <Link href="/about" className="text-lg font-headline font-bold">Sanctuary</Link>
-                <Link href="/admin" className="text-lg font-headline font-bold">Admin</Link>
+                <Link href="/" className="text-lg font-headline font-bold uppercase">Residents</Link>
+                <Link href="/about" className="text-lg font-headline font-bold uppercase">Mission</Link>
+                <Link href="/admin" className="text-lg font-headline font-bold uppercase">Manager</Link>
                 <Button asChild className="bg-primary text-primary-foreground font-bold mt-4">
                   <a href={donateUrl} target="_blank" rel="noopener noreferrer">
-                    SUPPORT THE SANCTUARY
+                    SUPPORT SANCTUARY
                   </a>
                 </Button>
               </div>
