@@ -4,7 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Bird, Egg, Heart, Crown, TrendingUp } from 'lucide-react';
+import { Sparkles, Bird, Egg, Heart, Crown, TrendingUp, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -32,9 +32,12 @@ export default function Home() {
   
   const globalStats = stats?.find(s => s.id === 'globalStats');
 
-  // Identify Top Producer (Highest current egg counter as a proxy for activity)
+  // Calculate Total Eggs Rescued from all residents in real-time
+  const totalEggsRescued = birds?.reduce((sum, bird) => sum + (bird.eggCounter || 0), 0) || 0;
+
+  // Identify Top Producer (Highest current egg counter)
   const topProducer = birds && birds.length > 0 
-    ? [...birds].sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
+    ? [...birds].filter(b => b.sex === 'female').sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
     : null;
 
   return (
@@ -42,8 +45,26 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
+        {/* Sanctuary Impact Ticker */}
+        <section className="bg-primary/5 border-b border-primary/20 py-16 relative overflow-hidden">
+          <div className="container mx-auto px-4 text-center space-y-4">
+            <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
+              <ShieldCheck className="h-4 w-4" /> SANCTUARY IMPACT
+            </div>
+            <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
+              {totalEggsRescued.toLocaleString()}
+            </h2>
+            <p className="text-xl md:text-2xl font-headline font-bold uppercase tracking-widest text-foreground">
+              Total Eggs Saved to Date
+            </p>
+          </div>
+          {/* Subtle background decoration */}
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
+        </section>
+
         {/* Hero Section */}
-        <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
+        <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent z-10" />
           <div 
             className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
@@ -70,50 +91,6 @@ export default function Home() {
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
                 <a href={donateUrl} target="_blank" rel="noopener noreferrer">DONATE TO MISSION</a>
               </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Live Stats Bar */}
-        <section className="bg-card/50 backdrop-blur-sm border-y border-border py-12 relative overflow-hidden">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-               <div className="flex flex-col items-center text-center space-y-3">
-                 <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20">
-                    <Bird className="h-8 w-8 text-primary" />
-                 </div>
-                 <div>
-                    <p className="text-4xl font-headline font-black">{globalStats?.totalBirds || birds?.length || 0}</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Active Residents</p>
-                 </div>
-               </div>
-               <div className="flex flex-col items-center text-center space-y-3">
-                 <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20">
-                    <Egg className="h-8 w-8 text-secondary" />
-                 </div>
-                 <div>
-                    <p className="text-4xl font-headline font-black text-secondary animate-pulse">{globalStats?.totalEggsRescuedToday || 0}</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Rescues Today</p>
-                 </div>
-               </div>
-               <div className="hidden md:flex flex-col items-center text-center space-y-3">
-                 <div className="p-3 bg-primary/10 rounded-2xl border border-primary/20">
-                    <Heart className="h-8 w-8 text-primary" />
-                 </div>
-                 <div>
-                    <p className="text-4xl font-headline font-black">100%</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Direct Support</p>
-                 </div>
-               </div>
-               <div className="hidden md:flex flex-col items-center text-center space-y-3">
-                 <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20">
-                    <div className="h-8 w-8 bg-secondary rounded-full flex items-center justify-center font-black text-white text-[10px] animate-ping">LIVE</div>
-                 </div>
-                 <div>
-                    <p className="text-4xl font-headline font-black">ACTIVE</p>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Sanctuary Monitor</p>
-                 </div>
-               </div>
             </div>
           </div>
         </section>

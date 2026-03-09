@@ -10,6 +10,8 @@ interface ResidentCardProps {
 }
 
 export function ResidentCard({ resident }: ResidentCardProps) {
+  const isHen = resident.sex === 'female';
+
   return (
     <Link href={`/residents/${resident.id}`}>
       <Card className="group overflow-hidden bg-card border-border rounded-2xl duck-card-hover">
@@ -35,10 +37,12 @@ export function ResidentCard({ resident }: ResidentCardProps) {
                 <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{resident.name}</h3>
                 <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-2">{resident.sex}</p>
               </div>
-              <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/30">
-                <Egg className="h-3.5 w-3.5 text-primary" />
-                <span className="font-black text-xs text-primary">{resident.eggCounter}</span>
-              </div>
+              {isHen && (
+                <div className="flex items-center gap-1.5 bg-primary/20 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/30">
+                  <Egg className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-black text-xs text-primary">{resident.eggCounter}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -38,6 +37,8 @@ export default function ResidentProfile() {
     notFound();
   }
 
+  const isHen = bird?.sex === 'female';
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
@@ -75,13 +76,23 @@ export default function ResidentProfile() {
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                <div className="bg-card p-8 rounded-2xl border border-border glow-primary">
-                  <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                    <Egg className="h-5 w-5 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Rescued Eggs</span>
+                {isHen ? (
+                  <div className="bg-card p-8 rounded-2xl border border-border glow-primary">
+                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                      <Egg className="h-5 w-5 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Rescued Eggs</span>
+                    </div>
+                    <span className="text-5xl font-headline font-black">{bird?.eggCounter || 0}</span>
                   </div>
-                  <span className="text-5xl font-headline font-black">{bird?.eggCounter || 0}</span>
-                </div>
+                ) : (
+                  <div className="bg-card p-8 rounded-2xl border border-border opacity-50">
+                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                      <Bird className="h-5 w-5 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Identity</span>
+                    </div>
+                    <span className="text-2xl font-headline font-black uppercase">Guardian</span>
+                  </div>
+                )}
                 <div className="bg-card p-8 rounded-2xl border border-border">
                   <div className="flex items-center gap-3 text-muted-foreground mb-4">
                     <Heart className="h-5 w-5 text-secondary" />
@@ -137,8 +148,10 @@ export default function ResidentProfile() {
                 ) : (
                   [1, 2, 3].map(i => (
                     <div key={i} className="relative w-[300px] h-[300px] rounded-2xl overflow-hidden border border-border bg-card/50 flex items-center justify-center opacity-40 italic font-black text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <Camera className="h-8 w-8 mb-2 block mx-auto opacity-20" />
-                      Awaiting Sanctuary Updates
+                      <div className="text-center">
+                        <Camera className="h-8 w-8 mb-2 block mx-auto opacity-20" />
+                        Awaiting Updates
+                      </div>
                     </div>
                   ))
                 )}
