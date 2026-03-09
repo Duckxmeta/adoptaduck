@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,16 +15,15 @@ import {
   Loader2, 
   Egg,
   Heart,
-  ChevronRight,
   Bird as BirdIcon,
   Camera
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, serverTimestamp, setDoc, arrayUnion, updateDoc, increment } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, arrayUnion, updateDoc, increment } from 'firebase/firestore';
 import { Resident, SanctuaryStatistic } from '@/lib/types';
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { generateDuckPersonalityAndLore } from '@/ai/flows/generate-duck-personality-and-lore-flow';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
@@ -84,12 +82,12 @@ export default function AdminDashboard() {
       updatedAt: new Date().toISOString()
     });
     
-    // Also update global stats
+    // Use set with merge for stats to ensure the document exists
     const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
-    updateDocumentNonBlocking(statsDocRef, {
+    setDocumentNonBlocking(statsDocRef, {
       totalEggsRescuedToday: increment(1),
       lastUpdated: new Date().toISOString()
-    });
+    }, { merge: true });
 
     toast({
       title: "Egg Counter Updated",
@@ -106,13 +104,13 @@ export default function AdminDashboard() {
       updatedAt: new Date().toISOString()
     });
     
-    // Also update global stats if they are positive
+    // Use set with merge for stats
     if (globalStats && globalStats.totalEggsRescuedToday > 0) {
       const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
-      updateDocumentNonBlocking(statsDocRef, {
+      setDocumentNonBlocking(statsDocRef, {
         totalEggsRescuedToday: increment(-1),
         lastUpdated: new Date().toISOString()
-      });
+      }, { merge: true });
     }
 
     toast({
@@ -212,12 +210,12 @@ export default function AdminDashboard() {
         primaryImageUrl: data.primaryImageUrl || `https://picsum.photos/seed/${newBirdId}/600/600`
       });
       
-      // Update global bird count
+      // Update global bird count - using set with merge to ensure doc existence
       const statsDocRef = doc(firestore, 'sanctuaryStats', 'globalStats');
-      updateDocumentNonBlocking(statsDocRef, {
+      setDocumentNonBlocking(statsDocRef, {
         totalBirds: increment(1),
         lastUpdated: new Date().toISOString()
-      });
+      }, { merge: true });
       
       toast({ title: "Resident Added", description: `${data.name} is now a sanctuary member.` });
     }
@@ -236,7 +234,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
-      {/* Hidden File Input for Gallery Updates */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -259,7 +256,6 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto p-4 space-y-8">
-        {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-primary text-primary-foreground border-none shadow-2xl rounded-2xl overflow-hidden relative">
             <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -293,7 +289,6 @@ export default function AdminDashboard() {
            </Button>
         </div>
 
-        {/* Admin Resident List */}
         <div className="space-y-6">
           {birdsLoading ? (
             [1, 2, 3].map(i => <div key={i} className="h-32 bg-card rounded-2xl animate-pulse" />)
@@ -314,21 +309,19 @@ export default function AdminDashboard() {
               </div>
               
               <div className="grid grid-cols-5 border-t border-border divide-x divide-border">
-                {/* Add Egg Button */}
                 <Button 
                   variant="ghost" 
                   className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-emerald-500/10 transition-colors"
-                  style={{ color: '#14F195' }} // Rescue Mint
+                  style={{ color: '#14F195' }}
                   onClick={() => handleAddEgg(bird)}
                 >
                   <Plus className="h-5 w-5" /> ADD
                 </Button>
 
-                {/* Remove Egg Button */}
                 <Button 
                   variant="ghost" 
                   className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-red-500/10 transition-colors disabled:opacity-20 disabled:grayscale"
-                  style={{ color: '#f87171' }} // Soft Red
+                  style={{ color: '#f87171' }}
                   onClick={() => handleRemoveEgg(bird)}
                   disabled={bird.eggCounter <= 0}
                 >
@@ -369,7 +362,6 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* Admin Mobile Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around p-4 z-50 backdrop-blur-xl">
         <Button variant="ghost" className="flex-col gap-1 h-auto py-1 text-primary">
           <LayoutGrid className="h-6 w-6" />
