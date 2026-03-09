@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2 } from 'lucide-react';
+import { Bird, Loader2, Camera, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface ResidentDialogProps {
   open: boolean;
@@ -32,12 +33,16 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     sex: 'unknown',
     personalityTraits: '',
     backstory: '',
-    primaryImageUrl: ''
+    primaryImageUrl: '',
+    galleryImageUrls: []
   });
 
   useEffect(() => {
     if (resident) {
-      setFormData(resident);
+      setFormData({
+        ...resident,
+        galleryImageUrls: resident.galleryImageUrls || []
+      });
     } else {
       setFormData({
         name: '',
@@ -45,7 +50,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         sex: 'unknown',
         personalityTraits: '',
         backstory: '',
-        primaryImageUrl: ''
+        primaryImageUrl: '',
+        galleryImageUrls: []
       });
     }
   }, [resident, open]);
@@ -53,6 +59,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
+  };
+
+  const removeGalleryImage = (index: number) => {
+    const newGallery = [...(formData.galleryImageUrls || [])];
+    newGallery.splice(index, 1);
+    setFormData({ ...formData, galleryImageUrls: newGallery });
   };
 
   return (
@@ -124,6 +136,27 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               placeholder="https://..."
               className="bg-background border-border h-11"
             />
+          </div>
+
+          <div className="space-y-3">
+             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Gallery Management</Label>
+             <div className="grid grid-cols-4 gap-2">
+               {formData.galleryImageUrls?.map((url, i) => (
+                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
+                   <Image src={url} alt="Gallery item" fill className="object-cover" />
+                   <button 
+                     type="button"
+                     onClick={() => removeGalleryImage(i)}
+                     className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                   >
+                     <X className="h-3 w-3" />
+                   </button>
+                 </div>
+               ))}
+               <div className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center opacity-40">
+                 <Camera className="h-5 w-5" />
+               </div>
+             </div>
           </div>
 
           <div className="space-y-2">

@@ -8,7 +8,7 @@ export type Resident = {
   personalityTraits: string;
   backstory: string;
   primaryImageUrl: string;
-  galleryImageUrls?: string[];
+  galleryImageUrls: string[];
   createdAt: string;
   updatedAt?: string;
 };

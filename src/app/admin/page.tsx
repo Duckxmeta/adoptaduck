@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,12 +16,13 @@ import {
   Egg,
   Heart,
   ChevronRight,
-  Bird as BirdIcon
+  Bird as BirdIcon,
+  Camera
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, serverTimestamp, setDoc, arrayUnion, updateDoc } from 'firebase/firestore';
 import { Resident, SanctuaryStatistic } from '@/lib/types';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { generateDuckPersonalityAndLore } from '@/ai/flows/generate-duck-personality-and-lore-flow';
@@ -38,6 +39,8 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
+  const [uploadingBirdId, setUploadingBirdId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -90,6 +93,44 @@ export default function AdminDashboard() {
     });
   };
 
+  const handlePostUpdate = (birdId: string) => {
+    setUploadingBirdId(birdId);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingBirdId || !firestore) return;
+
+    toast({
+      title: "Posting Update...",
+      description: "Uploading media to sanctuary gallery.",
+    });
+
+    // Simulate upload delay for prototype
+    setTimeout(() => {
+      const birdRef = doc(firestore, 'birds', uploadingBirdId);
+      // In a real app, you'd upload to Firebase Storage and get a URL
+      // For the prototype, we simulate with a new unique picsum URL
+      const newImageUrl = `https://picsum.photos/seed/${uploadingBirdId}-${Date.now()}/800/800`;
+      
+      updateDoc(birdRef, {
+        galleryImageUrls: arrayUnion(newImageUrl),
+        updatedAt: new Date().toISOString()
+      }).catch(err => {
+        console.error(err);
+      });
+
+      toast({
+        title: "Gallery Updated",
+        description: "Your snapshot has been shared with the public.",
+      });
+      setUploadingBirdId(null);
+    }, 1500);
+  };
+
   const handleGenerateLore = async (resident: Resident) => {
     toast({
       title: "Generating Lore...",
@@ -140,6 +181,7 @@ export default function AdminDashboard() {
         ...data,
         id: newBirdId,
         eggCounter: 0,
+        galleryImageUrls: [],
         createdAt: new Date().toISOString(),
         primaryImageUrl: data.primaryImageUrl || `https://picsum.photos/seed/${newBirdId}/600/600`
       });
@@ -169,7 +211,15 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
-      {/* Admin Mobile Header */}
+      {/* Hidden File Input for Gallery Updates */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={handleFileChange}
+      />
+
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-black text-primary-foreground shadow-lg">M</div>
@@ -235,27 +285,34 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-3 border-t border-border divide-x divide-border">
+              <div className="grid grid-cols-4 border-t border-border divide-x divide-border">
                 <Button 
                   variant="ghost" 
-                  className="rounded-none h-16 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-primary/10 hover:text-primary transition-colors"
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-primary/10 hover:text-primary transition-colors"
                   onClick={() => handleAddEgg(bird)}
                 >
-                  <Plus className="h-5 w-5" /> ADD EGG
+                  <Plus className="h-5 w-5" /> EGG
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="rounded-none h-16 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-secondary/10"
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-secondary/10 hover:text-secondary"
+                  onClick={() => handlePostUpdate(bird.id)}
+                >
+                  <Camera className="h-5 w-5" /> POST
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-secondary/10"
                   onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}
                 >
-                  <Settings className="h-5 w-5" /> EDIT BIO
+                  <Settings className="h-5 w-5" /> BIO
                 </Button>
                 <Button 
                   variant="ghost" 
-                  className="rounded-none h-16 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-primary/10"
+                  className="rounded-none h-20 text-[10px] font-black uppercase flex-col gap-1.5 py-2 hover:bg-primary/10"
                   onClick={() => handleGenerateLore(bird)}
                 >
-                  <Sparkles className="h-5 w-5 text-primary" /> AI SYNC
+                  <Sparkles className="h-5 w-5 text-primary" /> AI
                 </Button>
               </div>
             </Card>

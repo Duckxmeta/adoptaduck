@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -6,11 +7,12 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
-import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin } from 'lucide-react';
+import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
@@ -60,18 +62,6 @@ export default function ResidentProfile() {
                    <Badge className="bg-white/20 backdrop-blur-md text-white border-white/30 font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">{bird?.sex}</Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-4 gap-4">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden cursor-pointer opacity-50 hover:opacity-100 transition-all border border-border">
-                    <Image
-                      src={`https://picsum.photos/seed/bird${i}${bird?.id}/300/300`}
-                      alt={`${bird?.name} view ${i}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ))}
-              </div>
             </div>
 
             {/* Content Section */}
@@ -120,6 +110,41 @@ export default function ResidentProfile() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Life at the Sanctuary Gallery */}
+          <div className="mt-24 space-y-8">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+               <h2 className="font-headline font-black text-2xl uppercase tracking-tight flex items-center gap-3">
+                 <Camera className="h-6 w-6 text-primary" /> Life at the Sanctuary
+               </h2>
+               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Gallery Updates</span>
+            </div>
+            
+            <ScrollArea className="w-full whitespace-nowrap">
+              <div className="flex w-max space-x-6 p-1">
+                {bird?.galleryImageUrls && bird.galleryImageUrls.length > 0 ? (
+                  bird.galleryImageUrls.map((url, i) => (
+                    <div key={i} className="relative w-[300px] h-[300px] rounded-2xl overflow-hidden border border-border group">
+                      <Image
+                        src={url}
+                        alt={`${bird.name} Gallery ${i}`}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                  ))
+                ) : (
+                  [1, 2, 3].map(i => (
+                    <div key={i} className="relative w-[300px] h-[300px] rounded-2xl overflow-hidden border border-border bg-card/50 flex items-center justify-center opacity-40 italic font-black text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <Camera className="h-8 w-8 mb-2 block mx-auto opacity-20" />
+                      Awaiting Sanctuary Updates
+                    </div>
+                  ))
+                )}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
 
           <div className="mt-24">
