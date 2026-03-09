@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet";
 
 export function Navbar() {
-  const donateUrl = "https://www.paypal.com/donate?business=decentducks@example.com";
+  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
   const Logo = () => (
     <Link href="/" className="flex items-center gap-3 group">
@@ -34,10 +34,10 @@ export function Navbar() {
           <Link href="/admin" className="text-xs font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5" /> Manager
           </Link>
-          <Button asChild className="bg-primary text-primary-foreground hover:scale-105 transition-transform font-black rounded-xl px-6 h-11">
+          <Button asChild className="bg-primary text-primary-foreground hover:scale-105 transition-transform font-black rounded-xl px-6 h-11 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
             <a href={donateUrl} target="_blank" rel="noopener noreferrer">
               <Heart className="mr-2 h-4 w-4 fill-current" />
-              SUPPORT
+              DONATE TO SANCTUARY
             </a>
           </Button>
         </div>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export function Footer() {
-  const donateUrl = "https://www.paypal.com/donate?business=decentducks@example.com";
+  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
   return (
     <footer className="w-full bg-background border-t border-secondary/20 pt-12 pb-6">
@@ -24,15 +24,15 @@ export function Footer() {
             <h4 className="font-headline font-bold text-sm tracking-widest uppercase text-primary">Explore</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-primary transition-colors">Resident Directory</Link></li>
-              <li><Link href="/adoption-info" className="hover:text-primary transition-colors">How Virtual Adoption Works</Link></li>
+              <li><Link href="/about" className="hover:text-primary transition-colors">Sanctuary Mission</Link></li>
               <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Portal</Link></li>
             </ul>
           </div>
 
           <div className="space-y-4">
             <h4 className="font-headline font-bold text-sm tracking-widest uppercase text-primary">Support</h4>
-            <p className="text-sm text-muted-foreground mb-4">Every donation goes directly to feed, shelter, and medical care.</p>
-            <Button asChild className="w-full md:w-auto bg-primary text-primary-foreground font-bold hover:glow-yellow">
+            <p className="text-sm text-muted-foreground mb-4">Every donation goes directly to feed, shelter, and medical care for our birds.</p>
+            <Button asChild className="w-full md:w-auto bg-primary text-primary-foreground font-bold hover:scale-105 transition-transform">
               <a href={donateUrl} target="_blank" rel="noopener noreferrer">
                 DONATE VIA PAYPAL
               </a>

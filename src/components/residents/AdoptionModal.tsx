@@ -18,50 +18,51 @@ interface AdoptionModalProps {
 }
 
 export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
-  const donateUrl = `https://www.paypal.com/donate?business=decentducks@example.com&item_name=Virtual+Adoption+of+${resident.name}`;
+  // Using the provided hosted button ID for the sanctuary
+  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         {trigger || (
-          <Button size="lg" className="w-full bg-primary text-primary-foreground font-bold hover:glow-yellow py-8 text-xl">
+          <Button size="lg" className="w-full bg-primary text-primary-foreground font-black hover:scale-105 transition-all py-8 text-xl rounded-2xl shadow-lg shadow-primary/20">
             <Heart className="mr-3 h-6 w-6 fill-current" />
-            VIRTUALLY ADOPT {resident.name.toUpperCase()}
+            SUPPORT {resident.name.toUpperCase()}
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="bg-card text-card-foreground border-none max-w-md">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-md">
         <DialogHeader className="space-y-4">
           <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
             <Heart className="h-10 w-10 text-primary fill-primary" />
           </div>
-          <DialogTitle className="text-center font-headline text-2xl font-bold">Adopt {resident.name}</DialogTitle>
-          <DialogDescription className="text-center text-muted-foreground text-base">
-            Your virtual adoption supports {resident.name}'s food, bedding, and medical needs at the sanctuary.
+          <DialogTitle className="text-center font-headline text-2xl font-black uppercase tracking-tight">Help {resident.name}</DialogTitle>
+          <DialogDescription className="text-center text-muted-foreground text-base font-medium">
+            Your direct donation supports {resident.name}&apos;s food, bedding, and specialized medical needs at the sanctuary.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 mt-6">
-          <div className="bg-background/5 p-4 rounded-lg border border-secondary/10 space-y-3">
+          <div className="bg-background p-4 rounded-xl border border-border space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="font-medium">Selected Duck:</span>
-              <span className="text-primary font-bold">{resident.name}</span>
+              <span className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Resident Name:</span>
+              <span className="text-primary font-black uppercase">{resident.name}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="font-medium">Type:</span>
-              <span>Virtual Adoption</span>
+              <span className="font-bold text-muted-foreground uppercase tracking-widest text-[10px]">Support Type:</span>
+              <span className="font-black uppercase">Sanctuary Donation</span>
             </div>
           </div>
 
           <div className="space-y-3">
-            <Button asChild className="w-full bg-primary text-primary-foreground font-bold h-14 text-lg">
+            <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 text-lg rounded-xl shadow-xl">
               <a href={donateUrl} target="_blank" rel="noopener noreferrer">
-                CONTINUE TO PAYPAL
+                DONATE VIA PAYPAL
               </a>
             </Button>
-            <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+            <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1 font-bold uppercase tracking-widest">
               <ShieldCheck className="h-3 w-3" />
-              Secure donation processed via PayPal
+              Secure sanctuary support via PayPal
             </p>
           </div>
         </div>
