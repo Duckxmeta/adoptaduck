@@ -6,13 +6,13 @@
   :root {
     --background: 0 0% 10%; /* #1A1A1A */
     --foreground: 45 60% 97%; /* #FCF9F2 */
-    --card: 45 60% 97%; /* #FCF9F2 */
-    --card-foreground: 0 0% 10%;
-    --popover: 45 60% 97%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 51 100% 50%; /* #FFD700 */
+    --card: 0 0% 13%; /* Slightly lighter than background */
+    --card-foreground: 45 60% 97%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 45 60% 97%;
+    --primary: 51 100% 50%; /* #FFD700 (Gold/Yellow) */
     --primary-foreground: 0 0% 10%;
-    --secondary: 267 100% 64%; /* Sanctuary Deep Purple */
+    --secondary: 267 100% 64%; /* Sanctuary Purple #9945FF */
     --secondary-foreground: 45 60% 97%;
     --muted: 0 0% 20%;
     --muted-foreground: 45 30% 80%;
@@ -20,18 +20,10 @@
     --accent-foreground: 45 60% 97%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 267 100% 64%;
+    --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 51 100% 50%;
-    --chart-1: 155 88% 51%; /* Rescue Mint */
-    --chart-2: 267 100% 64%;
     --radius: 0.75rem;
-    --success: 155 88% 51%;
-  }
-
-  .dark {
-    --background: 0 0% 10%;
-    --foreground: 45 60% 97%;
   }
 }
 
@@ -40,27 +32,21 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline font-bold tracking-tight;
+    @apply font-headline font-black tracking-tight uppercase;
   }
 }
 
 @layer utilities {
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+  }
   .glow-purple {
-    box-shadow: 0 0 15px rgba(153, 69, 255, 0.3);
+    box-shadow: 0 0 20px rgba(153, 69, 255, 0.2);
   }
-
-  .glow-yellow {
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-  }
-
   .duck-card-hover {
-    @apply transition-all duration-300 hover:scale-[1.02] hover:glow-purple;
-  }
-
-  .status-live {
-    @apply bg-[#14F195] text-black font-bold px-2 py-0.5 rounded text-xs animate-pulse;
+    @apply transition-all duration-300 hover:scale-[1.02] hover:glow-purple border border-transparent hover:border-secondary/30;
   }
 }

@@ -2,23 +2,26 @@ export type Resident = {
   id: string;
   name: string;
   breed: string;
-  sex: 'male' | 'female';
-  heritage_tree?: string[];
-  egg_counter: number;
-  personality_traits: string[];
+  sex: 'male' | 'female' | 'unknown';
+  heritageTree?: string;
+  eggCounter: number;
+  personalityTraits: string;
   backstory: string;
-  image_url: string;
-  health_notes: HealthNote[];
-  createdAt: number;
-  updatedAt?: number;
+  primaryImageUrl: string;
+  galleryImageUrls?: string[];
+  createdAt: string;
+  updatedAt?: string;
 };
 
-export type HealthNote = {
-  date: string;
-  note: string;
+export type HealthLogEntry = {
+  id: string;
+  birdId: string;
+  logDate: string;
+  notes: string;
 };
 
-export type SanctuaryStats = {
+export type SanctuaryStatistic = {
+  id: string;
   totalBirds: number;
   totalEggsRescuedToday: number;
   lastUpdated: string;
