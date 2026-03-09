@@ -10,8 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -22,12 +24,17 @@ export default function AdminLogin() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
 
-  // Redirect if already logged in
+  // Redirect if already logged in with the correct account
   useEffect(() => {
     if (user && !isUserLoading) {
-      router.push('/admin');
+      if (user.email === ADMIN_EMAIL) {
+        router.push('/admin');
+      } else if (auth) {
+        // If someone else is logged in, sign them out of the admin portal
+        signOut(auth);
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, auth]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +42,20 @@ export default function AdminLogin() {
     
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Secondary check for the specific admin email
+      if (userCredential.user.email !== ADMIN_EMAIL) {
+        await signOut(auth);
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "This account is not authorized to manage the sanctuary.",
+        });
+        setLoading(false);
+        return;
+      }
+
       toast({
         title: "Access Granted",
         description: "Welcome back, Manager.",
@@ -106,8 +126,8 @@ export default function AdminLogin() {
         </CardContent>
       </Card>
       
-      <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-        Restricted Sanctuary Operations Area
+      <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black text-center max-w-xs leading-relaxed">
+        Restricted to authorized Sanctuary Manager: <br/> {ADMIN_EMAIL}
       </p>
     </div>
   );

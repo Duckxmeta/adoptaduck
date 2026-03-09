@@ -1,33 +1,20 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * BIRD SANCTUARY SECURITY MODEL
+     * DECENT DUCKS SANCTUARY SECURITY MODEL
      * 
      * Core Philosophy:
-     * This ruleset implements a Role-Based Access Control (RBAC) model driven by a dedicated 
-     * 'adminRoles' collection. It prioritizes public visibility for sanctuary residents 
-     * and real-time statistics while restricting all management capabilities (creating, 
-     * editing, or deleting birds and health records) strictly to authorized administrators.
-     * 
-     * Data Structure:
-     * - /adminRoles/{adminUid}: Stores simple tokens of authority.
-     * - /birds/{birdId}: Publicly accessible bird profiles.
-     * - /birds/{birdId}/healthLogs/{logId}: Admin-only sensitive medical history for birds.
-     * - /sanctuaryStats/globalStats: Publicly accessible real-time sanctuary metrics.
+     * This ruleset secures the sanctuary platform by strictly limiting administrative 
+     * capabilities to a single authorized manager email: flowmarket1@gmail.com.
      * 
      * Key Security Decisions:
-     * 1. DBAC (Database-Based Access Control): Admin status is determined by the existence 
-     *    of a document in the /adminRoles collection matching the user's UID. This avoids 
-     *    the complexity of Custom Claims during the prototyping phase.
-     * 2. Structural Segregation: Public data (Birds, Stats) and Private data (Health Logs) 
-     *    are kept in distinct collections/subcollections to ensure simple, performant 
-     *    'list' operations that never leak sensitive information.
-     * 3. Relational Integrity: The rules enforce that documents created within subcollections 
-     *    properly reference their parent IDs (e.g., a health log must contain the correct birdId).
-     * 4. Write Protection: No document can be modified or deleted without first verifying 
-     *    both the user's admin status and the document's existence.
+     * 1. Email-Based Authorization: Instead of dynamic role collections, we hardcode 
+     *    the authorized email for maximum security and simplicity in this prototype.
+     * 2. Public Read: All visitors can view resident profiles and sanctuary statistics.
+     * 3. Admin Writes: Only the verified manager can add birds, edit lore, or post updates.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -37,78 +24,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user has an entry in the adminRoles collection. */
+    /** @description Checks if the authenticated user's email matches the authorized sanctuary manager. */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/adminRoles/$(request.auth.uid));
-    }
-
-    /** @description Checks if the user is the owner of the document based on the path UID. */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /** @description Combines admin check with existence check for updates and deletes. */
-    function isExistingAdmin() {
-      return isAdmin() && resource != null;
+      return isSignedIn() && request.auth.token.email == 'flowmarket1@gmail.com';
     }
 
     // --- COLLECTION RULES ---
 
     /**
-     * @description Access rules for the administrative roles collection.
-     * @path /adminRoles/{adminUid}
-     * @allow (get) If the user is checking their own admin status.
-     * @deny (list, create, update, delete) Prevents users from escalating their own privileges.
-     * @principle Existence-based authorization; UIDs as document keys.
-     */
-    match /adminRoles/{adminUid} {
-      allow get: if isOwner(adminUid);
-      allow list: if false;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Public bird profiles manageable only by sanctuary administrators.
-     * @path /birds/{birdId}
-     * @allow (get, list) For all visitors to view sanctuary residents.
-     * @allow (create) For admins, ensuring the internal ID matches the document path.
-     * @deny (update, delete) For non-admins or if the document does not exist.
-     * @principle Public Read with Owner-Only (Admin) Writes.
+     * @description Public bird profiles manageable only by the sanctuary manager.
      */
     match /birds/{birdId} {
       allow read: if true;
-      allow create: if isAdmin() && request.resource.data.id == birdId;
-      allow update: if isExistingAdmin() && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingAdmin();
+      allow write: if isAdmin();
 
       /**
-       * @description Private health logs nested under specific birds.
-       * @path /birds/{birdId}/healthLogs/{healthLogEntryId}
-       * @allow (get, list, create, update, delete) Strictly restricted to sanctuary admins.
-       * @deny (any) For public users or unauthorized accounts.
-       * @principle Hierarchical path isolation for sensitive data.
+       * @description Private health logs strictly restricted to the sanctuary manager.
        */
       match /healthLogs/{healthLogEntryId} {
-        allow read: if isAdmin();
-        allow create: if isAdmin() && request.resource.data.birdId == birdId;
-        allow update: if isExistingAdmin() && request.resource.data.birdId == resource.data.birdId;
-        allow delete: if isExistingAdmin();
+        allow read, write: if isAdmin();
       }
     }
 
     /**
      * @description Aggregated sanctuary metrics for public real-time display.
-     * @path /sanctuaryStats/{statId}
-     * @allow (get, list) For public visibility of sanctuary impact.
-     * @allow (create, update) For admins to log new rescues or counts.
-     * @deny (delete) To prevent accidental removal of global tracking data.
-     * @principle Global stats read access with administrative write control.
      */
     match /sanctuaryStats/{statId} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isExistingAdmin();
-      allow delete: if false; // Global stats should generally not be deleted in prototyping
+      allow write: if isAdmin();
     }
   }
 }

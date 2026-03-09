@@ -31,6 +31,8 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
+
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -56,10 +58,12 @@ export default function AdminDashboard() {
   const { data: stats } = useCollection<SanctuaryStatistic>(statsRef);
   const globalStats = stats?.find(s => s.id === 'globalStats');
 
-  // Protect route
+  // Protect route - Only allow the specific admin email
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/admin/login');
+    if (!isUserLoading) {
+      if (!user || user.email !== ADMIN_EMAIL) {
+        router.push('/admin/login');
+      }
     }
   }, [user, isUserLoading, router]);
 
@@ -112,8 +116,6 @@ export default function AdminDashboard() {
     // Simulate upload delay for prototype
     setTimeout(() => {
       const birdRef = doc(firestore, 'birds', uploadingBirdId);
-      // In a real app, you'd upload to Firebase Storage and get a URL
-      // For the prototype, we simulate with a new unique picsum URL
       const newImageUrl = `https://picsum.photos/seed/${uploadingBirdId}-${Date.now()}/800/800`;
       
       updateDoc(birdRef, {
@@ -201,7 +203,8 @@ export default function AdminDashboard() {
     setEditingResident(null);
   };
 
-  if (isUserLoading || !user) {
+  // Only render if authorized email
+  if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -223,7 +226,10 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border p-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center font-black text-primary-foreground shadow-lg">M</div>
-           <h1 className="font-headline font-black text-xl uppercase tracking-tighter">SANCTUARY <span className="text-primary">MANAGER</span></h1>
+           <div className="flex flex-col">
+             <h1 className="font-headline font-black text-xl uppercase tracking-tighter leading-none">SANCTUARY <span className="text-primary">MANAGER</span></h1>
+             <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mt-1">Authorized: {user.email}</span>
+           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground hover:text-destructive">
           <LogOut className="h-5 w-5" />
