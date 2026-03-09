@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "duck-hero",
+      "description": "Happy duck in a sanctuary",
+      "imageUrl": "https://picsum.photos/seed/duck1/1200/600",
+      "imageHint": "duck sanctuary"
+    },
+    {
+      "id": "duck-1",
+      "description": "Pekin Duck profile",
+      "imageUrl": "https://picsum.photos/seed/duck2/600/600",
+      "imageHint": "pekin duck"
+    },
+    {
+      "id": "duck-2",
+      "description": "Mallard Duck profile",
+      "imageUrl": "https://picsum.photos/seed/duck3/600/600",
+      "imageHint": "mallard duck"
+    },
+    {
+      "id": "duck-3",
+      "description": "Runner Duck profile",
+      "imageUrl": "https://picsum.photos/seed/duck4/600/600",
+      "imageHint": "runner duck"
+    },
+    {
+      "id": "duck-4",
+      "description": "Wood Duck profile",
+      "imageUrl": "https://picsum.photos/seed/duck5/600/600",
+      "imageHint": "wood duck"
+    }
+  ]
 }
