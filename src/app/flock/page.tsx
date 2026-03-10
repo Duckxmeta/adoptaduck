@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -33,12 +32,25 @@ export default function BrowseFlock() {
 
   const { data: birds, isLoading } = useCollection<Resident>(birdsQuery);
 
-  const communityBirds = birds?.filter(b => COMMUNITY_NAMES.includes(b.name) || b.isCommunityDuck) || [];
-  const individualBirds = birds?.filter(b => !COMMUNITY_NAMES.includes(b.name) && !b.isCommunityDuck) || [];
+  const communityBirds = birds?.filter(b => {
+    const name = b.name?.trim().toLowerCase().replace(/\s+/g, '');
+    const isNamedCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === name);
+    return isNamedCommunity || b.isCommunityDuck;
+  }) || [];
+  
+  const individualBirds = birds?.filter(b => {
+    const name = b.name?.trim().toLowerCase().replace(/\s+/g, '');
+    const isNamedCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === name);
+    return !isNamedCommunity && !b.isCommunityDuck;
+  }) || [];
 
   const BirdCard = ({ bird }: { bird: Resident }) => {
-    const isCommunity = COMMUNITY_NAMES.includes(bird.name) || !!bird.isCommunityDuck;
-    const partnerName = PARTNER_MAP[bird.name];
+    const nameNorm = bird.name?.trim().toLowerCase().replace(/\s+/g, '');
+    const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!bird.isCommunityDuck;
+    
+    // Find partner name by normalized match
+    const partnerKey = COMMUNITY_NAMES.find(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm);
+    const partnerName = partnerKey ? PARTNER_MAP[partnerKey] : null;
 
     return (
       <Card 

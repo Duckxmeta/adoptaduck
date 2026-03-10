@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -36,7 +35,8 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const { toast } = useToast();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
-  const isCommunity = COMMUNITY_NAMES.includes(resident.name) || !!resident.isCommunityDuck;
+  const nameNorm = resident.name?.trim().toLowerCase().replace(/\s+/g, '');
+  const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!resident.isCommunityDuck;
 
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);

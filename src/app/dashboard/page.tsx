@@ -162,8 +162,10 @@ export default function MemberDashboard() {
         const potentialSlugs = [
           targetName.toLowerCase().replace(/\s+/g, '-'),
           targetName.toLowerCase().replace(/\s+/g, '_'),
+          targetName.toLowerCase().replace(/\s+/g, ''), // No spaces fallback
           'cutie-pie',
-          'cutie_pie'
+          'cutie_pie',
+          'cutiepie'
         ];
         
         for (const slug of potentialSlugs) {
@@ -176,12 +178,15 @@ export default function MemberDashboard() {
         }
       }
 
-      // Stage C: Fallback - Scan all residents for trimmed, case-insensitive name match
+      // Stage C: Fallback - Scan all residents for trimmed, case-insensitive, space-normalized match
       if (!birdDoc) {
         const allBirdsSnap = await getDocs(birdsRef);
         birdDoc = allBirdsSnap.docs.find(d => {
           const name = d.data().name;
-          return name && name.trim().toLowerCase() === targetName.trim().toLowerCase();
+          if (!name) return false;
+          const normalizedDbName = name.trim().toLowerCase().replace(/\s+/g, '');
+          const normalizedTargetName = targetName.trim().toLowerCase().replace(/\s+/g, '');
+          return normalizedDbName === normalizedTargetName;
         }) || null;
       }
 
@@ -190,10 +195,10 @@ export default function MemberDashboard() {
         const allBirdsSnap = await getDocs(birdsRef);
         console.group("Sanctuary Debug: Resident Lookup Failed");
         console.log("Target Name Search:", targetName);
-        console.log("Normalized Target:", targetName.trim().toLowerCase());
+        console.log("Normalized Target:", targetName.trim().toLowerCase().replace(/\s+/g, ''));
         console.log("Available Residents in Database:");
         allBirdsSnap.docs.forEach(d => {
-          console.log(`- ID: ${d.id}, Name: "${d.data().name}", Normalized: "${d.data().name?.trim().toLowerCase()}"`);
+          console.log(`- ID: ${d.id}, Name: "${d.data().name}", Normalized: "${d.data().name?.trim().toLowerCase().replace(/\s+/g, '')}"`);
         });
         console.groupEnd();
 
