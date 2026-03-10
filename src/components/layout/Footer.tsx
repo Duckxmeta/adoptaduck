@@ -63,7 +63,6 @@ export function Footer() {
 
         <div className="pt-8 flex flex-col items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-[0.4em] font-black">
           <p>© {new Date().getFullYear()} VIRTUAL SANCTUARY. BUILT FOR THE BIRDS.</p>
-          <p className="opacity-60 tracking-[0.2em]">RESTRICTED TO AUTHORIZED SANCTUARY MANAGERS</p>
         </div>
       </div>
     </footer>

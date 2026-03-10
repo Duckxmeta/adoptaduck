@@ -132,10 +132,6 @@ export default function AdminLogin() {
           </form>
         </CardContent>
       </Card>
-      
-      <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black text-center max-w-xs leading-relaxed">
-        RESTRICTED TO AUTHORIZED SANCTUARY MANAGERS
-      </p>
     </div>
   );
 }
