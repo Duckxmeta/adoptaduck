@@ -39,9 +39,11 @@
         "email": { "type": "string" },
         "my_flock": { "type": "array", "items": { "type": "string" }, "description": "Array of bird IDs linked to this user." },
         "community_codes": { "type": "array", "items": { "type": "string" }, "description": "Array of referral codes used." },
+        "role": { "type": "string", "enum": ["member", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["uid", "email"]
+      "required": ["uid", "email", "role"]
     },
     "NameSuggestion": {
       "$schema": "http://json-schema.org/draft-07/schema#",

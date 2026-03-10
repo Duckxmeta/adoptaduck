@@ -27,6 +27,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      // 4. Permission Check: Ensure users can create and manage their own profile
       allow read, write: if isOwner(userId);
     }
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -19,7 +20,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,7 +44,7 @@ export default function Home() {
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
 
   useEffect(() => {
-    if (!auth) return;
+    if (!auth || !firestore) return;
 
     // Configure persistence for mobile stability
     configureAuthPersistence(auth);
@@ -53,11 +54,36 @@ export default function Home() {
       try {
         setIsVerifying(true);
         const result = await handleGoogleRedirectResult(auth);
-        if (result) {
-          toast({
-            title: "Account Verified",
-            description: `Welcome back, ${result.user.displayName || 'Friend'}.`,
-          });
+        
+        if (result && result.user) {
+          // Sequential Registration: Auth is already successful at this point via the result
+          const userRef = doc(firestore, 'users', result.user.uid);
+          
+          try {
+            // Initialize or update user profile sequentially
+            await setDoc(userRef, {
+              uid: result.user.uid,
+              email: result.user.email,
+              my_flock: [], // Initialize with empty array
+              role: 'member', // Default role
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+
+            toast({
+              title: "Account Verified",
+              description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
+            });
+          } catch (dbError: any) {
+            console.error("Profile Setup Error:", dbError);
+            // Non-blocking fallback if Firestore write fails
+            toast({
+              title: "Partial Success",
+              description: "Account created, but profile setup is pending. Redirecting to dashboard...",
+            });
+          }
+          
+          router.push('/dashboard');
         }
       } catch (error: any) {
         console.error("Auth Redirect Error:", error);
@@ -74,7 +100,7 @@ export default function Home() {
     };
 
     checkRedirect();
-  }, [auth, toast]);
+  }, [auth, firestore, toast, router]);
   
   const handleGoogleSignIn = async () => {
     if (!auth) return;

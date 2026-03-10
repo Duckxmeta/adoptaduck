@@ -27,6 +27,8 @@ export type UserProfile = {
   email: string;
   my_flock: string[];
   community_codes: string[];
+  role: 'member' | 'admin';
+  createdAt: string;
   updatedAt: string;
 };
 
