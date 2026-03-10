@@ -10,27 +10,20 @@ import { Button } from '@/components/ui/button';
 import { 
   Sparkles, 
   Bird, 
-  Egg, 
   Heart, 
   ShieldCheck, 
   Users, 
-  CheckCircle2, 
   ArrowRight,
-  Droplets,
-  Utensils,
-  Calendar,
-  Stethoscope,
-  Clock
+  ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, useDoc, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
-import { Resident, DailyStatus } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
-import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -57,27 +50,11 @@ export default function Home() {
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return doc(firestore, 'daily_status', 'today');
-  }, [firestore, user]);
-
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   
-  const totalEggsRescued = birds?.reduce((sum, bird) => sum + (bird.eggCounter || 0), 0) || 0;
-
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
-
-  const routineTasks = [
-    { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-3 w-3" /> },
-    { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-3 w-3" /> },
-    { label: "Egg Counter", key: "eggCounter", icon: <Egg className="h-3 w-3" /> },
-    { label: "Health Check", key: "healthCheck", icon: <Stethoscope className="h-3 w-3" /> },
-    { label: "Nightly Pen Up", key: "nightlyPenUp", icon: <Clock className="h-3 w-3" /> },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -85,72 +62,24 @@ export default function Home() {
       
       <main className="flex-1">
         {/* Sanctuary Impact Ticker */}
-        <section className="bg-primary/5 border-b border-primary/20 py-16 relative overflow-hidden">
+        <section className="bg-primary/5 border-b border-primary/20 py-20 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
               <ShieldCheck className="h-4 w-4" /> VIRTUAL SANCTUARY MISSION
             </div>
-            <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
+            <h2 className="text-7xl md:text-9xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
               {birds?.length || 0}
             </h2>
             <p className="text-xl md:text-2xl font-headline font-bold uppercase tracking-widest text-foreground">
               Ducks in Our Care
             </p>
             
-            {!user ? (
-              <button 
-                onClick={() => initiateGoogleSignIn(auth!)}
-                className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-6 border-b border-primary/20 pb-1"
-              >
-                Sign up for free to see our daily sanctuary progress and member-only stats.
-              </button>
-            ) : (
-              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                 <div className="text-center md:text-left">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">MEMBER ACCESS: DAILY IMPACT</p>
-                    <div className="flex items-center justify-center md:justify-start gap-4">
-                       <Egg className="h-8 w-8 text-primary" />
-                       <p className="text-6xl font-headline font-black text-foreground">
-                         {totalEggsRescued.toLocaleString()}
-                       </p>
-                    </div>
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-2">Total Eggs Saved to Date</p>
-                 </div>
-
-                 {/* Daily Care Status widget */}
-                 <div className="bg-card/50 p-8 rounded-[2rem] border border-border text-left space-y-4 shadow-2xl">
-                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-secondary flex items-center gap-2">
-                      <Calendar className="h-4 w-4" /> Daily Care Status
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                       {routineTasks.map((task) => {
-                         const isCompleted = dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false;
-                         return (
-                           <div key={task.key} className="flex items-center gap-3 text-[11px] font-black uppercase tracking-tight">
-                              <div className={cn(
-                                "p-2 rounded-lg",
-                                isCompleted ? "bg-[#14F195]/10 text-[#14F195]" : "bg-muted/20 text-muted-foreground"
-                              )}>
-                                {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : task.icon}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className={cn(isCompleted ? "text-foreground" : "text-muted-foreground")}>
-                                  {task.label}
-                                </span>
-                                <span className={cn(
-                                  "text-[8px] tracking-[0.2em]",
-                                  isCompleted ? "text-[#14F195]" : "text-muted-foreground/60"
-                                )}>
-                                  {isCompleted ? "COMPLETED" : "PENDING"}
-                                </span>
-                              </div>
-                           </div>
-                         );
-                       })}
-                    </div>
-                 </div>
-              </div>
-            )}
+            <button 
+              onClick={() => initiateGoogleSignIn(auth!)}
+              className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
+            >
+              Sign up for free to see our daily sanctuary progress and member-only stats.
+            </button>
           </div>
           <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
           <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
@@ -331,17 +260,10 @@ export default function Home() {
                       </div>
                     </li>
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Calendar className="h-5 w-5" /></div>
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><ShieldAlert className="h-5 w-5" /></div>
                       <div>
                         <p className="font-black text-sm uppercase tracking-tight">Daily Duck Updates</p>
                         <p className="text-xs text-muted-foreground">Real-time photos and stories from the sanctuary.</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Stethoscope className="h-5 w-5" /></div>
-                      <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Detailed Care Logs</p>
-                        <p className="text-xs text-muted-foreground">Access to health checks, feeding schedules, and wellness updates.</p>
                       </div>
                     </li>
                   </ul>
