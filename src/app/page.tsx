@@ -42,9 +42,11 @@ export default function Home() {
   }, [firestore]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // Only attempt to fetch the daily status if a user is signed in,
+    // as per the Firestore security rules.
+    if (!firestore || !user) return null;
     return doc(firestore, 'daily_status', 'today');
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);

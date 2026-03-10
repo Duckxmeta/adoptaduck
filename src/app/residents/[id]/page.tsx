@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -25,9 +26,11 @@ export default function ResidentProfile() {
   }, [firestore, id]);
 
   const logsQuery = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
+    // Only attempt to fetch the health logs if a user is signed in,
+    // as per the Firestore security rules.
+    if (!firestore || !id || !user) return null;
     return query(collection(firestore, 'birds', id, 'healthLogs'), orderBy('logDate', 'desc'));
-  }, [firestore, id]);
+  }, [firestore, id, user]);
 
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
   const { data: logs } = useCollection<HealthLogEntry>(logsQuery);

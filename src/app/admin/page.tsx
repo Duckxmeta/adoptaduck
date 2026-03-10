@@ -54,14 +54,16 @@ export default function AdminDashboard() {
   }, [firestore]);
 
   const suggestionsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // Only fetch suggestions if an admin user is signed in
+    if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
     return query(collection(firestore, 'nameSuggestions'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
+  }, [firestore, user]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    // Only fetch daily status if an admin user is signed in
+    if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
     return doc(firestore, 'daily_status', 'today');
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: suggestions } = useCollection<NameSuggestion>(suggestionsQuery);
