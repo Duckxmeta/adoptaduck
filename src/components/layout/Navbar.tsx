@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart, Menu, ShieldCheck, LogOut, LayoutDashboard, ArrowLeft, User, Lock } from 'lucide-react';
+import { Heart, Menu, ShieldCheck, LogOut, LayoutDashboard, ArrowLeft, User, Lock, Bird } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -78,6 +78,9 @@ export function Navbar() {
           ) : user ? (
             <>
               <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
+              <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
+                <Bird className="h-3.5 w-3.5" /> The Flock
+              </Link>
               <Link href="/dashboard" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/dashboard' && "text-primary")}>
                 <User className="h-3.5 w-3.5" /> My Dashboard
               </Link>
@@ -89,7 +92,7 @@ export function Navbar() {
           ) : (
             <>
               <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
-              <Link href="/#residents" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">The Ducks</Link>
+              <Link href="/flock" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">The Flock</Link>
               <Link href="/dashboard" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5 group">
                 <Lock className="h-3 w-3 text-muted-foreground group-hover:text-primary" /> Member Dashboard
               </Link>
@@ -132,13 +135,14 @@ export function Navbar() {
                 ) : user ? (
                   <>
                     <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">Home</Link>
+                    <Link href="/flock" className="text-2xl font-headline font-black uppercase tracking-tighter">The Flock</Link>
                     <Link href="/dashboard" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">My Dashboard</Link>
                     <button onClick={handleLogout} className="text-left text-2xl font-headline font-black uppercase tracking-tighter text-destructive">Logout</button>
                   </>
                 ) : (
                   <>
                     <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">Home</Link>
-                    <Link href="/#residents" className="text-2xl font-headline font-black uppercase tracking-tighter">The Ducks</Link>
+                    <Link href="/flock" className="text-2xl font-headline font-black uppercase tracking-tighter">The Flock</Link>
                     <Link href="/dashboard" className="text-2xl font-headline font-black uppercase tracking-tighter flex items-center gap-2">
                       <Lock className="h-5 w-5" /> Member Dashboard
                     </Link>

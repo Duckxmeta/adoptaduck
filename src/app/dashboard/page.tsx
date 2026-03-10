@@ -174,7 +174,7 @@ export default function MemberDashboard() {
                       <p className="text-muted-foreground max-w-sm mx-auto">Your support directly funds life-saving care. Find a resident to name and adopt today.</p>
                    </div>
                    <Button asChild className="bg-primary text-primary-foreground font-black px-10 h-12 rounded-xl">
-                      <Link href="/#residents">BROWSE RESIDENTS <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                      <Link href="/flock">BROWSE RESIDENTS <ArrowRight className="ml-2 h-4 w-4" /></Link>
                    </Button>
                 </CardContent>
              </Card>

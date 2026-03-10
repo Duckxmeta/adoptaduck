@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -18,7 +19,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, where, getDocs } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,12 +39,24 @@ export default function Home() {
   useEffect(() => {
     if (user && !isUserLoading) {
       if (user.email === ADMIN_EMAIL) {
-        // Admins can stay or go to admin portal
+        // Admins stay put
       } else {
-        router.push('/dashboard');
+        // Check if user has adopted birds before redirecting to dashboard
+        const checkFlock = async () => {
+          if (!firestore) return;
+          const q = query(collection(firestore, 'birds'), where('adopterEmail', '==', user.email));
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            router.push('/dashboard');
+          } else {
+            // Keep them here or redirect to /flock
+            router.push('/flock');
+          }
+        };
+        checkFlock();
       }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -94,12 +107,14 @@ export default function Home() {
               Ducks in Our Care
             </p>
             
-            <button 
-              onClick={handleGoogleSignIn}
-              className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
-            >
-              Sign up for free to see our daily sanctuary progress and member-only stats.
-            </button>
+            {!user && (
+              <button 
+                onClick={handleGoogleSignIn}
+                className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
+              >
+                Sign up for free to see our daily sanctuary progress and member-only stats.
+              </button>
+            )}
           </div>
           <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
           <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
@@ -125,7 +140,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
-                <Link href="#residents">MEET THE RESIDENTS</Link>
+                <Link href="/flock">MEET THE RESIDENTS</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
                 <a href={donateUrl} target="_blank" rel="noopener noreferrer">ADOPT A DUCK</a>
