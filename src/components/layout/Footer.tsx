@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button';
 export function Footer() {
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
-  const PUBLIC_ADMIN_DISPLAY = 'decentducksorg@gmail.com';
 
   return (
-    <footer className="w-full bg-background border-t border-secondary/20 pt-16 pb-8">
+    <footer id="contact-section" className="w-full bg-background border-t border-secondary/20 pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center space-y-8 mb-16">
           <div className="relative w-24 h-24 overflow-hidden mb-2">
@@ -64,7 +63,7 @@ export function Footer() {
 
         <div className="pt-8 flex flex-col items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-[0.4em] font-black">
           <p>© {new Date().getFullYear()} VIRTUAL SANCTUARY. BUILT FOR THE BIRDS.</p>
-          <p className="opacity-60">Restricted to authorized Sanctuary Manager: {PUBLIC_ADMIN_DISPLAY}</p>
+          <p className="opacity-60 tracking-[0.2em]">RESTRICTED TO AUTHORIZED SANCTUARY MANAGERS</p>
         </div>
       </div>
     </footer>

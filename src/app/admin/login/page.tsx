@@ -13,7 +13,6 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
-const PUBLIC_ADMIN_DISPLAY = 'decentducksorg@gmail.com';
 const REQUIRED_SECURITY_KEY = 'Jasmine-JDI-G0';
 
 export default function AdminLogin() {
@@ -109,7 +108,7 @@ export default function AdminLogin() {
               <Input 
                 id="email" 
                 type="email" 
-                placeholder="admin@decentducks.com" 
+                placeholder="Manager Email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="bg-background border-secondary/20 h-12"
@@ -135,7 +134,7 @@ export default function AdminLogin() {
       </Card>
       
       <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black text-center max-w-xs leading-relaxed">
-        Restricted to authorized Sanctuary Manager: <br/> {PUBLIC_ADMIN_DISPLAY}
+        RESTRICTED TO AUTHORIZED SANCTUARY MANAGERS
       </p>
     </div>
   );
