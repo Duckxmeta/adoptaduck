@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -111,17 +110,19 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     e.preventDefault();
     setUploading(true);
 
-    let finalImageUrl = formData.primaryImageUrl;
+    // Default fallback if no image exists or is uploaded
+    let finalImageUrl = formData.primaryImageUrl || `https://picsum.photos/seed/${formData.name || 'duck'}/600/600`;
 
     try {
       if (selectedFile && storage) {
         toast({
-          title: "Uploading Image...",
-          description: "Sending your photo to the sanctuary storage.",
+          title: "Uploading Photo...",
+          description: "Storing resident image in the sanctuary archives.",
         });
         
-        const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'bird'}-${Date.now()}`;
-        const fileRef = storageRef(storage, `bird_profiles/${fileName}`);
+        const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-${Date.now()}`;
+        // Saving to the /resident-photos/ folder as requested
+        const fileRef = storageRef(storage, `resident-photos/${fileName}`);
         
         const snapshot = await uploadBytes(fileRef, selectedFile);
         finalImageUrl = await getDownloadURL(snapshot.ref);
@@ -132,7 +133,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         primaryImageUrl: finalImageUrl,
         motherId: formData.motherId || null,
         fatherId: formData.fatherId || null,
-        isFoundingResident: formData.source === 'Founding'
+        isFoundingResident: formData.source === 'Founding',
+        updatedAt: new Date().toISOString()
       };
 
       onSave(submissionData);
@@ -150,7 +152,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground border-border max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-lg max-h-[90vh] overflow-y-auto rounded-[2rem]">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -166,6 +168,43 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Photo Upload Section with Preview */}
+          <div className="space-y-4">
+            <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+              <Camera className="h-3 w-3" /> Upload Resident Photo
+            </Label>
+            <div 
+              className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex flex-col items-center justify-center group cursor-pointer hover:border-primary/50 transition-colors" 
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {previewUrl ? (
+                <>
+                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Upload className="h-8 w-8 text-white" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                  <Camera className="h-10 w-10" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to select or snap photo</span>
+                </div>
+              )}
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden" 
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+            {selectedFile && (
+              <p className="text-[9px] font-black uppercase text-secondary text-center">
+                Selected: {selectedFile.name}
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center justify-between p-4 bg-secondary/5 border border-secondary/20 rounded-xl">
               <div className="space-y-0.5">
@@ -191,31 +230,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex items-center justify-center group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              {previewUrl ? (
-                <>
-                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Camera className="h-8 w-8 text-white" />
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-                  <Camera className="h-10 w-10" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to snap or upload profile photo</span>
-                </div>
-              )}
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                className="hidden" 
-                accept="image/*"
-                onChange={handleFileChange}
-              />
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bird Name</Label>
@@ -224,7 +238,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.name} 
                 onChange={e => setFormData({...formData, name: e.target.value})}
                 placeholder="e.g. Captain Quack"
-                className="bg-background border-border h-11"
+                className="bg-background border-border h-11 rounded-xl"
                 required
               />
             </div>
@@ -235,7 +249,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.breed} 
                 onChange={e => setFormData({...formData, breed: e.target.value})}
                 placeholder="e.g. Pekin Duck"
-                className="bg-background border-border h-11"
+                className="bg-background border-border h-11 rounded-xl"
                 required
               />
             </div>
@@ -248,7 +262,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.sex} 
                 onValueChange={v => setFormData({...formData, sex: v as any})}
               >
-                <SelectTrigger className="bg-background border-border h-11">
+                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                   <SelectValue placeholder="Select sex" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -264,7 +278,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.source} 
                 onValueChange={v => setFormData({...formData, source: v as any, isFoundingResident: v === 'Founding'})}
               >
-                <SelectTrigger className="bg-background border-border h-11">
+                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -283,7 +297,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.motherId || "unknown"} 
                 onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}
               >
-                <SelectTrigger className="bg-background border-border h-11">
+                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                   <SelectValue placeholder="Select mother" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -300,7 +314,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 value={formData.fatherId || "unknown"} 
                 onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}
               >
-                <SelectTrigger className="bg-background border-border h-11">
+                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                   <SelectValue placeholder="Select father" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -320,7 +334,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               type="date"
               value={formData.hatch_date} 
               onChange={e => setFormData({...formData, hatch_date: e.target.value})}
-              className="bg-background border-border h-11"
+              className="bg-background border-border h-11 rounded-xl"
             />
           </div>
 
@@ -331,7 +345,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               value={formData.personalityTraits} 
               onChange={e => setFormData({...formData, personalityTraits: e.target.value})}
               placeholder="Brave, curious, loves water..."
-              className="bg-background border-border h-11"
+              className="bg-background border-border h-11 rounded-xl"
             />
           </div>
 
@@ -342,7 +356,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               value={formData.backstory} 
               onChange={e => setFormData({...formData, backstory: e.target.value})}
               placeholder="Describe origin story or incubation notes..."
-              className="bg-background border-border min-h-[120px] resize-none"
+              className="bg-background border-border min-h-[120px] resize-none rounded-xl"
             />
           </div>
 
@@ -351,7 +365,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              className="flex-1 h-12 border-border font-black uppercase text-xs tracking-widest"
+              className="flex-1 h-12 border-border font-black uppercase text-xs tracking-widest rounded-xl"
               disabled={uploading}
             >
               CANCEL
