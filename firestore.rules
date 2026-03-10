@@ -45,15 +45,15 @@ service cloud.firestore {
       }
     }
 
-    /** Global sanctuary financial ledger */
+    /** Global sanctuary financial ledger (Public read for transparency) */
     match /ledger/{expenseId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
-    /** Global sanctuary routine status (Viewable by all signed-in users) */
+    /** Global sanctuary routine status (Public read for live health indicators) */
     match /daily_status/{statusId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if true;
       allow write: if isAdmin();
     }
 
