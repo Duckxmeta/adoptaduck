@@ -19,9 +19,25 @@
         "galleryImageUrls": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" },
-        "generation": { "type": "number", "description": "The genealogical generation relative to founding members (0 = Root)." }
+        "generation": { "type": "number" }
       },
       "required": ["id", "name", "breed", "sex", "eggCounter", "personalityTraits", "backstory", "primaryImageUrl", "createdAt"]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Financial record of sanctuary spending.",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string" },
+        "category": { "type": "string", "enum": ["Feed", "Medical", "Bedding", "Infrastructure"] },
+        "cost": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "birdId": { "type": "string", "description": "Optional link to a specific resident." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["itemName", "category", "cost", "date", "createdAt"]
     },
     "HealthLogEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -55,7 +71,7 @@
     }
   },
   "auth": {
-    "providers": ["password", "anonymous"]
+    "providers": ["password", "google"]
   },
   "firestore": {
     "structure": [
@@ -76,6 +92,14 @@
         }
       },
       {
+        "path": "/ledger/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "description": "Global sanctuary financial records.",
+          "params": [{ "name": "expenseId" }]
+        }
+      },
+      {
         "path": "/birds/{birdId}/healthLogs/{healthLogId}",
         "definition": {
           "entityName": "HealthLogEntry",
@@ -91,7 +115,6 @@
           "params": [{ "name": "statusId" }]
         }
       }
-    ],
-    "reasoning": "The structure uses a global admin role pattern and explicit collection paths to ensure security and efficient real-time updates."
+    ]
   }
 }

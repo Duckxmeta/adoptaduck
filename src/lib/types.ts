@@ -22,6 +22,16 @@ export type Resident = {
   generation?: number;
 };
 
+export type Expense = {
+  id: string;
+  itemName: string;
+  category: 'Feed' | 'Medical' | 'Bedding' | 'Infrastructure';
+  cost: number;
+  date: string;
+  birdId?: string;
+  createdAt: string;
+};
+
 export type UserProfile = {
   id: string;
   uid: string;
@@ -58,11 +68,4 @@ export type DailyStatus = {
   healthCheck: boolean;
   nightlyPenUp: boolean;
   lastReset: string;
-};
-
-export type SanctuaryStatistic = {
-  id: string;
-  totalBirds: number;
-  totalEggsRescuedToday: number;
-  lastUpdated: string;
 };

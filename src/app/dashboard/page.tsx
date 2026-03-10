@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -18,7 +19,7 @@ import {
   arrayUnion,
   or
 } from 'firebase/firestore';
-import { Resident, DailyStatus, HealthLogEntry, UserProfile } from '@/lib/types';
+import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +49,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 
 const REFERRAL_MAP: Record<string, string> = {
   'STRAY-G0': 'Joey',
@@ -80,6 +82,14 @@ export default function MemberDashboard() {
   }, [firestore, user?.uid]);
 
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  // Global Ledger Query
+  const expensesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
+  }, [firestore]);
+
+  const { data: expenses } = useCollection<Expense>(expensesQuery);
 
   // Query for birds adopted by the user or linked via community codes
   const flockQuery = useMemoFirebase(() => {
@@ -325,14 +335,14 @@ export default function MemberDashboard() {
           </div>
         )}
 
-        {/* Global Sanctuary Routine & Health */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <Card className="lg:col-span-2 bg-card border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        {/* Financial Transparency & Routine Health */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+           <Card className="bg-card border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
               <div className="relative z-10 space-y-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Global Sanctuary Health</h2>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">Daily routine completion across all aviaries</p>
+                    <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Daily Sanctuary Health</h2>
+                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">Morning routine completion status</p>
                   </div>
                   <div className="text-right">
                     <span className="text-5xl font-headline font-black text-primary leading-none">{Math.round(globalHealth)}%</span>
@@ -361,15 +371,7 @@ export default function MemberDashboard() {
               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 blur-3xl rounded-full" />
            </Card>
 
-           <Card className="bg-primary/5 border-primary/20 rounded-3xl p-8 flex flex-col justify-center items-center text-center space-y-4">
-              <div className="p-4 bg-primary/10 rounded-full">
-                <Heart className="h-10 w-10 text-primary fill-primary animate-pulse" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-headline font-black uppercase">Live Impact</h3>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Your support directly fuels the daily health check progress shown here.</p>
-              </div>
-           </Card>
+           <SanctuaryCostCard expenses={expenses} />
         </section>
 
         {/* Your Adopted Residents Section */}
@@ -383,7 +385,7 @@ export default function MemberDashboard() {
            {myFlock && myFlock.length > 0 ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                {myFlock.map((bird) => (
-                 <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} />
+                 <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses} totalBirds={birds?.length || 1} />
                ))}
              </div>
            ) : (
@@ -404,7 +406,7 @@ export default function MemberDashboard() {
            )}
         </section>
 
-        {/* Supporter News & Care Logs */}
+        {/* News Feed */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
@@ -422,15 +424,30 @@ export default function MemberDashboard() {
   );
 }
 
-function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, dailyStatusProgress: number }) {
+function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[] | null, totalBirds: number }) {
   const firestore = useFirestore();
   const { user } = useUser();
   const isHen = bird.sex === 'female';
   
   const displayName = bird.name;
-  const altText = displayName === 'Huey' 
-    ? 'Huey, a rescued duck at the Virtual Sanctuary, adopted by SolGods.'
-    : `${displayName} Community Duck`;
+
+  const monthlyCareCost = useMemo(() => {
+    if (!expenses) return 0;
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+
+    const monthlyExpenses = expenses.filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === m && d.getFullYear() === y;
+    });
+
+    const specificCost = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + e.cost, 0);
+    const sharedCost = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + e.cost, 0);
+    const overhead = sharedCost / (totalBirds || 1);
+
+    return specificCost + overhead;
+  }, [expenses, bird.id, totalBirds]);
 
   const logsQuery = useMemoFirebase(() => {
     if (!firestore || !bird.id || !user) return null;
@@ -440,18 +457,12 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
   const { data: logs } = useCollection<HealthLogEntry>(logsQuery);
   const latestLog = logs?.[0];
 
-  const hasRecentEgg = useMemo(() => {
-    if (!bird.updatedAt || !isHen) return false;
-    const diff = new Date().getTime() - new Date(bird.updatedAt).getTime();
-    return diff < 24 * 60 * 60 * 1000;
-  }, [bird.updatedAt, isHen]);
-
   return (
     <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col group hover:glow-purple transition-all duration-500">
       <div className="relative aspect-video overflow-hidden">
         <Image 
           src={bird.primaryImageUrl} 
-          alt={altText} 
+          alt={displayName} 
           fill 
           className="object-cover transition-transform duration-700 group-hover:scale-110" 
         />
@@ -460,20 +471,10 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
            <div>
               <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter">{displayName}</h3>
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.breed}</p>
-              {displayName === 'Huey' && (
-                <Badge variant="outline" className="mt-1 text-[8px] border-secondary/50 text-secondary bg-secondary/10">Adopted by SolGods</Badge>
-              )}
            </div>
-           {hasRecentEgg && (
-             <Badge className="bg-[#14F195] text-black font-black flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-none animate-bounce">
-                <PartyPopper className="h-3.5 w-3.5" /> LAID TODAY
-             </Badge>
-           )}
-           {bird.isCommunityDuck && (
-             <Badge className="bg-secondary text-secondary-foreground font-black px-3 py-1.5 rounded-lg border-none">
-                COMMUNITY
-             </Badge>
-           )}
+           <Badge className="bg-primary text-black font-black px-3 py-1.5 rounded-lg border-none">
+              ${monthlyCareCost.toFixed(0)}/MO
+           </Badge>
         </div>
       </div>
 
@@ -506,23 +507,6 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
               <Stethoscope className="h-5 w-5 text-[#14F195] mb-1" />
               <span className="text-lg font-headline font-black uppercase text-[#14F195]">Healthy</span>
               <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Status</span>
-           </div>
-        </div>
-
-        <div className="space-y-3">
-           <h4 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-             <Calendar className="h-3.5 w-3.5" /> Latest Wellness Note
-           </h4>
-           <div className="bg-background/50 border border-border p-4 rounded-2xl min-h-[80px]">
-              {latestLog ? (
-                <p className="text-xs text-muted-foreground italic leading-relaxed">
-                  "{latestLog.notes.length > 100 ? latestLog.notes.substring(0, 100) + '...' : latestLog.notes}"
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground/60 italic leading-relaxed flex items-center justify-center h-full">
-                  Waiting for today's logs...
-                </p>
-              )}
            </div>
         </div>
 
@@ -561,7 +545,7 @@ function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlocke
   if (!flock || flock.length === 0) {
     return (
       <Card className="bg-muted/10 border-border p-12 text-center rounded-3xl border-dashed">
-        <p className="text-muted-foreground font-medium italic">News feed will populate once you adopt a resident or use a community code.</p>
+        <p className="text-muted-foreground font-medium italic">News feed will populate once you adopt a resident.</p>
       </Card>
     );
   }
@@ -591,11 +575,11 @@ function BirdLogs({ bird }: { bird: Resident }) {
   return (
     <div className="space-y-4">
       {logs.map(log => (
-        <Card key={log.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg group hover:border-secondary/30 transition-colors">
+        <Card key={log.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
-                <Image src={bird.primaryImageUrl} alt={`${displayName} Daily Log`} fill className="object-cover" />
+                <Image src={bird.primaryImageUrl} alt={displayName} fill className="object-cover" />
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between">
@@ -607,10 +591,6 @@ function BirdLogs({ bird }: { bird: Resident }) {
                 <p className="text-sm leading-relaxed text-foreground/90 font-medium">
                   {log.notes}
                 </p>
-                <div className="flex items-center gap-2 pt-2">
-                  <Badge className="bg-[#14F195]/10 text-[#14F195] border-none text-[8px] font-black px-2">Verified Status</Badge>
-                  <Badge className="bg-secondary/10 text-secondary border-none text-[8px] font-black px-2">Adopter Exclusive</Badge>
-                </div>
               </div>
             </div>
           </CardContent>

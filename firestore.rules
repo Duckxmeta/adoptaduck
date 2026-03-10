@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,8 +14,7 @@ service cloud.firestore {
     }
 
     /** 
-     * Checks if the user is one of the hardcoded administrators or 
-     * exists in the roles_admin DBAC collection.
+     * Checks if the user is an administrator.
      */
     function isAdmin() {
       return isSignedIn() && (
@@ -38,19 +38,26 @@ service cloud.firestore {
       allow get, list: if true;
       allow write: if isAdmin();
 
-      /** Wellness and clinical logs (Admin-only) */
+      /** Wellness and clinical logs (Member-only for read) */
       match /healthLogs/{healthLogId} {
-        allow get, list, write: if isAdmin();
+        allow get, list: if isSignedIn();
+        allow write: if isAdmin();
       }
     }
 
-    /** Global sanctuary routine status (Viewable by all members) */
+    /** Global sanctuary financial ledger */
+    match /ledger/{expenseId} {
+      allow get, list: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    /** Global sanctuary routine status (Viewable by all signed-in users) */
     match /daily_status/{statusId} {
       allow get, list: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    /** User profiles and adopted flock links */
+    /** User profiles */
     match /users/{userId} {
       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
