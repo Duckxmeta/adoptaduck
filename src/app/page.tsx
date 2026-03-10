@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect } from 'react';
@@ -24,6 +23,7 @@ import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { useToast } from '@/hooks/use-toast';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -32,9 +32,9 @@ export default function Home() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
-  // Automatically redirect logged-in users to the dashboard
   useEffect(() => {
     if (user && !isUserLoading) {
       if (user.email === ADMIN_EMAIL) {
@@ -52,6 +52,27 @@ export default function Home() {
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   
+  const handleGoogleSignIn = async () => {
+    if (!auth) return;
+    try {
+      await initiateGoogleSignIn(auth);
+    } catch (error: any) {
+      if (error.code === 'auth/operation-not-allowed') {
+        toast({
+          variant: "destructive",
+          title: "Setup Required",
+          description: "Google Sign-in is not enabled in the Firebase Console.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Sign-in Error",
+          description: "Could not complete the sign-in process.",
+        });
+      }
+    }
+  };
+
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
@@ -61,7 +82,6 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Sanctuary Impact Ticker */}
         <section className="bg-primary/5 border-b border-primary/20 py-20 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
@@ -75,7 +95,7 @@ export default function Home() {
             </p>
             
             <button 
-              onClick={() => initiateGoogleSignIn(auth!)}
+              onClick={handleGoogleSignIn}
               className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
             >
               Sign up for free to see our daily sanctuary progress and member-only stats.
@@ -85,7 +105,6 @@ export default function Home() {
           <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
         </section>
 
-        {/* Hero Section */}
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
@@ -115,7 +134,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Educational Section */}
         <section className="py-32 bg-card/30 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
@@ -127,7 +145,6 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Domestic Duck Card */}
               <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl shadow-secondary/10">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
@@ -151,7 +168,6 @@ export default function Home() {
                 </div>
               </Card>
 
-              {/* Wild Duck Card */}
               <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl shadow-secondary/10">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
@@ -178,7 +194,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Viewer CTA Section */}
         {!user && (
           <section className="py-24 bg-secondary/5 relative overflow-hidden">
             <div className="container mx-auto px-4 relative z-10">
@@ -198,7 +213,7 @@ export default function Home() {
                 </div>
                 
                 <Button 
-                  onClick={() => initiateGoogleSignIn(auth!)}
+                  onClick={handleGoogleSignIn}
                   size="lg" 
                   className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
                 >
@@ -209,7 +224,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Resident Grid */}
         <section id="residents" className="py-32 container mx-auto px-4">
           <div className="mb-20 text-center">
             <h2 className="text-5xl font-headline font-black mb-4 tracking-tighter text-center">OUR RESIDENTS</h2>
@@ -229,7 +243,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Support Our Mission */}
         <section className="py-32 bg-card border-y border-border relative overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">

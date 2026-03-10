@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -24,13 +23,11 @@ export default function AdminLogin() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
 
-  // Redirect if already logged in with the correct account
   useEffect(() => {
     if (user && !isUserLoading) {
       if (user.email === ADMIN_EMAIL) {
         router.push('/admin');
       } else if (auth) {
-        // If someone else is logged in, sign them out of the admin portal
         signOut(auth);
       }
     }
@@ -44,7 +41,6 @@ export default function AdminLogin() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // Secondary check for the specific admin email
       if (userCredential.user.email !== ADMIN_EMAIL) {
         await signOut(auth);
         toast({
@@ -62,11 +58,19 @@ export default function AdminLogin() {
       });
       router.push('/admin');
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Failed",
-        description: "Invalid credentials or insufficient permissions.",
-      });
+      if (error.code === 'auth/operation-not-allowed') {
+        toast({
+          variant: "destructive",
+          title: "Setup Required",
+          description: "Email/Password sign-in is not enabled in the Firebase Console.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: "Invalid credentials or insufficient permissions.",
+        });
+      }
     } finally {
       setLoading(false);
     }
