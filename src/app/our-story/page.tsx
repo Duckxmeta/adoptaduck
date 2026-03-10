@@ -128,12 +128,12 @@ export default function OurStoryPage() {
         {/* The Aha Moment */}
         <section className="py-24 container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="relative aspect-video rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl group">
+            <div className="relative aspect-square rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl group">
               <Image 
                 src={imgKayak} 
                 alt="Jasmine on a kayak trip" 
                 fill 
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </div>
