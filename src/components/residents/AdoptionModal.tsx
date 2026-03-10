@@ -20,12 +20,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 
-interface AdoptionModalProps {
-  resident: Resident;
-  trigger?: React.ReactNode;
-}
-
-const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
+const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey', 'SolGods'];
 
 export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const [suggestedName, setSuggestedName] = useState("");
@@ -37,6 +32,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
 
   const nameNorm = resident.name?.trim().toLowerCase().replace(/\s+/g, '');
   const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!resident.isCommunityDuck;
+  const displayName = resident.name === 'Huey' ? 'SolGods' : resident.name;
 
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);
@@ -53,7 +49,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
         
         toast({
           title: "Suggestion Recorded!",
-          description: `We've noted your suggestion for ${resident.name}. Redirecting to PayPal...`,
+          description: `We've noted your suggestion for ${displayName}. Redirecting to PayPal...`,
         });
       }
       
@@ -84,7 +80,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
           ) : (
             <Button size="lg" className="w-full bg-primary text-primary-foreground font-black hover:scale-105 transition-all py-8 text-xl rounded-2xl shadow-lg shadow-primary/20">
               <Heart className="mr-3 h-6 w-6 fill-current" />
-              SUPPORT {resident.name.toUpperCase()}
+              SUPPORT {displayName.toUpperCase()}
             </Button>
           )
         )}
@@ -121,7 +117,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
               <div className="mx-auto w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center border-2 border-primary/30">
                 <Heart className="h-10 w-10 text-primary fill-primary" />
               </div>
-              <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Ready to join {resident.name}&apos;s journey?</DialogTitle>
+              <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Ready to join {displayName}&apos;s journey?</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed">
                 Support our mission with a donation to unlock their daily egg stats, private care logs, and detailed heritage records.
               </DialogDescription>
@@ -167,4 +163,9 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
       </DialogContent>
     </Dialog>
   );
+}
+
+interface AdoptionModalProps {
+  resident: Resident;
+  trigger?: React.ReactNode;
 }

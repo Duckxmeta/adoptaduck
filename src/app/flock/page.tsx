@@ -14,12 +14,13 @@ import Link from 'next/link';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { cn } from '@/lib/utils';
 
-const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
+const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey', 'SolGods'];
 const PARTNER_MAP: Record<string, string> = {
   'Joey': 'Solana Strays',
   'Jordie': 'Quakk',
   'Cutie Pie': 'Quakey',
-  'Huey': 'Gods'
+  'Huey': 'Solana Gods',
+  'SolGods': 'Solana Gods'
 };
 
 export default function BrowseFlock() {
@@ -48,7 +49,7 @@ export default function BrowseFlock() {
     const nameNorm = bird.name?.trim().toLowerCase().replace(/\s+/g, '');
     const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!bird.isCommunityDuck;
     
-    // Find partner name by normalized match
+    const displayName = bird.name === 'Huey' ? 'SolGods' : bird.name;
     const partnerKey = COMMUNITY_NAMES.find(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm);
     const partnerName = partnerKey ? PARTNER_MAP[partnerKey] : null;
 
@@ -63,7 +64,7 @@ export default function BrowseFlock() {
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image 
             src={bird.primaryImageUrl} 
-            alt={bird.name} 
+            alt={`${displayName} Community Duck`} 
             fill 
             className="object-cover transition-transform duration-700 group-hover:scale-110" 
           />
@@ -79,7 +80,7 @@ export default function BrowseFlock() {
             )}
           </div>
           <div className="absolute bottom-6 left-6 right-6">
-            <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter leading-none mb-2">{bird.name}</h3>
+            <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter leading-none mb-2">{displayName}</h3>
             <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.sex === 'female' ? 'Hen' : 'Drake'}</p>
           </div>
         </div>
@@ -108,7 +109,7 @@ export default function BrowseFlock() {
                 resident={bird} 
                 trigger={
                   <Button className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg hover:scale-105 transition-transform uppercase text-xs tracking-widest">
-                    <Heart className="mr-2 h-4 w-4 fill-current" /> Adopt {bird.name}
+                    <Heart className="mr-2 h-4 w-4 fill-current" /> Adopt {displayName}
                   </Button>
                 }
               />
