@@ -1,3 +1,4 @@
+
 export type Resident = {
   id: string;
   name: string;
@@ -11,6 +12,16 @@ export type Resident = {
   galleryImageUrls: string[];
   createdAt: string;
   updatedAt?: string;
+};
+
+export type NameSuggestion = {
+  id: string;
+  birdId: string;
+  birdOriginalName: string;
+  suggestedName: string;
+  donorEmail?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
 };
 
 export type HealthLogEntry = {

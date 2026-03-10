@@ -13,18 +13,18 @@ import {
   Crown, 
   TrendingUp, 
   ShieldCheck, 
-  Info, 
   Users, 
   CheckCircle2, 
-  ExternalLink,
   Lock,
-  ArrowRight
+  ArrowRight,
+  Droplets,
+  Utensils
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { Resident, SanctuaryStatistic } from '@/lib/types';
+import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
@@ -43,10 +43,8 @@ export default function Home() {
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   
-  // Calculate Total Eggs Rescued from all residents in real-time
   const totalEggsRescued = birds?.reduce((sum, bird) => sum + (bird.eggCounter || 0), 0) || 0;
 
-  // Identify Top Producer (Highest current egg counter)
   const topProducer = birds && birds.length > 0 
     ? [...birds].filter(b => b.sex === 'female').sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
     : null;
@@ -77,15 +75,38 @@ export default function Home() {
                 Sign up for free to see our daily sanctuary progress and member-only stats.
               </button>
             ) : (
-              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-xs mx-auto">
-                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">MEMBER ACCESS: DAILY IMPACT</p>
-                 <div className="flex items-center justify-center gap-3">
-                    <Egg className="h-5 w-5 text-primary" />
-                    <p className="text-4xl font-headline font-black text-foreground">
-                      {totalEggsRescued.toLocaleString()}
-                    </p>
+              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-lg mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                 <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">MEMBER ACCESS: DAILY IMPACT</p>
+                    <div className="flex items-center justify-center gap-3">
+                       <Egg className="h-5 w-5 text-primary" />
+                       <p className="text-4xl font-headline font-black text-foreground">
+                         {totalEggsRescued.toLocaleString()}
+                       </p>
+                    </div>
+                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1">Total Eggs Saved to Date</p>
                  </div>
-                 <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1">Total Eggs Saved to Date</p>
+
+                 {/* Daily Sanctuary Checklist */}
+                 <div className="bg-card/50 p-6 rounded-2xl border border-border text-left space-y-3">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                      <CheckCircle2 className="h-3 w-3" /> Daily Checklist
+                    </p>
+                    <div className="space-y-2">
+                       {birds?.slice(0, 2).map((bird, i) => (
+                         <div key={bird.id} className="flex items-center gap-3 text-[11px] font-medium text-foreground/80">
+                            {i === 0 ? <Utensils className="h-3 w-3 text-emerald-500" /> : <Droplets className="h-3 w-3 text-blue-500" />}
+                            <span>{bird.name} has been {i === 0 ? 'fed' : 'provided fresh water'}.</span>
+                         </div>
+                       ))}
+                       {topProducer && (
+                         <div className="flex items-center gap-3 text-[11px] font-medium text-foreground/80">
+                            <Egg className="h-3 w-3 text-primary" />
+                            <span>{topProducer.name} laid an egg today!</span>
+                         </div>
+                       )}
+                    </div>
+                 </div>
               </div>
             )}
           </div>
@@ -125,7 +146,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Educational Section: Domestic vs. Wildlife */}
+        {/* Educational Section */}
         <section className="py-32 bg-card/30 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
@@ -137,7 +158,6 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Domestic Ducks */}
               <Card className="bg-background border-border rounded-3xl overflow-hidden group hover:border-primary/50 transition-all duration-500 shadow-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
@@ -148,15 +168,10 @@ export default function Home() {
                     <p className="text-foreground/80 text-sm leading-relaxed">
                       Breeds like Pekins or Rouens are selectively bred for human care. They <strong>cannot fly</strong> or survive in the wild. When abandoned at ponds, they face certain starvation or predation.
                     </p>
-                    <div className="pt-4 border-t border-border">
-                      <p className="text-[10px] font-black uppercase text-primary tracking-widest">The Reality</p>
-                      <p className="text-xs italic text-muted-foreground">Abandoned pets needing permanent human guardianship.</p>
-                    </div>
                   </CardContent>
                 </div>
               </Card>
 
-              {/* Wildlife Ducks */}
               <Card className="bg-background border-border rounded-3xl overflow-hidden group hover:border-secondary/50 transition-all duration-500 shadow-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
@@ -165,12 +180,8 @@ export default function Home() {
                   <CardContent className="p-8 flex flex-col justify-center space-y-4">
                     <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
                     <p className="text-foreground/80 text-sm leading-relaxed">
-                      Wild Mallards and native species are self-sufficient aviators. They need <strong>nature and space</strong> to migrate and thrive independently. They belong in the wild, not in sanctuaries.
+                      Wild Mallards and native species are self-sufficient aviators. They need <strong>nature and space</strong> to migrate and thrive independently. They belong in the wild.
                     </p>
-                    <div className="pt-4 border-t border-border">
-                      <p className="text-[10px] font-black uppercase text-secondary tracking-widest">The Balance</p>
-                      <p className="text-xs italic text-muted-foreground">Wild beings that require conservation and respect, not rescue.</p>
-                    </div>
                   </CardContent>
                 </div>
               </Card>
@@ -197,18 +208,6 @@ export default function Home() {
                   </p>
                 </div>
                 
-                <div className="flex flex-wrap justify-center gap-6 pt-4">
-                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/70">
-                     <CheckCircle2 className="h-4 w-4 text-secondary" /> Real-time Dashboard
-                   </div>
-                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/70">
-                     <CheckCircle2 className="h-4 w-4 text-secondary" /> Heritage Lineage
-                   </div>
-                   <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/70">
-                     <CheckCircle2 className="h-4 w-4 text-secondary" /> Priority Updates
-                   </div>
-                </div>
-
                 <Button 
                   onClick={() => initiateGoogleSignIn(auth!)}
                   size="lg" 
@@ -216,77 +215,6 @@ export default function Home() {
                 >
                   <Users className="mr-3 h-5 w-5" /> SIGN UP WITH GOOGLE
                 </Button>
-                
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Secure access for sanctuary supporters.
-                </p>
-              </div>
-            </div>
-            {/* Background Decor */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          </section>
-        )}
-
-        {/* Daily Production Widget */}
-        {topProducer && (
-          <section className="py-20 bg-background relative overflow-hidden">
-            <div className="container mx-auto px-4">
-              <div className="max-w-4xl mx-auto">
-                <Card className="bg-card border-2 border-primary/30 rounded-[2rem] overflow-hidden shadow-2xl relative">
-                  <div className="grid grid-cols-1 md:grid-cols-2">
-                    <div className="relative aspect-square md:aspect-auto h-full min-h-[300px]">
-                      <Image 
-                        src={topProducer.primaryImageUrl} 
-                        alt={topProducer.name} 
-                        fill 
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card hidden md:block" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent md:hidden" />
-                    </div>
-                    <CardContent className="p-10 flex flex-col justify-center items-start space-y-6">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.3em] text-xs">
-                          <TrendingUp className="h-4 w-4" /> DAILY PRODUCTION LEADER
-                        </div>
-                        <h2 className="text-5xl font-headline font-black tracking-tighter leading-none">{topProducer.name}</h2>
-                      </div>
-                      
-                      {user && (
-                        <Badge className="bg-primary text-primary-foreground font-black px-6 py-2.5 rounded-xl uppercase tracking-widest text-xs animate-subtle-pulse shadow-[0_0_20px_rgba(255,215,0,0.4)] border-none">
-                          <Crown className="h-4 w-4 mr-2" /> Top Producer of the Day!
-                        </Badge>
-                      )}
-                      
-                      <p className="text-muted-foreground text-lg leading-relaxed italic">
-                        "{topProducer.personalityTraits.split(',')[0]} and highly protective! {topProducer.name} has been instrumental in today's sanctuary success."
-                      </p>
-                      
-                      {user ? (
-                        <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-border w-full">
-                           <div className="p-3 bg-primary/10 rounded-xl">
-                              <Egg className="h-6 w-6 text-primary" />
-                           </div>
-                           <div>
-                              <p className="text-2xl font-headline font-black">{topProducer.eggCounter}</p>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Lifetime Rescues</p>
-                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-dashed border-primary/20 w-full opacity-60">
-                           <Lock className="h-5 w-5 text-muted-foreground" />
-                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Production stats restricted to members</p>
-                        </div>
-                      )}
-                      
-                      <Button variant="link" className="p-0 text-primary font-black uppercase tracking-widest text-xs group" asChild>
-                        <Link href={`/residents/${topProducer.id}`}>
-                          VIEW FULL PROFILE <TrendingUp className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </div>
-                </Card>
               </div>
             </div>
           </section>
@@ -297,9 +225,6 @@ export default function Home() {
           <div className="mb-20 text-center">
             <h2 className="text-5xl font-headline font-black mb-4 tracking-tighter">OUR RESIDENTS</h2>
             <div className="h-1.5 w-24 bg-primary mx-auto" />
-            <p className="text-muted-foreground mt-6 max-w-xl mx-auto text-lg font-medium">
-              Every resident has a name, a unique personality, and a place here. Click to explore their stories.
-            </p>
           </div>
 
           {birdsLoading ? (
@@ -311,26 +236,20 @@ export default function Home() {
               {birds?.map((bird) => (
                 <ResidentCard key={bird.id} resident={bird} />
               ))}
-              {(!birds || birds.length === 0) && (
-                <div className="col-span-full py-32 text-center border-2 border-dashed border-border rounded-3xl">
-                  <Bird className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-                  <p className="text-muted-foreground font-black uppercase tracking-widest">No residents found in sanctuary database.</p>
-                </div>
-              )}
             </div>
           )}
         </section>
 
-        {/* Support Our Mission: Donation Perks */}
+        {/* Support Our Mission */}
         <section className="py-32 bg-card border-y border-border relative overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div className="space-y-10">
                 <div className="space-y-4">
                   <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest border-none">100% DONOR FUNDED</Badge>
-                  <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">Support Our <br/><span className="text-primary">Mission</span></h2>
+                  <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">Donate $25+ to <br/><span className="text-primary">Adopt & Name</span></h2>
                   <p className="text-muted-foreground text-lg leading-relaxed font-medium">
-                    As a non-profit initiative, we rely entirely on the generosity of our community. Your contribution ensures every resident has the nutrition, shelter, and medical care they deserve.
+                    We rely entirely on the generosity of our community. Your contribution ensures every resident has nutrition, shelter, and medical care.
                   </p>
                 </div>
 
@@ -338,24 +257,17 @@ export default function Home() {
                   <h3 className="font-headline font-black text-xs text-primary uppercase tracking-[0.4em]">Supporter Perks</h3>
                   <ul className="space-y-4">
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform"><CheckCircle2 className="h-5 w-5" /></div>
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><CheckCircle2 className="h-5 w-5" /></div>
                       <div>
                         <p className="font-black text-sm uppercase tracking-tight">Digital Adoption Certificate</p>
-                        <p className="text-xs text-muted-foreground">Receive a personalized certificate with every donation to commemorate your support.</p>
+                        <p className="text-xs text-muted-foreground">Personalized certificate with every donation.</p>
                       </div>
                     </li>
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform"><Egg className="h-5 w-5" /></div>
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sparkles className="h-5 w-5" /></div>
                       <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Name an Egg</p>
-                        <p className="text-xs text-muted-foreground">Donors of $20+ get to name a rescued egg in our real-time tracking system.</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary group-hover:scale-110 transition-transform"><Sparkles className="h-5 w-5" /></div>
-                      <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Exclusive Updates</p>
-                        <p className="text-xs text-muted-foreground">Get early access to new rescue stories, gallery updates, and health milestones.</p>
+                        <p className="font-black text-sm uppercase tracking-tight">Name a Duck</p>
+                        <p className="text-xs text-muted-foreground">Donors of $25+ get to suggest a new name for a sanctuary resident!</p>
                       </div>
                     </li>
                   </ul>
@@ -364,27 +276,6 @@ export default function Home() {
                 <Button size="lg" className="bg-primary text-primary-foreground font-black h-16 px-16 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-all w-full md:w-auto" asChild>
                   <a href={donateUrl} target="_blank" rel="noopener noreferrer">DONATE VIA PAYPAL</a>
                 </Button>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -inset-10 bg-primary/10 blur-[100px] rounded-full" />
-                <Card className="relative overflow-hidden border-2 border-primary/20 rounded-[3rem] shadow-2xl bg-card/50 backdrop-blur-sm">
-                   <div className="relative aspect-[3/4] group">
-                      <Image 
-                        src="https://picsum.photos/seed/sanctuary-life/800/1000" 
-                        alt="Sanctuary Life" 
-                        fill 
-                        className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute bottom-10 left-10 right-10">
-                         <div className="flex items-center gap-3 text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-2">
-                           <Heart className="h-4 w-4 fill-primary" /> LATEST RESCUE
-                         </div>
-                         <h4 className="text-4xl font-headline font-black text-white uppercase tracking-tighter">Your Help, Their Home.</h4>
-                      </div>
-                   </div>
-                </Card>
               </div>
             </div>
           </div>
