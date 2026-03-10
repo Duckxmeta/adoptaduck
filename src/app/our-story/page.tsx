@@ -12,19 +12,28 @@ import {
   ShieldCheck, 
   BookOpen, 
   Sprout, 
-  Bug, 
+  Heart, 
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Compass,
+  Baby
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function OurStoryPage() {
-  const storyDiscoveryUrl = "https://picsum.photos/seed/hatchling/800/600";
-  const storyLakeUrl = "https://picsum.photos/seed/lake/800/600";
+  const BUCKET = "studio-7482167027-804c1.firebasestorage.app";
+  const getStorageUrl = (filename: string) => `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/our-story%2F${filename}?alt=media`;
+
+  const imgHatch = getStorageUrl("Jasminehatch.png");
+  const imgBaby1 = getStorageUrl("jasminebaby.png");
+  const imgBaby2 = getStorageUrl("Jasminebaby1.png");
+  const imgKayak = getStorageUrl("Jasminekayak.png");
+  const imgPublic = getStorageUrl("Jasminepublic.png");
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-body selection:bg-primary selection:text-primary-foreground">
       <Navbar />
 
       <main className="flex-1 pb-32">
@@ -38,30 +47,29 @@ export default function OurStoryPage() {
               FROM ONE EGG TO A <span className="text-primary">SANCTUARY</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-              The story of how one imprinted duckling changed the mission for domestic ducks in Tennessee.
+              The story of Jasmine, the imprinted duckling who exposed a hidden crisis in Tennessee.
             </p>
           </div>
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/5 blur-[120px] rounded-full" />
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full" />
         </section>
 
-        {/* The Discovery */}
+        {/* The Hatching */}
         <section className="py-24 container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl">
+            <div className="relative aspect-square rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl group">
               <Image 
-                src={storyDiscoveryUrl} 
-                alt="The Discovery" 
+                src={imgHatch} 
+                alt="Jasmine hatching half-in, half-out" 
                 fill 
-                className="object-cover"
-                data-ai-hint="duckling hatching"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-8 left-8">
                  <Badge className="bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 py-2">The Beginning</Badge>
               </div>
             </div>
-            <div className="space-y-8">
+            <div className="space-y-8 bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl">
               <div className="flex items-center gap-3 text-secondary">
                  <Search className="h-6 w-6" />
                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Discovery</span>
@@ -69,38 +77,78 @@ export default function OurStoryPage() {
               <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tight leading-none">
                 A "Half-In, Half-Out" <span className="text-secondary">Encounter</span>
               </h2>
-              <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
+              <div className="space-y-6 text-muted-foreground text-lg leading-relaxed italic">
                 <p>
+                  "The moment that changed everything."
+                </p>
+                <p className="not-italic text-foreground/80">
                   It started with a single egg found abandoned—a duckling struggling between two worlds, half-in and half-out of its shell. 
                 </p>
-                <p>
-                  Ducks are precocial; they are born ready to run, but they are also wired to bond. Because this specific duckling's eyes opened to a human first, the imprinting process began instantly. This wasn't just a rescue; it was a lifelong commitment that exposed a massive gap in our local ecosystem.
+                <p className="not-italic text-foreground/80">
+                  Ducks are precocial; they are born ready to run, but they are also wired to bond. Because Jasmine's eyes opened to a human first, the imprinting process began instantly. This wasn't just a rescue; it was a lifelong commitment.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* The Aha Moment */}
-        <section className="py-24 bg-card/30 border-y border-border">
+        {/* The Imprint */}
+        <section className="py-24 bg-card/20 border-y border-border overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div className="order-2 lg:order-1 space-y-8">
+              <div className="space-y-8 order-2 lg:order-1 bg-card/60 backdrop-blur-md p-10 rounded-[3rem] border border-border/50 shadow-2xl">
                 <div className="flex items-center gap-3 text-primary">
-                   <Lightbulb className="h-6 w-6" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Realization</span>
+                   <Baby className="h-6 w-6" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Imprint</span>
                 </div>
                 <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tight leading-none">
-                  THE "AHA" <span className="text-primary">MOMENT</span>
+                  MOTHER BY <span className="text-primary">BOND</span>
                 </h2>
                 <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
                   <p>
-                    Visits to local marinas and lakes across Tennessee revealed a heartbreaking pattern. What most people thought were "wild" ducks were actually abandoned domestic pets.
+                    Jasmine didn't just survive; she thrived. In those early days, the bond was absolute. She treated me as her mother, following every step and seeking protection in a world she wasn't built for alone.
                   </p>
                   <p>
-                    Without the ability to fly or migrate, these Pekins and Rouens have a survival rate of less than 10% in the wild. They are defenseless against predators and the elements.
+                    Watching her grow from a fragile baby into a social, energetic soul made one thing clear: domestic ducks possess a profound capacity for connection, yet they are entirely reliant on human stewardship for their safety.
                   </p>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 order-1 lg:order-2">
+                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border-2 border-border shadow-xl group">
+                  <Image src={imgBaby1} alt="Jasmine as a duckling" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                </div>
+                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border-2 border-border shadow-xl mt-8 group">
+                  <Image src={imgBaby2} alt="Jasmine growing up" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Aha Moment */}
+        <section className="py-24 container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="relative aspect-video rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl group">
+              <Image 
+                src={imgKayak} 
+                alt="Jasmine on a kayak trip" 
+                fill 
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+            </div>
+            <div className="space-y-8 bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl">
+              <div className="flex items-center gap-3 text-secondary">
+                 <Compass className="h-6 w-6" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Life on the Water</span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tight leading-none">
+                THE "AHA" <span className="text-secondary">MOMENT</span>
+              </h2>
+              <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
+                <p>
+                  Our trips to local marinas and lakes across Tennessee—often with Jasmine on the kayak—revealed a heartbreaking pattern. What most people thought were "wild" ducks were actually abandoned domestic pets.
+                </p>
                 <div className="p-8 bg-destructive/10 border-2 border-destructive/20 rounded-3xl relative overflow-hidden group">
                    <div className="relative z-10 space-y-2">
                       <p className="text-destructive font-black uppercase text-[10px] tracking-widest flex items-center gap-2">
@@ -110,18 +158,42 @@ export default function OurStoryPage() {
                         Domestic ducks cannot migrate. When they are dumped, they are defenseless.
                       </p>
                    </div>
-                   <div className="absolute -right-8 -bottom-8 opacity-10 group-hover:scale-110 transition-transform">
-                      <ShieldCheck className="h-32 w-32 text-destructive" />
-                   </div>
+                </div>
+                <p>
+                  Without the ability to fly or migrate, these Pekins and Rouens have a survival rate of less than 10% in the wild. They are defenseless against predators and the elements.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Mission Birth */}
+        <section className="py-24 bg-primary/5 border-y border-primary/10 overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div className="order-2 lg:order-1 space-y-8 bg-card/60 backdrop-blur-md p-10 rounded-[3rem] border border-primary/20 shadow-2xl">
+                <div className="flex items-center gap-3 text-primary">
+                   <Sparkles className="h-6 w-6" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Sanctuary Birth</span>
+                </div>
+                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tight leading-none text-primary">
+                  A MISSION <span className="text-foreground">IS BORN</span>
+                </h2>
+                <div className="space-y-6 text-muted-foreground text-lg leading-relaxed">
+                  <p>
+                    Transitioning from saving one life to building a refuge for many, Decent Ducks Sanctuary was born from a realization that individual rescues weren't enough. We needed a system of education, protection, and advocacy.
+                  </p>
+                  <p>
+                    Jasmine's legacy is the safety of every resident who now calls our sanctuary home. She showed us the gap; now we fill it every day.
+                  </p>
                 </div>
               </div>
-              <div className="order-1 lg:order-2 relative aspect-video lg:aspect-square rounded-[3rem] overflow-hidden border-2 border-border shadow-2xl">
+              <div className="order-1 lg:order-2 relative aspect-square rounded-[3rem] overflow-hidden border-4 border-primary shadow-2xl group">
                 <Image 
-                  src={storyLakeUrl} 
-                  alt="Abandoned Ducks" 
+                  src={imgPublic} 
+                  alt="Jasmine and the mission" 
                   fill 
-                  className="object-cover"
-                  data-ai-hint="ducks lake"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
             </div>
@@ -138,7 +210,7 @@ export default function OurStoryPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group">
+            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group shadow-xl">
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <ShieldCheck className="h-8 w-8 text-primary" />
               </div>
@@ -148,7 +220,7 @@ export default function OurStoryPage() {
               </p>
             </Card>
 
-            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group">
+            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group shadow-xl">
               <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <BookOpen className="h-8 w-8 text-secondary" />
               </div>
@@ -158,7 +230,7 @@ export default function OurStoryPage() {
               </p>
             </Card>
 
-            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group">
+            <Card className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group shadow-xl">
               <div className="w-16 h-16 bg-[#14F195]/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                 <Sprout className="h-8 w-8 text-[#14F195]" />
               </div>
@@ -172,7 +244,7 @@ export default function OurStoryPage() {
 
         {/* Call to Action */}
         <section className="container mx-auto px-4">
-           <div className="bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden">
+           <div className="bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden shadow-2xl">
               <div className="relative z-10 space-y-6">
                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
                    HELP US WRITE THE <span className="text-primary">NEXT CHAPTER</span>
@@ -198,5 +270,3 @@ export default function OurStoryPage() {
     </div>
   );
 }
-
-import { Button } from '@/components/ui/button';
