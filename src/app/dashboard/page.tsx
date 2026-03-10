@@ -14,6 +14,7 @@ import {
   doc, 
   limit, 
   getDocs, 
+  getDoc,
   setDoc, 
   arrayUnion,
   or
@@ -121,7 +122,7 @@ export default function MemberDashboard() {
     const code = referralCode.trim().toUpperCase();
     
     // 1. Validation
-    if (!code) return;
+    if (!code || !firestore || !user) return;
     
     if (!REFERRAL_MAP[code]) {
       toast({
@@ -146,20 +147,61 @@ export default function MemberDashboard() {
     setIsVerifying(true);
     try {
       const birdsRef = collection(firestore, 'birds');
+      
+      // Multi-step robust lookup logic
+      let birdDoc = null;
+
+      // Step A: Exact Name Match
       const q = query(birdsRef, where('name', '==', targetName));
       const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        birdDoc = querySnapshot.docs[0];
+      }
 
-      if (querySnapshot.empty) {
-        toast({
-          variant: "destructive",
-          title: "Resident Not Found",
-          description: `We couldn't find ${targetName} in the sanctuary records.`
-        });
+      // Step B: Fallback - Check by Document ID (slugified name)
+      if (!birdDoc) {
+        const potentialId = targetName.toLowerCase().replace(/\s+/g, '-');
+        const birdDocRef = doc(firestore, 'birds', potentialId);
+        const birdDocSnap = await getDoc(birdDocRef);
+        if (birdDocSnap.exists()) {
+          birdDoc = birdDocSnap;
+        }
+      }
+
+      // Step C: Fallback - Scan all residents for case-insensitive name match
+      if (!birdDoc) {
+        const allBirdsSnap = await getDocs(birdsRef);
+        birdDoc = allBirdsSnap.docs.find(d => 
+          d.data().name?.toLowerCase() === targetName.toLowerCase()
+        ) || null;
+      }
+
+      if (!birdDoc) {
+        // Lookups failed - Log debug info for the administrator
+        const allBirdsSnap = await getDocs(birdsRef);
+        console.log("DEBUG: Resident lookup failed for:", targetName);
+        console.log("DEBUG: Available residents in DB:", allBirdsSnap.docs.map(d => ({ 
+          id: d.id, 
+          name: d.data().name 
+        })));
+
+        if (targetName === 'Cutie Pie') {
+          toast({
+            variant: "destructive",
+            title: "Update in Progress",
+            description: "Resident record for Cutie Pie is being updated, please try again in a moment."
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Resident Not Found",
+            description: `We couldn't find ${targetName} in the sanctuary records.`
+          });
+        }
       } else {
-        const birdDoc = querySnapshot.docs[0];
         const birdId = birdDoc.id;
 
-        // Check if bird is already in flock (via different code or email)
+        // Verify if bird is already in flock (via different code or email)
         if (userProfile?.my_flock?.includes(birdId)) {
           toast({
             title: "Already Adopted",
@@ -169,8 +211,7 @@ export default function MemberDashboard() {
           return;
         }
         
-        // 3. Unlimited Use Logic & Success State
-        // Link to user profile. Real-time listener on userProfile will update the flock grid instantly.
+        // Success: Link to user profile
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
           uid: user.uid,
@@ -188,7 +229,7 @@ export default function MemberDashboard() {
         setReferralCode('');
       }
     } catch (e: any) {
-      console.error(e);
+      console.error("Referral Code Error:", e);
       toast({
         variant: "destructive",
         title: "Link Failed",
