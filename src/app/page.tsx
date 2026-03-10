@@ -127,12 +127,11 @@ export default function Home() {
               <Sparkles className="h-3.5 w-3.5" />
               Dedicated Virtual Sanctuary
             </div>
-            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter">
-              VIRTUAL <span className="text-primary">SANCTUARY</span><br />
-              DECENT DUCKS
+            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase">
+              VIRTUAL <span className="text-primary">SANCTUARY</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
-              A haven for feathered friends. Meet our residents and support their journey through direct sanctuary donation.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
+              A real-time window into our rescue mission. Track our residents, monitor their health, and see the daily impact of your support.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
