@@ -91,7 +91,7 @@ export default function LineageTreePage() {
       <Link href={`/residents/${bird.id}`} className={cn("w-[260px] h-[350px] group relative shrink-0", className)}>
         <div className={cn(
           "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105 flex flex-col",
-          isG0 ? "border-primary glow-primary shadow-primary/20" : "border-border group-hover:border-primary"
+          isG0 ? "border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.2)]" : "border-border group-hover:border-primary"
         )}>
           {hasImage ? (
             <div className="relative h-full w-full">
@@ -120,7 +120,7 @@ export default function LineageTreePage() {
 
           {isG0 && (
             <div className="absolute top-2 left-2">
-              <Badge className="bg-primary text-primary-foreground border-none text-[6px] font-black px-1.5 py-0.5 rounded-sm shadow-lg animate-pulse">
+              <Badge className="bg-[#D4AF37] text-black border-none text-[6px] font-black px-1.5 py-0.5 rounded-sm shadow-lg animate-pulse">
                 ROOT ANCESTOR
               </Badge>
             </div>
@@ -150,39 +150,53 @@ export default function LineageTreePage() {
         </div>
 
         <ScrollArea className="w-full whitespace-nowrap pb-12">
-          <div className="relative min-w-fit mx-auto py-12 px-24 space-y-[120px]">
+          <div className="relative min-w-fit mx-auto py-12 px-24 space-y-[150px]">
+            {/* SVG Connector Layer */}
             <div className="absolute inset-0 pointer-events-none z-0">
                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="tree-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.1 }} />
-                      <stop offset="100%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.6 }} />
-                    </linearGradient>
-                  </defs>
-                  
-                  {hasGrandparents && hasParents && (
-                    <g className="opacity-20">
-                      <line x1="25%" y1="5%" x2="25%" y2="35%" stroke="url(#tree-grad)" strokeWidth="1" />
-                      <line x1="75%" y1="5%" x2="75%" y2="35%" stroke="url(#tree-grad)" strokeWidth="1" />
+                  {/* G1 to G2 (Resident) Connector */}
+                  {hasParents && (
+                    <g>
+                      {/* Vertical line up from child */}
+                      <line x1="50%" y1="1100" x2="50%" y2="1000" stroke="#D4AF37" strokeWidth="2" strokeDasharray="5,5" className="opacity-40" />
+                      
+                      {/* Horizontal bar connecting parents */}
+                      {mother && father && (
+                        <line x1="35%" y1="1000" x2="65%" y2="1000" stroke="#D4AF37" strokeWidth="2" />
+                      )}
+                      
+                      {/* Vertical drop from parents to meeting bar */}
+                      {mother && (
+                        <line x1={father ? "35%" : "50%"} y1="850" x2={father ? "35%" : "50%"} y2="1000" stroke="#D4AF37" strokeWidth="2" />
+                      )}
+                      {father && (
+                        <line x1={mother ? "65%" : "50%"} y1="850" x2={mother ? "65%" : "50%"} y2="1000" stroke="#D4AF37" strokeWidth="2" />
+                      )}
                     </g>
                   )}
 
-                  {hasParents && (
+                  {/* G0 to G1 (Parents) Connectors */}
+                  {hasGrandparents && hasParents && (
                     <g>
-                      <path 
-                        d="M 25% 45% Q 25% 65%, 50% 75%" 
-                        stroke="url(#tree-grad)" 
-                        strokeWidth="3" 
-                        fill="none" 
-                        strokeLinecap="round" 
-                      />
-                      <path 
-                        d="M 75% 45% Q 75% 65%, 50% 75%" 
-                        stroke="url(#tree-grad)" 
-                        strokeWidth="3" 
-                        fill="none" 
-                        strokeLinecap="round" 
-                      />
+                      {/* Mother's Parents to Mother */}
+                      {(mGrandma || mGrandpa) && (
+                        <g>
+                          <line x1="35%" y1="500" x2="35%" y2="600" stroke="#D4AF37" strokeWidth="1.5" strokeDasharray="4,4" className="opacity-30" />
+                          {mGrandma && mGrandpa && <line x1="25%" y1="500" x2="45%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                          {mGrandma && <line x1="25%" y1="350" x2="25%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                          {mGrandpa && <line x1="45%" y1="350" x2="45%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                        </g>
+                      )}
+                      
+                      {/* Father's Parents to Father */}
+                      {(fGrandma || fGrandpa) && (
+                        <g>
+                          <line x1="65%" y1="500" x2="65%" y2="600" stroke="#D4AF37" strokeWidth="1.5" strokeDasharray="4,4" className="opacity-30" />
+                          {fGrandma && fGrandpa && <line x1="55%" y1="500" x2="75%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                          {fGrandma && <line x1="55%" y1="350" x2="55%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                          {fGrandpa && <line x1="75%" y1="350" x2="75%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
+                        </g>
+                      )}
                     </g>
                   )}
                </svg>
@@ -207,7 +221,7 @@ export default function LineageTreePage() {
             )}
 
             {hasParents && (
-              <div className="relative flex flex-col items-center mt-[100px]">
+              <div className="relative flex flex-col items-center">
                 <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
                    <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text">{parentTierLabel}</span>
                 </div>
@@ -218,7 +232,7 @@ export default function LineageTreePage() {
               </div>
             )}
 
-            <div className="relative flex flex-col items-center mt-[120px]">
+            <div className="relative flex flex-col items-center">
               <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-60">
                  <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text text-primary">{residentTierLabel}</span>
               </div>
@@ -241,7 +255,7 @@ export default function LineageTreePage() {
            <div className="bg-card border border-border p-10 rounded-[2.5rem] text-center space-y-6 shadow-2xl relative overflow-hidden group">
               <div className="flex justify-center gap-10 items-center">
                 <div className="flex items-center gap-3">
-                  <div className="w-3.5 h-3.5 rounded-full bg-primary glow-primary" />
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Root Ancestor (G0)</span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -252,7 +266,7 @@ export default function LineageTreePage() {
               
               <div className="space-y-3">
                 <h3 className="text-xl font-headline font-black uppercase flex items-center justify-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" /> GENETIC VERIFICATION
+                  <ShieldCheck className="h-5 w-5 text-[#D4AF37]" /> GENETIC VERIFICATION
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium max-w-lg mx-auto">
                   Generations are calculated relative to the founding residents. 
