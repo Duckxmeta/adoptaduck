@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -15,7 +14,8 @@ import {
   Users, 
   ArrowRight,
   ShieldAlert,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn, handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Home() {
   const firestore = useFirestore();
@@ -34,6 +35,7 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
+  const [authError, setAuthError] = useState<{code: string, message: string} | null>(null);
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
   const birdsQuery = useMemoFirebase(() => {
@@ -56,42 +58,48 @@ export default function Home() {
         const result = await handleGoogleRedirectResult(auth);
         
         if (result && result.user) {
-          // Sequential Registration: Auth is already successful at this point via the result
+          // Sequential Registration: Auth is already successful
           const userRef = doc(firestore, 'users', result.user.uid);
           
           try {
-            // Initialize or update user profile sequentially
+            // Initialize user profile with Alpha/Founding status
             await setDoc(userRef, {
               uid: result.user.uid,
               email: result.user.email,
-              my_flock: [], // Initialize with empty array
-              role: 'member', // Default role
+              my_flock: [], 
+              role: 'member',
+              isFoundingMember: true, // Alpha tester group
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp()
             }, { merge: true });
 
             toast({
               title: "Account Verified",
-              description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
+              description: `Welcome to the sanctuary Alpha, ${result.user.displayName || 'Friend'}.`,
             });
+            
+            router.push('/dashboard');
           } catch (dbError: any) {
             console.error("Profile Setup Error:", dbError);
-            // Non-blocking fallback if Firestore write fails
-            toast({
-              title: "Partial Success",
-              description: "Account created, but profile setup is pending. Redirecting to dashboard...",
+            setAuthError({ 
+              code: dbError.code || 'firestore/permission-denied', 
+              message: "Auth succeeded but profile creation failed. Check Firestore rules." 
             });
           }
-          
-          router.push('/dashboard');
         }
       } catch (error: any) {
         console.error("Auth Redirect Error:", error);
-        if (error.code !== 'auth/popup-closed-by-user') {
+        // Display specific error code for debugging 403/unauthorized issues
+        setAuthError({ 
+          code: error.code, 
+          message: error.message 
+        });
+        
+        if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-closure-redirect') {
            toast({
             variant: "destructive",
             title: "Verification Failed",
-            description: "Could not complete the sign-in process. Please try again.",
+            description: `Error: ${error.code}. Please ensure your email is in the Test Users list.`,
           });
         }
       } finally {
@@ -104,13 +112,15 @@ export default function Home() {
   
   const handleGoogleSignIn = async () => {
     if (!auth) return;
+    setAuthError(null);
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
+      setAuthError({ code: error.code, message: error.message });
       toast({
         variant: "destructive",
         title: "Sign-in Error",
-        description: "Could not initiate the sign-in process.",
+        description: `Could not initiate: ${error.code}`,
       });
     }
   };
@@ -123,7 +133,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary space-y-4">
         <Loader2 className="h-12 w-12 animate-spin" />
-        <p className="font-headline font-black uppercase tracking-[0.3em] text-xs">Verifying Account...</p>
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-xs">Verifying Alpha Access...</p>
       </div>
     );
   }
@@ -133,6 +143,18 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
+        {authError && (
+          <div className="container mx-auto px-4 pt-8">
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Authentication Error: {authError.code}</AlertTitle>
+              <AlertDescription>
+                {authError.message}. If this is a 403, ensure your email is added to the Google Cloud Console "Test Users" list.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         <section className="bg-primary/5 border-b border-primary/20 py-20 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
@@ -150,12 +172,10 @@ export default function Home() {
                 onClick={handleGoogleSignIn}
                 className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
               >
-                Sign up for free to see our daily sanctuary progress and member-only stats.
+                Sign up for Alpha access to see daily sanctuary progress and member-only stats.
               </button>
             )}
           </div>
-          <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
         </section>
 
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
@@ -168,7 +188,7 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
               <Sparkles className="h-3.5 w-3.5" />
-              Dedicated Virtual Sanctuary
+              Alpha Tester Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
               VIRTUAL <span className="text-primary">SANCTUARY</span>
@@ -258,17 +278,17 @@ export default function Home() {
                 </div>
                 <div className="space-y-4">
                   <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none text-center">
-                    Become a <span className="text-secondary">Sanctuary Viewer</span> – It’s Free!
+                    Become a <span className="text-secondary">Sanctuary Alpha</span> – It’s Free!
                   </h2>
                   <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
-                    Join our community to unlock real-time access to the sanctuary dashboard, detailed heritage trees, and the live egg ticker.
+                    Join our early tester group to unlock real-time access to the sanctuary dashboard, detailed heritage trees, and the live egg ticker.
                   </p>
                 </div>
                 
                 <Button 
                   onClick={handleGoogleSignIn}
                   size="lg" 
-                  className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                  className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                 >
                   <Users className="mr-3 h-5 w-5" /> SIGN UP WITH GOOGLE
                 </Button>
@@ -276,72 +296,6 @@ export default function Home() {
             </div>
           </section>
         )}
-
-        <section id="residents" className="py-32 container mx-auto px-4">
-          <div className="mb-20 text-center">
-            <h2 className="text-5xl font-headline font-black mb-4 tracking-tighter text-center">OUR RESIDENTS</h2>
-            <div className="h-1.5 w-24 bg-primary mx-auto" />
-          </div>
-
-          {birdsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {[1, 2, 3].map(i => <div key={i} className="aspect-[4/5] bg-card rounded-3xl animate-pulse" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {birds?.map((bird) => (
-                <ResidentCard key={bird.id} resident={bird} />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="py-32 bg-card border-y border-border relative overflow-hidden">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-              <div className="space-y-10">
-                <div className="space-y-4">
-                  <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest border-none">100% DONOR FUNDED</Badge>
-                  <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none text-left">Donate $25+ to <br/><span className="text-primary">Adopt & Name</span></h2>
-                  <p className="text-muted-foreground text-lg leading-relaxed font-medium">
-                    We rely entirely on the community. Your contribution ensures every resident has nutrition, shelter, and medical care.
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  <h3 className="font-headline font-black text-xs text-primary uppercase tracking-[0.4em]">Exclusive Adopter & Member Benefits</h3>
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sparkles className="h-5 w-5" /></div>
-                      <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Digital Adoption Certificate</p>
-                        <p className="text-xs text-muted-foreground">Personalized certificate with every donation.</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Bird className="h-5 w-5" /></div>
-                      <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Name a Duck</p>
-                        <p className="text-xs text-muted-foreground">Donors of $25+ get to suggest a new name for a sanctuary resident!</p>
-                      </div>
-                    </li>
-                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><ShieldAlert className="h-5 w-5" /></div>
-                      <div>
-                        <p className="font-black text-sm uppercase tracking-tight">Daily Duck Updates</p>
-                        <p className="text-xs text-muted-foreground">Real-time photos and stories from the sanctuary.</p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-
-                <Button size="lg" className="bg-primary text-primary-foreground font-black h-16 px-16 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-all w-full md:w-auto" asChild>
-                  <a href={donateUrl} target="_blank" rel="noopener noreferrer">ADOPT NOW</a>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       <Footer />
