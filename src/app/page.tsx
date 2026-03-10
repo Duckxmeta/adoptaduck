@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -59,14 +60,34 @@ export default function Home() {
         <section className="bg-primary/5 border-b border-primary/20 py-16 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
-              <ShieldCheck className="h-4 w-4" /> SANCTUARY IMPACT
+              <ShieldCheck className="h-4 w-4" /> SANCTUARY MISSION
             </div>
             <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
-              {totalEggsRescued.toLocaleString()}
+              {birds?.length || 0}
             </h2>
             <p className="text-xl md:text-2xl font-headline font-bold uppercase tracking-widest text-foreground">
-              Total Eggs Saved to Date
+              Ducks in Our Care
             </p>
+            
+            {!user ? (
+              <button 
+                onClick={() => initiateGoogleSignIn(auth!)}
+                className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-6 border-b border-primary/20 pb-1"
+              >
+                Sign up for free to see our daily sanctuary progress and member-only stats.
+              </button>
+            ) : (
+              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-xs mx-auto">
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">MEMBER ACCESS: DAILY IMPACT</p>
+                 <div className="flex items-center justify-center gap-3">
+                    <Egg className="h-5 w-5 text-primary" />
+                    <p className="text-4xl font-headline font-black text-foreground">
+                      {totalEggsRescued.toLocaleString()}
+                    </p>
+                 </div>
+                 <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1">Total Eggs Saved to Date</p>
+              </div>
+            )}
           </div>
           <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
           <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/2 w-64 h-64 bg-secondary/10 blur-[100px] rounded-full" />
@@ -231,23 +252,32 @@ export default function Home() {
                         <h2 className="text-5xl font-headline font-black tracking-tighter leading-none">{topProducer.name}</h2>
                       </div>
                       
-                      <Badge className="bg-primary text-primary-foreground font-black px-6 py-2.5 rounded-xl uppercase tracking-widest text-xs animate-subtle-pulse shadow-[0_0_20px_rgba(255,215,0,0.4)] border-none">
-                        <Crown className="h-4 w-4 mr-2" /> Top Producer of the Day!
-                      </Badge>
+                      {user && (
+                        <Badge className="bg-primary text-primary-foreground font-black px-6 py-2.5 rounded-xl uppercase tracking-widest text-xs animate-subtle-pulse shadow-[0_0_20px_rgba(255,215,0,0.4)] border-none">
+                          <Crown className="h-4 w-4 mr-2" /> Top Producer of the Day!
+                        </Badge>
+                      )}
                       
                       <p className="text-muted-foreground text-lg leading-relaxed italic">
-                        "{topProducer.personalityTraits.split(',')[0]} and highly productive! {topProducer.name} has been instrumental in today's sanctuary success."
+                        "{topProducer.personalityTraits.split(',')[0]} and highly protective! {topProducer.name} has been instrumental in today's sanctuary success."
                       </p>
                       
-                      <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-border w-full">
-                         <div className="p-3 bg-primary/10 rounded-xl">
-                            <Egg className="h-6 w-6 text-primary" />
-                         </div>
-                         <div>
-                            <p className="text-2xl font-headline font-black">{topProducer.eggCounter}</p>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Lifetime Rescues</p>
-                         </div>
-                      </div>
+                      {user ? (
+                        <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-border w-full">
+                           <div className="p-3 bg-primary/10 rounded-xl">
+                              <Egg className="h-6 w-6 text-primary" />
+                           </div>
+                           <div>
+                              <p className="text-2xl font-headline font-black">{topProducer.eggCounter}</p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Lifetime Rescues</p>
+                           </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-4 bg-background/50 p-4 rounded-2xl border border-dashed border-primary/20 w-full opacity-60">
+                           <Lock className="h-5 w-5 text-muted-foreground" />
+                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Production stats restricted to members</p>
+                        </div>
+                      )}
                       
                       <Button variant="link" className="p-0 text-primary font-black uppercase tracking-widest text-xs group" asChild>
                         <Link href={`/residents/${topProducer.id}`}>

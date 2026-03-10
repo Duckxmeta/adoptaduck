@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -6,9 +7,9 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
-import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera } from 'lucide-react';
+import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -16,6 +17,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const birdRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -77,12 +79,21 @@ export default function ResidentProfile() {
 
               <div className="grid grid-cols-2 gap-6">
                 {isHen ? (
-                  <div className="bg-card p-8 rounded-2xl border border-border glow-primary">
-                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                      <Egg className="h-5 w-5 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Rescued Eggs</span>
-                    </div>
-                    <span className="text-5xl font-headline font-black">{bird?.eggCounter || 0}</span>
+                  <div className="bg-card p-8 rounded-2xl border border-border glow-primary relative overflow-hidden">
+                    {user ? (
+                      <>
+                        <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                          <Egg className="h-5 w-5 text-primary" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Rescued Eggs</span>
+                        </div>
+                        <span className="text-5xl font-headline font-black">{bird?.eggCounter || 0}</span>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full gap-3 opacity-60">
+                        <Lock className="h-5 w-5 text-muted-foreground" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-center">Production Hidden</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="bg-card p-8 rounded-2xl border border-border opacity-50">
@@ -184,7 +195,13 @@ export default function ResidentProfile() {
                    <div className="bg-card p-10 rounded-3xl border border-border">
                      <h4 className="font-headline font-black text-xl mb-8 flex items-center gap-3"><History className="text-primary h-6 w-6" /> LINEAGE RECORDS</h4>
                      <p className="text-muted-foreground text-lg leading-relaxed">
-                       {bird?.heritageTree || "Historical data for this resident is currently being archived by sanctuary staff."}
+                       {user ? (
+                         bird?.heritageTree || "Historical data for this resident is currently being archived by sanctuary staff."
+                       ) : (
+                         <span className="flex items-center gap-2">
+                           <Lock className="h-4 w-4" /> Sign in as a member to view detailed heritage trees and rescue lineage.
+                         </span>
+                       )}
                      </p>
                    </div>
                    <div className="bg-secondary/5 border-2 border-secondary/20 p-10 rounded-3xl flex flex-col justify-center items-center text-center">
