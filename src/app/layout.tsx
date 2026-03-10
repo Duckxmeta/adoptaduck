@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'Decent Ducks Sanctuary',
+  title: 'Virtual Sanctuary | Decent Ducks',
   description: 'A modern, virtual adoption sanctuary for birds.',
 };
 

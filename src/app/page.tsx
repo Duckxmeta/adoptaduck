@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -58,7 +57,7 @@ export default function Home() {
         <section className="bg-primary/5 border-b border-primary/20 py-16 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
-              <ShieldCheck className="h-4 w-4" /> SANCTUARY MISSION
+              <ShieldCheck className="h-4 w-4" /> VIRTUAL SANCTUARY MISSION
             </div>
             <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
               {birds?.length || 0}
@@ -126,11 +125,11 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
               <Sparkles className="h-3.5 w-3.5" />
-              Dedicated Bird Sanctuary
+              Dedicated Virtual Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter">
-              DECENT <span className="text-primary">DUCKS</span><br />
-              SANCTUARY
+              VIRTUAL <span className="text-primary">SANCTUARY</span><br />
+              DECENT DUCKS
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium">
               A haven for feathered friends. Meet our residents and support their journey through direct sanctuary donation.
@@ -140,7 +139,7 @@ export default function Home() {
                 <Link href="#residents">MEET THE RESIDENTS</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <a href={donateUrl} target="_blank" rel="noopener noreferrer">DONATE TO MISSION</a>
+                <a href={donateUrl} target="_blank" rel="noopener noreferrer">ADOPT A DUCK</a>
               </Button>
             </div>
           </div>
@@ -153,7 +152,7 @@ export default function Home() {
               <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-widest">WHY WE EXIST</Badge>
               <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
-                Understanding the difference is the first step in protecting these abandoned creatures.
+                Domestic ducks like Pekins or Rouens cannot fly or survive in the wild. Our sanctuary exists to save these abandoned pets.
               </p>
             </div>
 
@@ -166,7 +165,7 @@ export default function Home() {
                   <CardContent className="p-8 flex flex-col justify-center space-y-4">
                     <h3 className="text-2xl font-headline font-black text-primary">Domestic Ducks</h3>
                     <p className="text-foreground/80 text-sm leading-relaxed">
-                      Breeds like Pekins or Rouens are selectively bred for human care. They <strong>cannot fly</strong> or survive in the wild. When abandoned at ponds, they face certain starvation or predation.
+                      Breeds like Pekins are selectively bred for human care. They <strong>cannot fly</strong> or survive in the wild. They face certain predation without a safe sanctuary home.
                     </p>
                   </CardContent>
                 </div>
@@ -180,7 +179,7 @@ export default function Home() {
                   <CardContent className="p-8 flex flex-col justify-center space-y-4">
                     <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
                     <p className="text-foreground/80 text-sm leading-relaxed">
-                      Wild Mallards and native species are self-sufficient aviators. They need <strong>nature and space</strong> to migrate and thrive independently. They belong in the wild.
+                      Wild Mallards are self-sufficient aviators. They need <strong>nature and space</strong> to migrate and thrive independently. They belong in the wild, not as pets.
                     </p>
                   </CardContent>
                 </div>
@@ -249,7 +248,7 @@ export default function Home() {
                   <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest border-none">100% DONOR FUNDED</Badge>
                   <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">Donate $25+ to <br/><span className="text-primary">Adopt & Name</span></h2>
                   <p className="text-muted-foreground text-lg leading-relaxed font-medium">
-                    We rely entirely on the generosity of our community. Your contribution ensures every resident has nutrition, shelter, and medical care.
+                    We rely entirely on the community. Your contribution ensures every resident has nutrition, shelter, and medical care.
                   </p>
                 </div>
 
@@ -257,14 +256,14 @@ export default function Home() {
                   <h3 className="font-headline font-black text-xs text-primary uppercase tracking-[0.4em]">Supporter Perks</h3>
                   <ul className="space-y-4">
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><CheckCircle2 className="h-5 w-5" /></div>
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sparkles className="h-5 w-5" /></div>
                       <div>
                         <p className="font-black text-sm uppercase tracking-tight">Digital Adoption Certificate</p>
                         <p className="text-xs text-muted-foreground">Personalized certificate with every donation.</p>
                       </div>
                     </li>
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sparkles className="h-5 w-5" /></div>
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Bird className="h-5 w-5" /></div>
                       <div>
                         <p className="font-black text-sm uppercase tracking-tight">Name a Duck</p>
                         <p className="text-xs text-muted-foreground">Donors of $25+ get to suggest a new name for a sanctuary resident!</p>
@@ -274,7 +273,7 @@ export default function Home() {
                 </div>
 
                 <Button size="lg" className="bg-primary text-primary-foreground font-black h-16 px-16 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-all w-full md:w-auto" asChild>
-                  <a href={donateUrl} target="_blank" rel="noopener noreferrer">DONATE VIA PAYPAL</a>
+                  <a href={donateUrl} target="_blank" rel="noopener noreferrer">ADOPT NOW</a>
                 </Button>
               </div>
             </div>
