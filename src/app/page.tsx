@@ -36,28 +36,6 @@ export default function Home() {
   const { toast } = useToast();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
-  useEffect(() => {
-    if (user && !isUserLoading) {
-      if (user.email === ADMIN_EMAIL) {
-        // Admins stay put
-      } else {
-        // Check if user has adopted birds before redirecting to dashboard
-        const checkFlock = async () => {
-          if (!firestore) return;
-          const q = query(collection(firestore, 'birds'), where('adopterEmail', '==', user.email));
-          const snapshot = await getDocs(q);
-          if (!snapshot.empty) {
-            router.push('/dashboard');
-          } else {
-            // Keep them here or redirect to /flock
-            router.push('/flock');
-          }
-        };
-        checkFlock();
-      }
-    }
-  }, [user, isUserLoading, router, firestore]);
-
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
