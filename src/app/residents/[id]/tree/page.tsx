@@ -227,12 +227,11 @@ export default function LineageTreePage() {
               </div>
               <div className="relative">
                 <div className="absolute -inset-10 bg-primary/10 blur-[80px] rounded-full opacity-40 animate-pulse" />
-                {/* FORCED DIMENSIONS AND DIAGNOSTIC BORDER */}
                 <TreeCard 
                   bird={resident} 
                   label="Current Resident" 
                   genLabel={residentTierLabel}
-                  className="w-[300px] h-[400px] min-h-[400px] min-w-[300px] flex-shrink-0 scale-105 shadow-2xl border-primary border-2 border-red-500" 
+                  className="w-[300px] h-[400px] min-h-[400px] min-w-[300px] flex-shrink-0 scale-105 shadow-2xl border-primary border-2" 
                 />
               </div>
             </div>
