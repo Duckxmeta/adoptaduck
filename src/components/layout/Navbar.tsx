@@ -15,7 +15,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-const ADMIN_EMAIL = 'flowmarket1@gmail.com';
+const ADMIN_EMAIL = 'decentducksorg@gmail.com';
 
 export function Navbar() {
   const { user } = useUser();

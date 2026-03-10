@@ -9,7 +9,7 @@ service cloud.firestore {
 
     function isAdmin() {
       // Use the email check but ensure it's available in the token
-      return isSignedIn() && (request.auth.token.email == 'flowmarket1@gmail.com');
+      return isSignedIn() && (request.auth.token.email == 'decentducksorg@gmail.com');
     }
 
     function isOwner(userId) {

@@ -30,7 +30,7 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { Navbar } from '@/components/layout/Navbar';
 
-const ADMIN_EMAIL = 'flowmarket1@gmail.com';
+const ADMIN_EMAIL = 'decentducksorg@gmail.com';
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();

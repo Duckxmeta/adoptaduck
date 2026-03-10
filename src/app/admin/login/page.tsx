@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
-const ADMIN_EMAIL = 'flowmarket1@gmail.com';
+const ADMIN_EMAIL = 'decentducksorg@gmail.com';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');

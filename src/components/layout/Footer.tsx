@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ export function Footer() {
           <div className="space-y-4">
             <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Contact</h5>
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
-              <li><Link href="mailto:info@decentducks.com" className="hover:text-primary transition-colors">Email Us</Link></li>
+              <li><Link href="mailto:decentducksorg@gmail.com" className="hover:text-primary transition-colors">Email Us</Link></li>
             </ul>
           </div>
         </div>
