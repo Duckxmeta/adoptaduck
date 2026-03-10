@@ -31,6 +31,16 @@ export type HealthLogEntry = {
   notes: string;
 };
 
+export type DailyStatus = {
+  id: string;
+  morningFeeding: boolean;
+  freshWater: boolean;
+  eggCounter: boolean;
+  healthCheck: boolean;
+  nightlyPenUp: boolean;
+  lastReset: string;
+};
+
 export type SanctuaryStatistic = {
   id: string;
   totalBirds: number;

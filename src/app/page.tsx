@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -16,13 +17,14 @@ import {
   Droplets,
   Utensils,
   Calendar,
-  Stethoscope
+  Stethoscope,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import { Resident } from '@/lib/types';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import { Resident, DailyStatus } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
@@ -39,18 +41,28 @@ export default function Home() {
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
+  const dailyStatusRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'daily_status', 'today');
+  }, [firestore]);
+
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   
   const totalEggsRescued = birds?.reduce((sum, bird) => sum + (bird.eggCounter || 0), 0) || 0;
-
-  const topProducer = birds && birds.length > 0 
-    ? [...birds].filter(b => b.sex === 'female').sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
-    : null;
 
   // Official Image URLs
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
+
+  const routineTasks = [
+    { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-3 w-3" /> },
+    { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-3 w-3" /> },
+    { label: "Egg Counter", key: "eggCounter", icon: <Egg className="h-3 w-3" /> },
+    { label: "Health Check", key: "healthCheck", icon: <Stethoscope className="h-3 w-3" /> },
+    { label: "Nightly Pen Up", key: "nightlyPenUp", icon: <Clock className="h-3 w-3" /> },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -78,36 +90,48 @@ export default function Home() {
                 Sign up for free to see our daily sanctuary progress and member-only stats.
               </button>
             ) : (
-              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-lg mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                 <div>
+              <div className="pt-8 mt-8 border-t border-primary/10 animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                 <div className="text-center md:text-left">
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2">MEMBER ACCESS: DAILY IMPACT</p>
-                    <div className="flex items-center justify-center gap-3">
-                       <Egg className="h-5 w-5 text-primary" />
-                       <p className="text-4xl font-headline font-black text-foreground">
+                    <div className="flex items-center justify-center md:justify-start gap-4">
+                       <Egg className="h-8 w-8 text-primary" />
+                       <p className="text-6xl font-headline font-black text-foreground">
                          {totalEggsRescued.toLocaleString()}
                        </p>
                     </div>
-                    <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1">Total Eggs Saved to Date</p>
+                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-2">Total Eggs Saved to Date</p>
                  </div>
 
-                 {/* Daily Sanctuary Checklist */}
-                 <div className="bg-card/50 p-6 rounded-2xl border border-border text-left space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
-                      <CheckCircle2 className="h-3 w-3" /> Daily Checklist
+                 {/* Daily Care Status widget */}
+                 <div className="bg-card/50 p-8 rounded-[2rem] border border-border text-left space-y-4 shadow-2xl">
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-secondary flex items-center gap-2">
+                      <Calendar className="h-4 w-4" /> Daily Care Status
                     </p>
-                    <div className="space-y-2">
-                       {birds?.slice(0, 2).map((bird, i) => (
-                         <div key={bird.id} className="flex items-center gap-3 text-[11px] font-medium text-foreground/80">
-                            {i === 0 ? <Utensils className="h-3 w-3 text-emerald-500" /> : <Droplets className="h-3 w-3 text-blue-500" />}
-                            <span>{bird.name} has been {i === 0 ? 'fed' : 'provided fresh water'}.</span>
-                         </div>
-                       ))}
-                       {topProducer && (
-                         <div className="flex items-center gap-3 text-[11px] font-medium text-foreground/80">
-                            <Egg className="h-3 w-3 text-primary" />
-                            <span>{topProducer.name} laid an egg today!</span>
-                         </div>
-                       )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                       {routineTasks.map((task) => {
+                         const isCompleted = dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false;
+                         return (
+                           <div key={task.key} className="flex items-center gap-3 text-[11px] font-black uppercase tracking-tight">
+                              <div className={cn(
+                                "p-2 rounded-lg",
+                                isCompleted ? "bg-[#14F195]/10 text-[#14F195]" : "bg-muted/20 text-muted-foreground"
+                              )}>
+                                {isCompleted ? <CheckCircle2 className="h-3.5 w-3.5" /> : task.icon}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={cn(isCompleted ? "text-foreground" : "text-muted-foreground")}>
+                                  {task.label}
+                                </span>
+                                <span className={cn(
+                                  "text-[8px] tracking-[0.2em]",
+                                  isCompleted ? "text-[#14F195]" : "text-muted-foreground/60"
+                                )}>
+                                  {isCompleted ? "COMPLETED" : "PENDING"}
+                                </span>
+                              </div>
+                           </div>
+                         );
+                       })}
                     </div>
                  </div>
               </div>
@@ -119,7 +143,6 @@ export default function Home() {
 
         {/* Hero Section */}
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-          {/* 0.6 opacity dark overlay for readability */}
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
             className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"

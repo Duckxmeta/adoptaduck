@@ -1,9 +1,12 @@
+
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Plus, 
   Minus,
@@ -14,21 +17,21 @@ import {
   MessageSquare,
   Check,
   X as CloseIcon,
-  ArrowRight,
   Stethoscope,
-  ChevronRight
+  ChevronRight,
+  ClipboardList,
+  RotateCcw
 } from 'lucide-react';
 import Image from 'next/image';
-import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc } from 'firebase/firestore';
-import { Resident, NameSuggestion } from '@/lib/types';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { Resident, NameSuggestion, DailyStatus } from '@/lib/types';
+import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
-import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -55,8 +58,14 @@ export default function AdminDashboard() {
     return query(collection(firestore, 'nameSuggestions'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
+  const dailyStatusRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'daily_status', 'today');
+  }, [firestore]);
+
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: suggestions } = useCollection<NameSuggestion>(suggestionsQuery);
+  const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -150,6 +159,25 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
+    if (!dailyStatusRef) return;
+    const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
+    updateDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue });
+  };
+
+  const resetDailyTasks = () => {
+    if (!dailyStatusRef) return;
+    setDocumentNonBlocking(dailyStatusRef, {
+      morningFeeding: false,
+      freshWater: false,
+      eggCounter: false,
+      healthCheck: false,
+      nightlyPenUp: false,
+      lastReset: new Date().toISOString()
+    }, { merge: true });
+    toast({ title: "Checklist Reset", description: "A fresh start for a new day." });
+  };
+
   if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -165,7 +193,40 @@ export default function AdminDashboard() {
         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground"><LogOut className="h-5 w-5" /></Button>
       </header>
 
-      <main className="container mx-auto p-4 space-y-8">
+      <main className="container mx-auto p-4 space-y-12">
+        {/* Daily Sanctuary Routine Checklist */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" /> DAILY SANCTUARY ROUTINE
+            </h2>
+            <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+              <RotateCcw className="h-3 w-3 mr-1" /> Reset Day
+            </Button>
+          </div>
+          <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl">
+            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-5 gap-6">
+              {[
+                { label: "Morning Feeding", icon: "🌾", key: "morningFeeding" },
+                { label: "Fresh Water", icon: "💧", key: "freshWater" },
+                { label: "Egg Counter", icon: "🥚", key: "eggCounter" },
+                { label: "Health Check", icon: "🩺", key: "healthCheck" },
+                { label: "Nightly Pen Up", icon: "🌙", key: "nightlyPenUp" }
+              ].map((task) => (
+                <div key={task.key} className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
+                  <span className="text-2xl">{task.icon}</span>
+                  <Label htmlFor={task.key} className="text-[10px] font-black uppercase tracking-tight text-center">{task.label}</Label>
+                  <Switch 
+                    id={task.key} 
+                    checked={dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false}
+                    onCheckedChange={() => toggleDailyTask(task.key as any)}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Pending Name Suggestions Notification Panel */}
         {suggestions && suggestions.length > 0 && (
           <section className="space-y-4">

@@ -1,58 +1,41 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
      * VIRTUAL SANCTUARY SECURITY MODEL
-     * 
-     * Core Philosophy:
-     * This ruleset secures the sanctuary platform by strictly limiting administrative 
-     * capabilities to a single authorized manager email: flowmarket1@gmail.com.
-     * Members (signed-in users) can access exclusive content like egg stats and health logs.
      */
 
-    // --- HELPER FUNCTIONS ---
-
-    /** @description Checks if the request is coming from a signed-in user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's email matches the authorized sanctuary manager. */
     function isAdmin() {
       return isSignedIn() && (request.auth.token.email == 'flowmarket1@gmail.com');
     }
 
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Public bird profiles manageable only by the sanctuary manager.
-     */
     match /birds/{birdId} {
       allow read: if true;
       allow write: if isAdmin();
 
-      /**
-       * @description Care logs accessible to all members, manageable only by admin.
-       */
       match /healthLogs/{healthLogEntryId} {
         allow read: if isSignedIn();
         allow write: if isAdmin();
       }
     }
 
-    /**
-     * @description Collection for name suggestions from donors.
-     */
     match /nameSuggestions/{suggestionId} {
       allow read: if isAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Aggregated sanctuary metrics.
-     */
+    match /daily_status/{statusId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     match /sanctuaryStats/{statId} {
       allow read: if true;
       allow write: if isAdmin();

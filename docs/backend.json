@@ -37,6 +37,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["birdId", "suggestedName", "status", "createdAt"]
+    },
+    "DailyStatus": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailyStatus",
+      "type": "object",
+      "description": "Daily sanctuary routine checklist status.",
+      "properties": {
+        "id": { "type": "string" },
+        "morningFeeding": { "type": "boolean" },
+        "freshWater": { "type": "boolean" },
+        "eggCounter": { "type": "boolean" },
+        "healthCheck": { "type": "boolean" },
+        "nightlyPenUp": { "type": "boolean" },
+        "lastReset": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -58,6 +73,14 @@
           "entityName": "NameSuggestion",
           "schema": { "$ref": "#/backend/entities/NameSuggestion" },
           "description": "Collection of pending and processed name suggestions from donors."
+        }
+      },
+      {
+        "path": "/daily_status/{statusId}",
+        "definition": {
+          "entityName": "DailyStatus",
+          "schema": { "$ref": "#/backend/entities/DailyStatus" },
+          "description": "Daily sanctuary routine tracking."
         }
       }
     ]
