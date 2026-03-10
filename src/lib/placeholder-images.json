@@ -29,6 +29,18 @@
       "description": "Wood Duck profile",
       "imageUrl": "https://picsum.photos/seed/duck5/600/600",
       "imageHint": "wood duck"
+    },
+    {
+      "id": "edu-domestic",
+      "description": "White Pekin Duck",
+      "imageUrl": "https://picsum.photos/seed/pekin/600/600",
+      "imageHint": "pekin duck"
+    },
+    {
+      "id": "edu-wild",
+      "description": "Male Mallard Duck",
+      "imageUrl": "https://picsum.photos/seed/mallard-wild/600/600",
+      "imageHint": "mallard duck"
     }
   ]
 }

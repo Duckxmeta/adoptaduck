@@ -126,7 +126,7 @@ export default function Home() {
               <Sparkles className="h-3.5 w-3.5" />
               Dedicated Virtual Sanctuary
             </div>
-            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase">
+            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
               VIRTUAL <span className="text-primary">SANCTUARY</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
@@ -148,17 +148,28 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
               <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-widest">WHY WE EXIST</Badge>
-              <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
+              <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none text-center">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
                 Domestic ducks like Pekins or Rouens cannot fly or survive in the wild. Our sanctuary exists to save these abandoned pets.
               </p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="bg-background border-border rounded-3xl overflow-hidden group hover:border-primary/50 transition-all duration-500 shadow-2xl">
+              {/* Domestic Duck Card */}
+              <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl shadow-secondary/10">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
-                    <Image src="https://picsum.photos/seed/domestic/600/600" alt="Domestic Duck" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                    <Image 
+                      src="https://picsum.photos/seed/pekin/600/600" 
+                      alt="Domestic Duck" 
+                      fill 
+                      className="object-cover transition-all duration-700" 
+                      data-ai-hint="pekin duck"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">Domestic: Reliant on Human Care</p>
+                    </div>
                   </div>
                   <CardContent className="p-8 flex flex-col justify-center space-y-4">
                     <h3 className="text-2xl font-headline font-black text-primary">Domestic Ducks</h3>
@@ -169,10 +180,21 @@ export default function Home() {
                 </div>
               </Card>
 
-              <Card className="bg-background border-border rounded-3xl overflow-hidden group hover:border-secondary/50 transition-all duration-500 shadow-2xl">
+              {/* Wild Duck Card */}
+              <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl shadow-secondary/10">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
-                    <Image src="https://picsum.photos/seed/wildlife/600/600" alt="Wild Mallard" fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                    <Image 
+                      src="https://picsum.photos/seed/mallard-wild/600/600" 
+                      alt="Wild Mallard" 
+                      fill 
+                      className="object-cover transition-all duration-700" 
+                      data-ai-hint="mallard duck"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/90">Wild: Natural Survivors</p>
+                    </div>
                   </div>
                   <CardContent className="p-8 flex flex-col justify-center space-y-4">
                     <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
@@ -197,7 +219,7 @@ export default function Home() {
                    </div>
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">
+                  <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none text-center">
                     Become a <span className="text-secondary">Sanctuary Viewer</span> – It’s Free!
                   </h2>
                   <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
@@ -220,7 +242,7 @@ export default function Home() {
         {/* Resident Grid */}
         <section id="residents" className="py-32 container mx-auto px-4">
           <div className="mb-20 text-center">
-            <h2 className="text-5xl font-headline font-black mb-4 tracking-tighter">OUR RESIDENTS</h2>
+            <h2 className="text-5xl font-headline font-black mb-4 tracking-tighter text-center">OUR RESIDENTS</h2>
             <div className="h-1.5 w-24 bg-primary mx-auto" />
           </div>
 
@@ -244,7 +266,7 @@ export default function Home() {
               <div className="space-y-10">
                 <div className="space-y-4">
                   <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest border-none">100% DONOR FUNDED</Badge>
-                  <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">Donate $25+ to <br/><span className="text-primary">Adopt & Name</span></h2>
+                  <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none text-left">Donate $25+ to <br/><span className="text-primary">Adopt & Name</span></h2>
                   <p className="text-muted-foreground text-lg leading-relaxed font-medium">
                     We rely entirely on the community. Your contribution ensures every resident has nutrition, shelter, and medical care.
                   </p>
