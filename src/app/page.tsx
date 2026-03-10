@@ -50,7 +50,7 @@ export default function Home() {
   // Official Image URLs
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
-  const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/download.jpg?alt=media";
+  const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -190,7 +190,7 @@ export default function Home() {
                   <div className="relative aspect-square">
                     <Image 
                       src={wildImageUrl} 
-                      alt="Wild Mallard" 
+                      alt="Wild Mallard Duck - Natural Survivor" 
                       fill 
                       className="object-cover transition-all duration-700" 
                     />
