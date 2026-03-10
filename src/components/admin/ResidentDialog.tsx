@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -75,7 +75,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         motherId: resident.motherId || '',
         fatherId: resident.fatherId || '',
         hatch_date: resident.hatch_date || '',
-        isFoundingResident: resident.source === 'Rehomed' || resident.source === 'Founding',
+        isFoundingResident: resident.source !== 'Hatched',
         generation: resident.generation ?? 0
       });
       setPreviewUrl(resident.primaryImageUrl || null);
@@ -142,7 +142,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         finalImageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      // Final generation calculation based on selected type
       const isRehomed = formData.source !== 'Hatched';
       const finalGeneration = isRehomed ? 0 : calculateGeneration(formData.motherId, formData.fatherId);
 
@@ -184,14 +183,15 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground font-medium">
-            Maintain accurate sanctuary records and lineage data.
+            Register identity and sanctuary lineage.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Photo Section */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-              <Camera className="h-3 w-3" /> Upload Resident Photo
+              <Camera className="h-3 w-3" /> Resident Portrait
             </Label>
             <div 
               className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex flex-col items-center justify-center group cursor-pointer hover:border-primary/50 transition-colors" 
@@ -220,6 +220,20 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </div>
           </div>
 
+          {/* 1. Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resident Name</Label>
+            <Input 
+              id="name" 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              placeholder="e.g. Captain Quack"
+              className="bg-background border-border h-12 rounded-xl text-lg font-headline font-bold uppercase tracking-tight"
+              required
+            />
+          </div>
+
+          {/* 2. Registration Type (source) */}
           <div className="space-y-4 p-5 bg-muted/20 border border-border rounded-2xl">
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" /> Registration Type
@@ -238,72 +252,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 <Label htmlFor="type-hatched" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Hatched (Lineage)</Label>
               </div>
             </RadioGroup>
-            <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest leading-relaxed">
-              {isHatched 
-                ? "Offspring born at the sanctuary. Requires parent records to build heritage tree." 
-                : "New arrivals with unknown parentage. These ducks start a new generation line (G0)."}
-            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Bird Name</Label>
-              <Input 
-                id="name" 
-                value={formData.name} 
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                placeholder="e.g. Captain Quack"
-                className="bg-background border-border h-11 rounded-xl"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="breed" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breed / Type</Label>
-              <Input 
-                id="breed" 
-                value={formData.breed} 
-                onChange={e => setFormData({...formData, breed: e.target.value})}
-                placeholder="e.g. Pekin Duck"
-                className="bg-background border-border h-11 rounded-xl"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-             <div className="space-y-2">
-              <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>
-              <Select 
-                value={formData.sex} 
-                onValueChange={v => setFormData({...formData, sex: v as any})}
-              >
-                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                  <SelectValue placeholder="Select sex" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="male">Male (Drake)</SelectItem>
-                  <SelectItem value="female">Female (Hen)</SelectItem>
-                  <SelectItem value="unknown">Unknown</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="comm" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Partner Status</Label>
-              <Select 
-                value={formData.isCommunityDuck ? "yes" : "no"} 
-                onValueChange={v => setFormData({...formData, isCommunityDuck: v === "yes"})}
-              >
-                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                  <SelectValue placeholder="Partnered?" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="no">Individual</SelectItem>
-                  <SelectItem value="yes">Community Partner</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
+          {/* 3. Parents (If Hatched) */}
           {isHatched && (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="space-y-2">
@@ -344,11 +295,39 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   </SelectContent>
                 </Select>
               </div>
-              <p className="col-span-2 text-[8px] font-black uppercase text-secondary tracking-widest text-center">
-                Generation will be auto-calculated as: G{calculateGeneration(formData.motherId, formData.fatherId)}
-              </p>
             </div>
           )}
+
+          {/* 4. Breed/Species */}
+          <div className="space-y-2">
+            <Label htmlFor="breed" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breed / Species</Label>
+            <Input 
+              id="breed" 
+              value={formData.breed} 
+              onChange={e => setFormData({...formData, breed: e.target.value})}
+              placeholder="e.g. Pekin Duck"
+              className="bg-background border-border h-11 rounded-xl"
+              required
+            />
+          </div>
+
+          {/* 5. Biological Gender */}
+          <div className="space-y-2">
+            <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>
+            <Select 
+              value={formData.sex} 
+              onValueChange={v => setFormData({...formData, sex: v as any})}
+            >
+              <SelectTrigger className="bg-background border-border h-11 rounded-xl">
+                <SelectValue placeholder="Select sex" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="male">Male (Drake)</SelectItem>
+                <SelectItem value="female">Female (Hen)</SelectItem>
+                <SelectItem value="unknown">Unknown</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="hatch_date" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Arrival / Hatch Date</Label>
@@ -379,7 +358,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               value={formData.backstory} 
               onChange={e => setFormData({...formData, backstory: e.target.value})}
               placeholder="Describe origin story or incubation notes..."
-              className="bg-background border-border min-h-[120px] resize-none rounded-xl"
+              className="bg-background border-border min-h-[100px] resize-none rounded-xl"
             />
           </div>
 
