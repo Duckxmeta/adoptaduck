@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -30,7 +29,7 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { Navbar } from '@/components/layout/Navbar';
 
-const ADMIN_EMAIL = 'decentducksorg@gmail.com';
+const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -44,26 +43,28 @@ export default function AdminDashboard() {
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
   const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
 
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
+    if (!firestore || !isAdmin) return null;
     return doc(firestore, 'daily_status', 'today');
-  }, [firestore, user]);
+  }, [firestore, isAdmin]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   useEffect(() => {
     if (!isUserLoading) {
-      if (!user || user.email !== ADMIN_EMAIL) {
+      if (!isAdmin) {
         router.push('/admin/login');
       }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, isAdmin]);
 
   const handleAddEgg = (resident: Resident) => {
     if (!firestore || resident.sex !== 'female') return;
@@ -124,7 +125,6 @@ export default function AdminDashboard() {
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
     if (!dailyStatusRef) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
-    // Use setDocumentNonBlocking with merge: true instead of update to handle initial creation
     setDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
     toast({ title: "Checklist Reset" });
   };
 
-  if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
+  if (isUserLoading || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

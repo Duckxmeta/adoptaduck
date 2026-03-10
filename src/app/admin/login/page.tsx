@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,7 +12,9 @@ import { useAuth, useUser } from '@/firebase';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
-const ADMIN_EMAIL = 'decentducksorg@gmail.com';
+const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+const PUBLIC_ADMIN_DISPLAY = 'decentducksorg@gmail.com';
+const REQUIRED_SECURITY_KEY = 'Jasmine-JDI-G0';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -26,7 +27,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (user && !isUserLoading) {
-      if (user.email === ADMIN_EMAIL) {
+      if (ADMIN_EMAILS.includes(user.email || '')) {
         router.push('/admin');
       } else if (auth) {
         signOut(auth);
@@ -37,12 +38,22 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth) return;
+
+    // Hardcoded security key check as requested
+    if (password !== REQUIRED_SECURITY_KEY) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "Invalid security key provided.",
+      });
+      return;
+    }
     
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      if (userCredential.user.email !== ADMIN_EMAIL) {
+      if (!ADMIN_EMAILS.includes(userCredential.user.email || '')) {
         await signOut(auth);
         toast({
           variant: "destructive",
@@ -59,19 +70,11 @@ export default function AdminLogin() {
       });
       router.push('/admin');
     } catch (error: any) {
-      if (error.code === 'auth/operation-not-allowed') {
-        toast({
-          variant: "destructive",
-          title: "Setup Required",
-          description: "Email/Password sign-in is not enabled in the Firebase Console.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Authentication Failed",
-          description: "Invalid credentials or insufficient permissions.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Authentication Failed",
+        description: "Invalid credentials or insufficient permissions.",
+      });
     } finally {
       setLoading(false);
     }
@@ -132,7 +135,7 @@ export default function AdminLogin() {
       </Card>
       
       <p className="mt-8 text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black text-center max-w-xs leading-relaxed">
-        Restricted to authorized Sanctuary Manager: <br/> {ADMIN_EMAIL}
+        Restricted to authorized Sanctuary Manager: <br/> {PUBLIC_ADMIN_DISPLAY}
       </p>
     </div>
   );

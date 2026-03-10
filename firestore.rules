@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -8,8 +7,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Use the email check but ensure it's available in the token
-      return isSignedIn() && (request.auth.token.email == 'decentducksorg@gmail.com');
+      // Allow dual-admin access while keeping flowmarket1@gmail.com hidden from UI
+      return isSignedIn() && (
+        request.auth.token.email == 'decentducksorg@gmail.com' || 
+        request.auth.token.email == 'flowmarket1@gmail.com'
+      );
     }
 
     function isOwner(userId) {
@@ -27,8 +29,8 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // 4. Permission Check: Ensure users can create and manage their own profile
-      allow read, write: if isOwner(userId);
+      // Allow users to manage their own profiles or admins to manage all profiles
+      allow read, write: if isOwner(userId) || isAdmin();
     }
 
     match /nameSuggestions/{suggestionId} {

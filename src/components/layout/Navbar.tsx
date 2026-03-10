@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -15,7 +14,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-const ADMIN_EMAIL = 'decentducksorg@gmail.com';
+const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
 export function Navbar() {
   const { user } = useUser();
@@ -25,7 +24,7 @@ export function Navbar() {
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
   const isInAdmin = pathname.startsWith('/admin');
 
   const handleLogout = async () => {
