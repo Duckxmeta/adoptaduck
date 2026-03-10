@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from 'next/image';
@@ -6,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Resident } from '@/lib/types';
-import { ChevronRight, Egg } from 'lucide-react';
+import { ChevronRight, Egg, Bird } from 'lucide-react';
 import { useUser } from '@/firebase';
 
 interface ResidentCardProps {
@@ -16,19 +15,29 @@ interface ResidentCardProps {
 export function ResidentCard({ resident }: ResidentCardProps) {
   const { user } = useUser();
   const isHen = resident.sex === 'female';
+  const hasImage = !!resident.primaryImageUrl && resident.primaryImageUrl.startsWith('http');
 
   return (
     <Link href={`/residents/${resident.id}`}>
-      <Card className="group overflow-hidden bg-card border-border rounded-2xl duck-card-hover">
-        <div className="relative aspect-[4/5] overflow-hidden">
-          <Image
-            src={resident.primaryImageUrl}
-            alt={resident.name}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+      <Card className="group overflow-hidden bg-card border-border rounded-2xl duck-card-hover h-full flex flex-col">
+        <div className="relative aspect-[4/5] overflow-hidden shrink-0">
+          {hasImage ? (
+            <>
+              <Image
+                src={resident.primaryImageUrl}
+                alt={resident.name}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
+            </>
+          ) : (
+            <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center p-6 text-center">
+              <Bird className="h-20 w-20 text-muted-foreground/40 mb-2" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Photo Coming Soon!</span>
+            </div>
+          )}
           
           <div className="absolute top-4 left-4">
             <Badge className="bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
@@ -51,7 +60,7 @@ export function ResidentCard({ resident }: ResidentCardProps) {
             </div>
           </div>
         </div>
-        <CardContent className="p-4 flex justify-end bg-card">
+        <CardContent className="p-4 flex justify-end bg-card mt-auto">
            <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
              <ChevronRight className="h-4 w-4" />
            </div>

@@ -18,7 +18,7 @@ import {
   Loader2, 
   Dna,
   ShieldCheck,
-  ChevronDown
+  Bird
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,12 +27,10 @@ export default function LineageTreePage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  // --- Fetch Target Resident ---
   const { data: resident, isLoading: residentLoading } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id])
   );
 
-  // --- Fetch Parents ---
   const { data: mother } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && resident?.motherId ? doc(firestore, 'birds', resident.motherId) : null), [firestore, resident?.motherId])
   );
@@ -40,7 +38,6 @@ export default function LineageTreePage() {
     useMemoFirebase(() => (firestore && resident?.fatherId ? doc(firestore, 'birds', resident.fatherId) : null), [firestore, resident?.fatherId])
   );
 
-  // --- Fetch Grandparents (Maternal) ---
   const { data: mGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && mother?.motherId ? doc(firestore, 'birds', mother.motherId) : null), [firestore, mother?.motherId])
   );
@@ -48,7 +45,6 @@ export default function LineageTreePage() {
     useMemoFirebase(() => (firestore && mother?.fatherId ? doc(firestore, 'birds', mother.fatherId) : null), [firestore, mother?.fatherId])
   );
 
-  // --- Fetch Grandparents (Paternal) ---
   const { data: fGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && father?.motherId ? doc(firestore, 'birds', father.motherId) : null), [firestore, father?.motherId])
   );
@@ -65,7 +61,6 @@ export default function LineageTreePage() {
     );
   }
 
-  // --- Generation Logic ---
   const hasGrandparents = mGrandma || mGrandpa || fGrandma || fGrandpa;
   const hasParents = mother || father;
 
@@ -88,17 +83,26 @@ export default function LineageTreePage() {
     if (!bird) return null;
 
     const isG0 = !bird.motherId && !bird.fatherId;
+    const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.startsWith('http');
 
     return (
-      <Link href={`/residents/${bird.id}`} className={cn("w-40 md:w-52 group relative shrink-0", className)}>
+      <Link href={`/residents/${bird.id}`} className={cn("w-[260px] h-[350px] group relative shrink-0", className)}>
         <div className={cn(
-          "aspect-[3/4] rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105 h-full w-full",
+          "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105 flex flex-col",
           isG0 ? "border-primary glow-primary shadow-primary/20" : "border-border group-hover:border-primary"
         )}>
-          <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          {hasImage ? (
+            <div className="relative h-full w-full">
+              <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            </div>
+          ) : (
+            <div className="h-full w-full bg-slate-800 flex flex-col items-center justify-center p-6 text-center">
+              <Bird className="h-16 w-16 text-muted-foreground/40 mb-2" />
+              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Photo Coming Soon!</span>
+            </div>
+          )}
           
-          {/* Generation Tag */}
           {genLabel && (
             <div className="absolute top-2 right-2">
               <Badge className="bg-background/80 backdrop-blur-sm text-foreground border-none text-[7px] font-black px-1.5 py-0.5">
@@ -143,12 +147,8 @@ export default function LineageTreePage() {
           </div>
         </div>
 
-        {/* Tree Container with Horizontal Scroll Support */}
         <ScrollArea className="w-full whitespace-nowrap pb-12">
-          {/* Use a simple grid/block stack to prevent flex squashing */}
           <div className="relative min-w-fit mx-auto py-12 px-24 space-y-[120px]">
-            
-            {/* SVG Connector Lines Layer */}
             <div className="absolute inset-0 pointer-events-none z-0">
                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
                   <defs>
@@ -158,7 +158,6 @@ export default function LineageTreePage() {
                     </linearGradient>
                   </defs>
                   
-                  {/* Lines from Grandparents to Parents */}
                   {hasGrandparents && hasParents && (
                     <g className="opacity-20">
                       <line x1="25%" y1="5%" x2="25%" y2="35%" stroke="url(#tree-grad)" strokeWidth="1" />
@@ -166,7 +165,6 @@ export default function LineageTreePage() {
                     </g>
                   )}
 
-                  {/* Lines from Parents to Resident */}
                   {hasParents && (
                     <g>
                       <path 
@@ -188,7 +186,6 @@ export default function LineageTreePage() {
                </svg>
             </div>
 
-            {/* Tier 1: Grandparents (G0) */}
             {hasGrandparents && (
               <div className="relative flex flex-col items-center">
                 <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
@@ -207,7 +204,6 @@ export default function LineageTreePage() {
               </div>
             )}
 
-            {/* Tier 2: Parents (G1 or G0) */}
             {hasParents && (
               <div className="relative flex flex-col items-center mt-[100px]">
                 <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
@@ -220,7 +216,6 @@ export default function LineageTreePage() {
               </div>
             )}
 
-            {/* Tier 3: The Resident (The Hatchling) */}
             <div className="relative flex flex-col items-center mt-[120px]">
               <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-60">
                  <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text text-primary">{residentTierLabel}</span>
@@ -231,7 +226,7 @@ export default function LineageTreePage() {
                   bird={resident} 
                   label="Current Resident" 
                   genLabel={residentTierLabel}
-                  className="w-[300px] h-[400px] min-h-[400px] min-w-[300px] flex-shrink-0 scale-105 shadow-2xl border-primary border-2" 
+                  className="w-[300px] h-[350px] flex-shrink-0 scale-105 shadow-2xl" 
                 />
               </div>
             </div>
@@ -240,7 +235,6 @@ export default function LineageTreePage() {
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
-        {/* Info Legend */}
         <section className="mt-24 max-w-2xl mx-auto w-full">
            <div className="bg-card border border-border p-10 rounded-[2.5rem] text-center space-y-6 shadow-2xl relative overflow-hidden group">
               <div className="flex justify-center gap-10 items-center">

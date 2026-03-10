@@ -18,7 +18,8 @@ import {
   RotateCcw,
   LayoutDashboard,
   TreePine,
-  Trash2
+  Trash2,
+  Bird as BirdIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -107,7 +108,7 @@ export default function AdminDashboard() {
         eggCounter: 0,
         galleryImageUrls: data.galleryImageUrls || [],
         createdAt: new Date().toISOString(),
-        primaryImageUrl: data.primaryImageUrl || `https://picsum.photos/seed/${newId}/600/600`
+        primaryImageUrl: data.primaryImageUrl || ""
       }, { merge: true });
       toast({ title: "Resident Added" });
     }
@@ -118,14 +119,10 @@ export default function AdminDashboard() {
     if (!firestore || !deletingResident) return;
     
     try {
-      // 1. Delete Firestore Document
       await deleteDoc(doc(firestore, 'birds', deletingResident.id));
       
-      // 2. Try to Delete Storage Image if it's our hosted photo
-      if (storage && deletingResident.primaryImageUrl.includes('firebasestorage.googleapis.com')) {
+      if (storage && deletingResident.primaryImageUrl && deletingResident.primaryImageUrl.includes('firebasestorage.googleapis.com')) {
         try {
-          // Attempt to extract path from URL (crude but usually works for our structure)
-          // URL format: .../o/resident-photos%2Ffilename?alt=media...
           const url = new URL(deletingResident.primaryImageUrl);
           const pathParam = url.pathname.split('/o/')[1];
           const decodedPath = decodeURIComponent(pathParam.split('?')[0]);
@@ -209,7 +206,6 @@ export default function AdminDashboard() {
            </div>
         </div>
 
-        {/* Daily Routine Checklist */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -255,7 +251,7 @@ export default function AdminDashboard() {
           ) : birds?.map((bird) => {
             const isHen = bird.sex === 'female';
             const isFounding = !!bird.isFoundingResident;
-            const offspringCount = birds?.filter(b => b.motherId === bird.id || b.fatherId === bird.id).length || 0;
+            const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.startsWith('http');
 
             return (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col group relative">
@@ -269,8 +265,15 @@ export default function AdminDashboard() {
                 </Button>
 
                 <div className="flex items-center p-4 gap-5">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner">
-                    <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner bg-slate-800 flex flex-col items-center justify-center">
+                    {hasImage ? (
+                      <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                    ) : (
+                      <>
+                        <BirdIcon className="h-8 w-8 text-muted-foreground/40 mb-1" />
+                        <span className="text-[6px] font-black uppercase tracking-widest text-muted-foreground/40 text-center">No Photo</span>
+                      </>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
