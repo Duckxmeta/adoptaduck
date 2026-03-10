@@ -12,18 +12,13 @@ import {
   Plus, 
   Minus,
   Settings, 
-  Sparkles, 
   Loader2, 
-  MessageSquare,
-  Check,
-  X as CloseIcon,
   Stethoscope,
   ChevronRight,
   ClipboardList,
   RotateCcw,
   LayoutDashboard,
-  TreePine,
-  Baby
+  TreePine
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -45,7 +40,6 @@ export default function AdminDashboard() {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
-  const [hatcheryInitialData, setHatcheryInitialData] = useState<Partial<Resident> | undefined>(undefined);
   
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
   const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
@@ -55,18 +49,12 @@ export default function AdminDashboard() {
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
-  const suggestionsQuery = useMemoFirebase(() => {
-    if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
-    return query(collection(firestore, 'nameSuggestions'), orderBy('createdAt', 'desc'));
-  }, [firestore, user]);
-
   const dailyStatusRef = useMemoFirebase(() => {
     if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
     return doc(firestore, 'daily_status', 'today');
   }, [firestore, user]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: suggestions } = useCollection<NameSuggestion>(suggestionsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   useEffect(() => {
@@ -77,32 +65,6 @@ export default function AdminDashboard() {
     }
   }, [user, isUserLoading, router]);
 
-  const handleApproveSuggestion = async (suggestion: NameSuggestion) => {
-    if (!firestore) return;
-    try {
-      const birdRef = doc(firestore, 'birds', suggestion.birdId);
-      await updateDoc(birdRef, { 
-        name: suggestion.suggestedName,
-        adopterEmail: suggestion.donorEmail || null,
-        updatedAt: new Date().toISOString()
-      });
-      await deleteDoc(doc(firestore, 'nameSuggestions', suggestion.id));
-      toast({ title: "Name Updated", description: `Resident is now officially ${suggestion.suggestedName}.` });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not approve suggestion." });
-    }
-  };
-
-  const handleRejectSuggestion = async (id: string) => {
-    if (!firestore) return;
-    try {
-      await deleteDoc(doc(firestore, 'nameSuggestions', id));
-      toast({ title: "Suggestion Removed" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error" });
-    }
-  };
-
   const handleAddEgg = (resident: Resident) => {
     if (!firestore || resident.sex !== 'female') return;
     const birdRef = doc(firestore, 'birds', resident.id);
@@ -110,7 +72,7 @@ export default function AdminDashboard() {
       eggCounter: increment(1), 
       updatedAt: new Date().toISOString() 
     });
-    toast({ title: "Egg Added", description: `${resident.name} laid an egg!` });
+    toast({ title: "Egg Counted", description: `${resident.name}'s daily total updated.` });
   };
 
   const handleRemoveEgg = (resident: Resident) => {
@@ -123,20 +85,6 @@ export default function AdminDashboard() {
     toast({ title: "Egg Removed" });
   };
 
-  const handleHatchEgg = (mother: Resident) => {
-    if (!firestore || mother.eggCounter <= 0) return;
-    
-    setHatcheryInitialData({
-      motherId: mother.id,
-      breed: mother.breed,
-      source: 'Hatched',
-      hatch_date: new Date().toISOString().split('T')[0],
-      backstory: `Hatched in the sanctuary. Biological mother is ${mother.name}.`
-    });
-    setEditingResident(null);
-    setIsDialogOpen(true);
-  };
-
   const handleSaveResident = (data: Partial<Resident>) => {
     if (!firestore) return;
     if (editingResident) {
@@ -145,11 +93,6 @@ export default function AdminDashboard() {
     } else {
       const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
       
-      // If hatching, decrement mother's egg counter
-      if (data.source === 'Hatched' && data.motherId) {
-        updateDocumentNonBlocking(doc(firestore, 'birds', data.motherId), { eggCounter: increment(-1) });
-      }
-
       setDoc(doc(firestore, 'birds', newId), {
         ...data,
         id: newId,
@@ -160,7 +103,6 @@ export default function AdminDashboard() {
       });
       toast({ title: "Resident Added" });
     }
-    setHatcheryInitialData(undefined);
     setIsDialogOpen(false);
   };
 
@@ -205,8 +147,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const incubatorBirds = birds?.filter(b => b.sex === 'female' && b.eggCounter > 0) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
@@ -256,40 +196,9 @@ export default function AdminDashboard() {
           </Card>
         </section>
 
-        {/* Hatchery Log / Egg to Duck Pipeline */}
-        {incubatorBirds.length > 0 && (
-          <section className="space-y-4">
-             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
-               <Baby className="h-4 w-4" /> SANCTUARY HATCHERY LOG
-             </h2>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-               {incubatorBirds.map(hen => (
-                 <Card key={hen.id} className="bg-secondary/5 border-secondary/20 rounded-2xl overflow-hidden p-4 flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                       <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-secondary/20">
-                          <Image src={hen.primaryImageUrl} alt={hen.name} fill className="object-cover" />
-                       </div>
-                       <div className="flex-1 min-w-0">
-                          <p className="font-black text-[10px] uppercase truncate">{hen.name}</p>
-                          <p className="text-[9px] text-muted-foreground uppercase">{hen.eggCounter} Eggs Available</p>
-                       </div>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="w-full bg-secondary text-secondary-foreground font-black text-[9px] uppercase tracking-widest h-9"
-                      onClick={() => handleHatchEgg(hen)}
-                    >
-                      <Plus className="h-3 w-3 mr-1" /> Convert Egg to Duck
-                    </Button>
-                 </Card>
-               ))}
-             </div>
-          </section>
-        )}
-
         <div className="flex justify-between items-center">
            <h2 className="font-headline font-black text-sm uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2>
-           <Button onClick={() => { setEditingResident(null); setHatcheryInitialData(undefined); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl h-11 px-6 shadow-lg">
+           <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl h-11 px-6 shadow-lg">
              <Plus className="h-4 w-4 mr-2" /> ADD BIRD
            </Button>
         </div>
@@ -346,7 +255,7 @@ export default function AdminDashboard() {
                     <Stethoscope className="h-4 w-4 text-secondary" />
                     <span className="text-[7px] font-black uppercase tracking-widest">LOG</span>
                   </Button>
-                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => { setEditingResident(bird); setHatcheryInitialData(undefined); setIsDialogOpen(true); }}>
+                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     <span className="text-[7px] font-black uppercase tracking-widest">EDIT</span>
                   </Button>
@@ -366,7 +275,6 @@ export default function AdminDashboard() {
         onOpenChange={setIsDialogOpen} 
         onSave={handleSaveResident} 
         resident={editingResident}
-        initialData={hatcheryInitialData}
       />
       <HealthLogDialog 
         open={isHealthLogOpen} 

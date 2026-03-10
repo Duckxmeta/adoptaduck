@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, X, Upload, ShieldCheck, TreePine, Info } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -29,10 +29,9 @@ interface ResidentDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (data: Partial<Resident>) => void;
   resident?: Resident | null;
-  initialData?: Partial<Resident>;
 }
 
-export function ResidentDialog({ open, onOpenChange, onSave, resident, initialData }: ResidentDialogProps) {
+export function ResidentDialog({ open, onOpenChange, onSave, resident }: ResidentDialogProps) {
   const storage = useStorage();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -78,17 +77,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         isFoundingResident: !!resident.isFoundingResident
       });
       setPreviewUrl(resident.primaryImageUrl || null);
-    } else if (initialData) {
-      setFormData({
-        ...formData,
-        ...initialData,
-        isCommunityDuck: !!initialData.isCommunityDuck,
-        source: initialData.source || 'Founding',
-        motherId: initialData.motherId || '',
-        fatherId: initialData.fatherId || '',
-        hatch_date: initialData.hatch_date || ''
-      });
-      setPreviewUrl(initialData.primaryImageUrl || null);
     } else {
       setFormData({
         name: '',
@@ -108,7 +96,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
       setPreviewUrl(null);
     }
     setSelectedFile(null);
-  }, [resident, initialData, open]);
+  }, [resident, open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,7 +127,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         finalImageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      // Ensure null is saved for empty parent IDs
       const submissionData = {
         ...formData,
         primaryImageUrl: finalImageUrl,
