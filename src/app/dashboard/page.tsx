@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -148,42 +147,55 @@ export default function MemberDashboard() {
     try {
       const birdsRef = collection(firestore, 'birds');
       
-      // Multi-step robust lookup logic
+      // Robust lookup logic
       let birdDoc = null;
 
-      // Step A: Exact Name Match
+      // Stage A: Exact Case-Sensitive Name Match
       const q = query(birdsRef, where('name', '==', targetName));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         birdDoc = querySnapshot.docs[0];
       }
 
-      // Step B: Fallback - Check by Document ID (slugified name)
+      // Stage B: Fallback - Check by Document IDs (potential slugs)
       if (!birdDoc) {
-        const potentialId = targetName.toLowerCase().replace(/\s+/g, '-');
-        const birdDocRef = doc(firestore, 'birds', potentialId);
-        const birdDocSnap = await getDoc(birdDocRef);
-        if (birdDocSnap.exists()) {
-          birdDoc = birdDocSnap;
+        const potentialSlugs = [
+          targetName.toLowerCase().replace(/\s+/g, '-'),
+          targetName.toLowerCase().replace(/\s+/g, '_'),
+          'cutie-pie',
+          'cutie_pie'
+        ];
+        
+        for (const slug of potentialSlugs) {
+          const birdDocRef = doc(firestore, 'birds', slug);
+          const birdDocSnap = await getDoc(birdDocRef);
+          if (birdDocSnap.exists()) {
+            birdDoc = birdDocSnap;
+            break;
+          }
         }
       }
 
-      // Step C: Fallback - Scan all residents for case-insensitive name match
+      // Stage C: Fallback - Scan all residents for trimmed, case-insensitive name match
       if (!birdDoc) {
         const allBirdsSnap = await getDocs(birdsRef);
-        birdDoc = allBirdsSnap.docs.find(d => 
-          d.data().name?.toLowerCase() === targetName.toLowerCase()
-        ) || null;
+        birdDoc = allBirdsSnap.docs.find(d => {
+          const name = d.data().name;
+          return name && name.trim().toLowerCase() === targetName.trim().toLowerCase();
+        }) || null;
       }
 
       if (!birdDoc) {
-        // Lookups failed - Log debug info for the administrator
+        // Lookups failed - Log detailed debug info for the administrator
         const allBirdsSnap = await getDocs(birdsRef);
-        console.log("DEBUG: Resident lookup failed for:", targetName);
-        console.log("DEBUG: Available residents in DB:", allBirdsSnap.docs.map(d => ({ 
-          id: d.id, 
-          name: d.data().name 
-        })));
+        console.group("Sanctuary Debug: Resident Lookup Failed");
+        console.log("Target Name Search:", targetName);
+        console.log("Normalized Target:", targetName.trim().toLowerCase());
+        console.log("Available Residents in Database:");
+        allBirdsSnap.docs.forEach(d => {
+          console.log(`- ID: ${d.id}, Name: "${d.data().name}", Normalized: "${d.data().name?.trim().toLowerCase()}"`);
+        });
+        console.groupEnd();
 
         if (targetName === 'Cutie Pie') {
           toast({
