@@ -1,119 +1,177 @@
-
 {
   "entities": {
     "Bird": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Bird",
       "type": "object",
-      "description": "Represents a single resident duck or bird in the Decent Ducks Sanctuary.",
+      "description": "Represents a virtual duck resident in the Decent Ducks Sanctuary, holding all core profile information and AI-generated lore.",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "breed": { "type": "string" },
-        "sex": { "type": "string" },
-        "heritageTree": { "type": "string" },
-        "eggCounter": { "type": "number" },
-        "personalityTraits": { "type": "string" },
-        "backstory": { "type": "string" },
-        "primaryImageUrl": { "type": "string", "format": "uri" },
-        "galleryImageUrls": { "type": "array", "items": { "type": "string" } },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "adopterEmail": { "type": "string" },
-        "isCommunityDuck": { "type": "boolean" },
-        "motherId": { "type": "string", "description": "ID of the biological mother resident." },
-        "fatherId": { "type": "string", "description": "ID of the biological father resident." },
-        "source": { "type": "string", "enum": ["Founding", "Rehomed", "Hatched"], "description": "The origin of the resident." },
-        "hatch_date": { "type": "string", "format": "date", "description": "The date the resident hatched." },
-        "isFoundingResident": { "type": "boolean", "description": "Whether this duck is a first-generation sanctuary resident." }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Bird entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The common name of the duck resident."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The breed or species of the duck resident."
+        },
+        "sex": {
+          "type": "string",
+          "description": "The biological sex of the duck resident (e.g., Male, Female, Unknown)."
+        },
+        "heritageTree": {
+          "type": "string",
+          "description": "A descriptive string representing the visual lineage or heritage information of the duck."
+        },
+        "eggCounter": {
+          "type": "number",
+          "description": "A counter tracking the number of eggs laid by the duck, manageable by administrators."
+        },
+        "personalityTraits": {
+          "type": "string",
+          "description": "AI-generated rich, unique personality traits for the duck, enhancing virtual adoption appeal."
+        },
+        "backstory": {
+          "type": "string",
+          "description": "AI-generated compelling backstory and lore for the duck."
+        },
+        "primaryImageUrl": {
+          "type": "string",
+          "description": "URL for the primary image displayed for the duck on dashboards and profiles.",
+          "format": "uri"
+        },
+        "galleryImageUrls": {
+          "type": "array",
+          "description": "An array of URLs for additional images in the duck's photo gallery, uploaded via Firebase Storage.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the bird's profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the bird's profile was last updated.",
+          "format": "date-time"
+        }
       },
-      "required": ["id", "name", "breed", "sex", "eggCounter", "primaryImageUrl", "createdAt"]
+      "required": [
+        "id",
+        "name",
+        "breed",
+        "sex",
+        "eggCounter",
+        "personalityTraits",
+        "backstory",
+        "primaryImageUrl",
+        "createdAt"
+      ]
     },
-    "UserProfile": {
+    "HealthLogEntry": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserProfile",
+      "title": "HealthLogEntry",
       "type": "object",
-      "description": "Member profile information including unlocked community ducks.",
+      "description": "Records dated health notes for a specific bird resident, accessible via the admin dashboard.",
       "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string" },
-        "my_flock": { "type": "array", "items": { "type": "string" }, "description": "Array of bird IDs linked to this user." },
-        "community_codes": { "type": "array", "items": { "type": "string" }, "description": "Array of referral codes used." },
-        "role": { "type": "string", "enum": ["member", "admin"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the HealthLogEntry entity."
+        },
+        "birdId": {
+          "type": "string",
+          "description": "Reference to the Bird entity this health log pertains to. (Relationship: Bird 1:N HealthLogEntry)"
+        },
+        "logDate": {
+          "type": "string",
+          "description": "The date and time when the health note was recorded.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Detailed health notes or observations for the bird."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the health log entry was created.",
+          "format": "date-time"
+        }
       },
-      "required": ["uid", "email", "role"]
-    },
-    "NameSuggestion": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "NameSuggestion",
-      "type": "object",
-      "description": "A donation-linked name suggestion for a sanctuary resident.",
-      "properties": {
-        "id": { "type": "string" },
-        "birdId": { "type": "string" },
-        "birdOriginalName": { "type": "string" },
-        "suggestedName": { "type": "string" },
-        "donorEmail": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["birdId", "suggestedName", "status", "createdAt"]
-    },
-    "DailyStatus": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DailyStatus",
-      "type": "object",
-      "description": "Daily sanctuary routine checklist status.",
-      "properties": {
-        "id": { "type": "string" },
-        "morningFeeding": { "type": "boolean" },
-        "freshWater": { "type": "boolean" },
-        "eggCounter": { "type": "boolean" },
-        "healthCheck": { "type": "boolean" },
-        "nightlyPenUp": { "type": "boolean" },
-        "lastReset": { "type": "string", "format": "date-time" }
-      }
+      "required": [
+        "id",
+        "birdId",
+        "logDate",
+        "notes",
+        "createdAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["password", "anonymous", "google"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
     "structure": [
       {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "Stores documents for authenticated users who possess administrator privileges. Used for DBAC (Database Access Control) checks. Access is based on existence.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The user ID of the administrator."
+            }
+          ]
+        }
+      },
+      {
         "path": "/birds/{birdId}",
         "definition": {
           "entityName": "Bird",
-          "schema": { "$ref": "#/backend/entities/Bird" },
-          "description": "Public bird profiles."
+          "schema": {
+            "$ref": "#/backend/entities/Bird"
+          },
+          "description": "Contains publicly viewable profiles for all virtual duck residents. Read access is public for all users. Write access (create, update, delete) is restricted to authenticated administrators.",
+          "params": [
+            {
+              "name": "birdId",
+              "description": "The unique identifier for a bird."
+            }
+          ]
         }
       },
       {
-        "path": "/users/{userId}",
+        "path": "/birds/{birdId}/health_logs/{healthLogId}",
         "definition": {
-          "entityName": "UserProfile",
-          "schema": { "$ref": "#/backend/entities/UserProfile" },
-          "description": "User account and flock data."
-        }
-      },
-      {
-        "path": "/nameSuggestions/{suggestionId}",
-        "definition": {
-          "entityName": "NameSuggestion",
-          "schema": { "$ref": "#/backend/entities/NameSuggestion" },
-          "description": "Collection of pending and processed name suggestions from donors."
-        }
-      },
-      {
-        "path": "/daily_status/{statusId}",
-        "definition": {
-          "entityName": "DailyStatus",
-          "schema": { "$ref": "#/backend/entities/DailyStatus" },
-          "description": "Daily sanctuary routine tracking."
+          "entityName": "HealthLogEntry",
+          "schema": {
+            "$ref": "#/backend/entities/HealthLogEntry"
+          },
+          "description": "Stores health log entries specific to a virtual duck resident. All read and write access is restricted to authenticated administrators. The 'birdId' field provides an explicit link to the parent bird document, ensuring Authorization Independence from the parent's data for security rule evaluation.",
+          "params": [
+            {
+              "name": "birdId",
+              "description": "The unique identifier for a bird."
+            },
+            {
+              "name": "healthLogId",
+              "description": "The unique identifier for a health log entry."
+            }
+          ]
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and debuggable, adhering strictly to the core design principles and strategy mandates. \n\n**Authorization Independence (CRITICAL) and QAPs:**\n\n1.  **Global Admin Role (`/roles_admin/{uid}`):** To ensure Authorization Independence and support DBAC, administrator roles are managed in a top-level collection (`/roles_admin`). A document's existence at `/roles_admin/{request.auth.uid}` grants admin privileges. This completely isolates authorization logic from data documents, eliminating the need for `get()` operations in security rules to determine a user's role. This pattern is inherently QAP-compliant because rules can verify admin status atomically and efficiently for any read or write operation across other collections.\n\n2.  **Publicly Readable Bird Data (`/birds/{birdId}`):** The `Bird` collection stores all virtual duck resident profiles. This collection is designed for public read access (for dashboards and profiles) and admin-only write access (for management). This homogeneous security posture simplifies rules: any user can read, and only authenticated users with an existing document in `/roles_admin/{uid}` can create, update, or delete. This supports QAPs for public `list` operations without requiring client-side filtering or complex server-side logic.\n\n3.  **Admin-Only Health Logs (`/birds/{birdId}/health_logs/{healthLogId}`):** Health log entries are stored as a subcollection under `Bird`. While logically nested, the security posture for this subcollection is *not* dependent on specific fields within the parent `Bird` document (e.g., an `ownerId` on the bird). Instead, access for `HealthLogEntry` documents is *exclusively* granted to administrators, as verified by the `/roles_admin` collection. The `birdId` field within each `HealthLogEntry` document ensures referential integrity and facilitates querying but is not used for authorization. This design achieves Authorization Independence because the security rule for `health_logs` only needs to check the global admin role, not the parent `Bird` document's data. This also makes `list` operations QAP-compliant, as an admin can list all health logs for a bird, and non-admins cannot list any.\n\n**Denormalization:**\n\n*   No complex denormalization of authorization context is required for `Bird` or `HealthLogEntry` documents because access is either public (for Bird reads) or determined by a global admin role. The `HealthLogEntry`'s `birdId` is part of its schema, providing the necessary link without needing parent document reads for authorization."
   }
 }

@@ -2,51 +2,97 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    /**
+     * DECENT DUCKS SANCTUARY SECURITY RULES
+     *
+     * CORE PHILOSOPHY:
+     * This ruleset implements a Database Access Control (DBAC) model where administrative privileges
+     * are decoupled from individual data records. It prioritizes public transparency for duck profiles
+     * while maintaining strict confidentiality for internal health records and system configuration.
+     *
+     * DATA STRUCTURE:
+     * - /roles_admin/{uid}: Existence of a document here identifies an account with global admin rights.
+     * - /birds/{birdId}: Publicly accessible profiles for sanctuary residents.
+     * - /birds/{birdId}/health_logs/{healthLogId}: Sensitive medical and observation logs (Admin-only).
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. DBAC for Admins: Instead of checking roles on every document, we perform a lookup on the 
+     *    'roles_admin' collection. This ensures Authorization Independence.
+     * 2. Public Transparency: Duck profiles (Bird entities) are readable by anyone to facilitate 
+     *    the virtual adoption experience.
+     * 3. Administrative Lockdown: All data modification (Create, Update, Delete) and sensitive logs 
+     *    are restricted exclusively to accounts verified in the 'roles_admin' collection.
+     * 4. Relational Integrity: On document creation, we enforce that the internal 'id' or link 
+     *    fields (like birdId) match the physical Firestore path.
+     *
+     * PROTOTYPING MODE:
+     * Rules enforce strict authorization (Who) and relational integrity (Links) but allow flexible
+     * schema shapes for content fields to support rapid iteration.
+     */
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** Checks if the request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /** 
+     * Verifies if the authenticated user is an administrator by checking for 
+     * the existence of their UID in the roles_admin collection. 
+     */
     function isAdmin() {
-      // Allow dual-admin access while keeping flowmarket1@gmail.com hidden from UI
-      return isSignedIn() && (
-        request.auth.token.email == 'decentducksorg@gmail.com' || 
-        request.auth.token.email == 'flowmarket1@gmail.com'
-      );
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    /** Combines admin check with existence check for destructive/modifying operations. */
+    function isExistingAdmin() {
+      return isAdmin() && resource != null;
     }
 
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Stores administrator role assignments. Existence of a UID document grants admin status.
+     * @path /roles_admin/{uid}
+     * @allow (get) Any authenticated user can check their own role status; Admins can get any.
+     * @deny (list) Listing all administrators is prohibited for security.
+     * @principle DBAC (Database Access Control) via document existence.
+     */
+    match /roles_admin/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if false; // Admin roles should be managed via Cloud Functions or CLI.
+    }
+
+    /**
+     * @description Publicly viewable profiles for virtual duck residents.
+     * @path /birds/{birdId}
+     * @allow (get, list) Anyone can view bird profiles.
+     * @allow (create) Authenticated admins can create birds.
+     * @deny (update, delete) Non-admins or attempts to modify non-existent birds.
+     * @principle Public Read with Admin-Only Writes.
+     */
     match /birds/{birdId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow get, list: if true;
+      allow create: if isAdmin() && request.resource.data.id == birdId;
+      allow update: if isExistingAdmin() && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingAdmin();
 
-      match /healthLogs/{healthLogEntryId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
+      /**
+       * @description Internal health and observation logs for a specific bird.
+       * @path /birds/{birdId}/health_logs/{healthLogId}
+       * @allow (all) Authenticated admins only.
+       * @deny (all) All non-admin access.
+       * @principle Authorization Independence; access is granted by role, not parent document ownership.
+       */
+      match /health_logs/{healthLogId} {
+        allow get, list: if isAdmin();
+        allow create: if isAdmin() && request.resource.data.birdId == birdId;
+        allow update: if isExistingAdmin() && request.resource.data.birdId == resource.data.birdId;
+        allow delete: if isExistingAdmin();
       }
     }
 
-    match /users/{userId} {
-      // Allow users to manage their own profiles or admins to manage all profiles
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /nameSuggestions/{suggestionId} {
-      allow read: if isAdmin();
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
-    }
-
-    match /daily_status/{statusId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /sanctuaryStats/{statId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
   }
 }

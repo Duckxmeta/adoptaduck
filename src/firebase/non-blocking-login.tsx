@@ -1,53 +1,29 @@
 'use client';
 import {
-  Auth,
+  Auth, // Import Auth type for type hinting
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
-  setPersistence,
-  browserLocalPersistence,
-  UserCredential,
+  // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
 
-/** Configure browser persistence (non-blocking). */
-export function configureAuthPersistence(authInstance: Auth): Promise<void> {
-  return setPersistence(authInstance, browserLocalPersistence);
-}
-
 /** Initiate anonymous sign-in (non-blocking). */
-export function initiateAnonymousSignIn(authInstance: Auth): Promise<UserCredential> {
-  return signInAnonymously(authInstance);
+export function initiateAnonymousSignIn(authInstance: Auth): void {
+  // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
+  signInAnonymously(authInstance);
+  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
-  return createUserWithEmailAndPassword(authInstance, email, password);
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
+  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
+  createUserWithEmailAndPassword(authInstance, email, password);
+  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
-  return signInWithEmailAndPassword(authInstance, email, password);
-}
-
-/** Initiate Google Sign-in via Redirect. Mobile browsers handle this much better than popups. */
-export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
-  const provider = new GoogleAuthProvider();
-  
-  /** 
-   * Force 'select_account' to ensure users can choose the specific email 
-   * added to the Google Cloud Console Test Users list. 
-   */
-  provider.setCustomParameters({
-    prompt: 'select_account'
-  });
-  
-  return signInWithRedirect(authInstance, provider);
-}
-
-/** Handle the result of a Google Redirect sign-in. */
-export function handleGoogleRedirectResult(authInstance: Auth): Promise<UserCredential | null> {
-  return getRedirectResult(authInstance);
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
+  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
+  signInWithEmailAndPassword(authInstance, email, password);
+  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
