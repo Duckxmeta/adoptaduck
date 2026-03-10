@@ -19,6 +19,7 @@ export type Resident = {
   source?: 'Founding' | 'Rehomed' | 'Hatched';
   hatch_date?: string;
   isFoundingResident?: boolean;
+  generation?: number;
 };
 
 export type UserProfile = {

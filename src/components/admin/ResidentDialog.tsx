@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -14,14 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ResidentDialogProps {
   open: boolean;
@@ -52,11 +53,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     primaryImageUrl: '',
     galleryImageUrls: [],
     isCommunityDuck: false,
-    source: 'Founding',
+    source: 'Rehomed',
     motherId: '',
     fatherId: '',
     hatch_date: '',
-    isFoundingResident: false
+    isFoundingResident: true,
+    generation: 0
   });
 
   const [uploading, setUploading] = useState(false);
@@ -69,11 +71,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         ...resident,
         galleryImageUrls: resident.galleryImageUrls || [],
         isCommunityDuck: !!resident.isCommunityDuck,
-        source: resident.source || 'Founding',
+        source: resident.source || 'Rehomed',
         motherId: resident.motherId || '',
         fatherId: resident.fatherId || '',
         hatch_date: resident.hatch_date || '',
-        isFoundingResident: !!resident.isFoundingResident
+        isFoundingResident: resident.source === 'Rehomed' || resident.source === 'Founding',
+        generation: resident.generation ?? 0
       });
       setPreviewUrl(resident.primaryImageUrl || null);
     } else {
@@ -86,11 +89,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         primaryImageUrl: '',
         galleryImageUrls: [],
         isCommunityDuck: false,
-        source: 'Founding',
+        source: 'Rehomed',
         motherId: '',
         fatherId: '',
         hatch_date: '',
-        isFoundingResident: false
+        isFoundingResident: true,
+        generation: 0
       });
       setPreviewUrl(null);
     }
@@ -104,6 +108,18 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
+  };
+
+  const calculateGeneration = (motherId?: string, fatherId?: string) => {
+    if (!motherId && !fatherId) return 0;
+    
+    const mother = birds?.find(b => b.id === motherId);
+    const father = birds?.find(b => b.id === fatherId);
+    
+    const motherGen = mother?.generation ?? 0;
+    const fatherGen = father?.generation ?? 0;
+    
+    return Math.max(motherGen, fatherGen) + 1;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,12 +142,17 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         finalImageUrl = await getDownloadURL(snapshot.ref);
       }
 
+      // Final generation calculation based on selected type
+      const isRehomed = formData.source !== 'Hatched';
+      const finalGeneration = isRehomed ? 0 : calculateGeneration(formData.motherId, formData.fatherId);
+
       const submissionData = {
         ...formData,
         primaryImageUrl: finalImageUrl,
-        motherId: formData.motherId || null,
-        fatherId: formData.fatherId || null,
-        isFoundingResident: formData.source === 'Founding',
+        motherId: isRehomed ? "" : (formData.motherId || ""),
+        fatherId: isRehomed ? "" : (formData.fatherId || ""),
+        isFoundingResident: isRehomed,
+        generation: finalGeneration,
         updatedAt: new Date().toISOString()
       };
 
@@ -147,6 +168,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       setUploading(false);
     }
   };
+
+  const isHatched = formData.source === 'Hatched';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,29 +220,29 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center justify-between p-4 bg-secondary/5 border border-secondary/20 rounded-xl">
-              <div className="space-y-0.5">
-                <Label className="text-[9px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
-                  <ShieldCheck className="h-3 w-3" /> Community
-                </Label>
+          <div className="space-y-4 p-5 bg-muted/20 border border-border rounded-2xl">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5" /> Registration Type
+            </Label>
+            <RadioGroup 
+              value={formData.source} 
+              onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', motherId: '', fatherId: ''})}
+              className="grid grid-cols-2 gap-4"
+            >
+              <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
+                <RadioGroupItem value="Rehomed" id="type-rehomed" />
+                <Label htmlFor="type-rehomed" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Rehomed (G0)</Label>
               </div>
-              <Switch 
-                checked={formData.isCommunityDuck} 
-                onCheckedChange={(checked) => setFormData({...formData, isCommunityDuck: checked})} 
-              />
-            </div>
-            <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
-              <div className="space-y-0.5">
-                <Label className="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                  <TreePine className="h-3 w-3" /> Founding
-                </Label>
+              <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
+                <RadioGroupItem value="Hatched" id="type-hatched" />
+                <Label htmlFor="type-hatched" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Hatched (Lineage)</Label>
               </div>
-              <Switch 
-                checked={formData.source === 'Founding'} 
-                onCheckedChange={(checked) => setFormData({...formData, source: checked ? 'Founding' : 'Rehomed', isFoundingResident: checked})} 
-              />
-            </div>
+            </RadioGroup>
+            <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-widest leading-relaxed">
+              {isHatched 
+                ? "Offspring born at the sanctuary. Requires parent records to build heritage tree." 
+                : "New arrivals with unknown parentage. These ducks start a new generation line (G0)."}
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -265,62 +288,70 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="source" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Source</Label>
+              <Label htmlFor="comm" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Partner Status</Label>
               <Select 
-                value={formData.source} 
-                onValueChange={v => setFormData({...formData, source: v as any, isFoundingResident: v === 'Founding'})}
+                value={formData.isCommunityDuck ? "yes" : "no"} 
+                onValueChange={v => setFormData({...formData, isCommunityDuck: v === "yes"})}
               >
                 <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                  <SelectValue placeholder="Select source" />
+                  <SelectValue placeholder="Partnered?" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="Founding">Founding</SelectItem>
-                  <SelectItem value="Rehomed">Rehomed</SelectItem>
-                  <SelectItem value="Hatched">Hatched (Sanctuary Born)</SelectItem>
+                  <SelectItem value="no">Individual</SelectItem>
+                  <SelectItem value="yes">Community Partner</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mother</Label>
-              <Select 
-                value={formData.motherId || "unknown"} 
-                onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}
-              >
-                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                  <SelectValue placeholder="Select mother" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="unknown">Unknown / Original</SelectItem>
-                  {birds?.filter(b => b.sex === 'female' && b.id !== resident?.id).map(b => (
-                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {isHatched && (
+            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="space-y-2">
+                <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <TreePine className="h-3 w-3 text-secondary" /> Mother
+                </Label>
+                <Select 
+                  value={formData.motherId || "unknown"} 
+                  onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}
+                >
+                  <SelectTrigger className="bg-background border-border h-11 rounded-xl">
+                    <SelectValue placeholder="Select mother" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="unknown">Unknown / Original</SelectItem>
+                    {birds?.filter(b => b.sex === 'female' && b.id !== resident?.id).map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name} (G{b.generation ?? 0})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <TreePine className="h-3 w-3 text-secondary" /> Father
+                </Label>
+                <Select 
+                  value={formData.fatherId || "unknown"} 
+                  onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}
+                >
+                  <SelectTrigger className="bg-background border-border h-11 rounded-xl">
+                    <SelectValue placeholder="Select father" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="unknown">Unknown / Original</SelectItem>
+                    {birds?.filter(b => b.sex === 'male' && b.id !== resident?.id).map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name} (G{b.generation ?? 0})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="col-span-2 text-[8px] font-black uppercase text-secondary tracking-widest text-center">
+                Generation will be auto-calculated as: G{calculateGeneration(formData.motherId, formData.fatherId)}
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Father</Label>
-              <Select 
-                value={formData.fatherId || "unknown"} 
-                onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}
-              >
-                <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                  <SelectValue placeholder="Select father" />
-                </SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="unknown">Unknown / Original</SelectItem>
-                  {birds?.filter(b => b.sex === 'male' && b.id !== resident?.id).map(b => (
-                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
 
           <div className="space-y-2">
-            <Label htmlFor="hatch_date" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hatch Date / Arrival Date</Label>
+            <Label htmlFor="hatch_date" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Arrival / Hatch Date</Label>
             <Input 
               id="hatch_date" 
               type="date"

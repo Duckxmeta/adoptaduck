@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Bird": {
@@ -17,7 +18,8 @@
         "primaryImageUrl": { "type": "string", "format": "uri" },
         "galleryImageUrls": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "generation": { "type": "number", "description": "The genealogical generation relative to founding members (0 = Root)." }
       },
       "required": ["id", "name", "breed", "sex", "eggCounter", "personalityTraits", "backstory", "primaryImageUrl", "createdAt"]
     },
