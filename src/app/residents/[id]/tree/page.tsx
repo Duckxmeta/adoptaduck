@@ -92,7 +92,7 @@ export default function LineageTreePage() {
     return (
       <Link href={`/residents/${bird.id}`} className={cn("w-40 md:w-52 group relative shrink-0", className)}>
         <div className={cn(
-          "aspect-[3/4] rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105",
+          "aspect-[3/4] rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105 h-full w-full",
           isG0 ? "border-primary glow-primary shadow-primary/20" : "border-border group-hover:border-primary"
         )}>
           <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
@@ -145,7 +145,8 @@ export default function LineageTreePage() {
 
         {/* Tree Container with Horizontal Scroll Support */}
         <ScrollArea className="w-full whitespace-nowrap pb-12">
-          <div className="relative min-w-fit mx-auto py-12 px-24 flex flex-col items-center gap-40">
+          {/* Use a simple grid/block stack to prevent flex squashing */}
+          <div className="relative min-w-fit mx-auto py-12 px-24 space-y-[120px]">
             
             {/* SVG Connector Lines Layer */}
             <div className="absolute inset-0 pointer-events-none z-0">
@@ -157,11 +158,11 @@ export default function LineageTreePage() {
                     </linearGradient>
                   </defs>
                   
-                  {/* Lines from Grandparents to Parents (Visual placeholder as precise coordinates depend on flex width) */}
+                  {/* Lines from Grandparents to Parents */}
                   {hasGrandparents && hasParents && (
                     <g className="opacity-20">
-                      <line x1="25%" y1="10%" x2="25%" y2="45%" stroke="url(#tree-grad)" strokeWidth="1" />
-                      <line x1="75%" y1="10%" x2="75%" y2="45%" stroke="url(#tree-grad)" strokeWidth="1" />
+                      <line x1="25%" y1="5%" x2="25%" y2="35%" stroke="url(#tree-grad)" strokeWidth="1" />
+                      <line x1="75%" y1="5%" x2="75%" y2="35%" stroke="url(#tree-grad)" strokeWidth="1" />
                     </g>
                   )}
 
@@ -169,14 +170,14 @@ export default function LineageTreePage() {
                   {hasParents && (
                     <g>
                       <path 
-                        d="M 25% 55% Q 25% 80%, 50% 85%" 
+                        d="M 25% 45% Q 25% 65%, 50% 75%" 
                         stroke="url(#tree-grad)" 
                         strokeWidth="3" 
                         fill="none" 
                         strokeLinecap="round" 
                       />
                       <path 
-                        d="M 75% 55% Q 75% 80%, 50% 85%" 
+                        d="M 75% 45% Q 75% 65%, 50% 75%" 
                         stroke="url(#tree-grad)" 
                         strokeWidth="3" 
                         fill="none" 
@@ -189,13 +190,10 @@ export default function LineageTreePage() {
 
             {/* Tier 1: Grandparents (G0) */}
             {hasGrandparents && (
-              <div className="relative w-full flex flex-col items-center">
-                {/* Margin Label */}
-                <div className="absolute left-[-120px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
+              <div className="relative flex flex-col items-center">
+                <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
                    <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text">{grandparentTierLabel}</span>
-                   <div className="w-px h-12 bg-primary/30" />
                 </div>
-
                 <div className="flex justify-center gap-12 md:gap-24">
                   <div className="flex gap-4">
                     <TreeCard bird={mGrandma} label="M-Grandmother" genLabel={grandparentTierLabel} />
@@ -211,13 +209,10 @@ export default function LineageTreePage() {
 
             {/* Tier 2: Parents (G1 or G0) */}
             {hasParents && (
-              <div className="relative w-full flex flex-col items-center">
-                {/* Margin Label */}
-                <div className="absolute left-[-120px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
+              <div className="relative flex flex-col items-center mt-[100px]">
+                <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
                    <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text">{parentTierLabel}</span>
-                   <div className="w-px h-12 bg-primary/30" />
                 </div>
-
                 <div className="flex justify-center gap-24 md:gap-48">
                   <TreeCard bird={mother} label="Mother" genLabel={parentTierLabel} />
                   <TreeCard bird={father} label="Father" genLabel={parentTierLabel} />
@@ -226,20 +221,18 @@ export default function LineageTreePage() {
             )}
 
             {/* Tier 3: The Resident (The Hatchling) */}
-            <div className="relative w-full flex flex-col items-center">
-              {/* Margin Label */}
-              <div className="absolute left-[-120px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-60">
+            <div className="relative flex flex-col items-center mt-[120px]">
+              <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-60">
                  <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text text-primary">{residentTierLabel}</span>
-                 <div className="w-px h-12 bg-primary" />
               </div>
-
               <div className="relative">
                 <div className="absolute -inset-10 bg-primary/10 blur-[80px] rounded-full opacity-40 animate-pulse" />
+                {/* FORCED DIMENSIONS AND DIAGNOSTIC BORDER */}
                 <TreeCard 
                   bird={resident} 
                   label="Current Resident" 
                   genLabel={residentTierLabel}
-                  className="w-48 md:w-64 scale-105 shadow-2xl border-primary" 
+                  className="w-[300px] h-[400px] min-h-[400px] min-w-[300px] flex-shrink-0 scale-105 shadow-2xl border-primary border-2 border-red-500" 
                 />
               </div>
             </div>
@@ -271,7 +264,6 @@ export default function LineageTreePage() {
                   G0 residents represent the original rescues whose prior history is not available in the sanctuary records.
                 </p>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
            </div>
         </section>
       </main>
