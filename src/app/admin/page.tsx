@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -18,16 +17,19 @@ import {
   ClipboardList,
   RotateCcw,
   LayoutDashboard,
-  TreePine
+  TreePine,
+  Trash2
 } from 'lucide-react';
 import Image from 'next/image';
-import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc } from 'firebase/firestore';
-import { Resident, NameSuggestion, DailyStatus } from '@/lib/types';
+import { ref as storageRef, deleteObject } from 'firebase/storage';
+import { Resident, DailyStatus } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
+import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
@@ -35,6 +37,7 @@ const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -43,6 +46,9 @@ export default function AdminDashboard() {
   
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
   const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
@@ -106,6 +112,44 @@ export default function AdminDashboard() {
       toast({ title: "Resident Added" });
     }
     setIsDialogOpen(false);
+  };
+
+  const handleDeleteResident = async () => {
+    if (!firestore || !deletingResident) return;
+    
+    try {
+      // 1. Delete Firestore Document
+      await deleteDoc(doc(firestore, 'birds', deletingResident.id));
+      
+      // 2. Try to Delete Storage Image if it's our hosted photo
+      if (storage && deletingResident.primaryImageUrl.includes('firebasestorage.googleapis.com')) {
+        try {
+          // Attempt to extract path from URL (crude but usually works for our structure)
+          // URL format: .../o/resident-photos%2Ffilename?alt=media...
+          const url = new URL(deletingResident.primaryImageUrl);
+          const pathParam = url.pathname.split('/o/')[1];
+          const decodedPath = decodeURIComponent(pathParam.split('?')[0]);
+          
+          if (decodedPath.startsWith('resident-photos/')) {
+            const fileRef = storageRef(storage, decodedPath);
+            await deleteObject(fileRef);
+          }
+        } catch (storageErr) {
+          console.warn("Storage cleanup skipped or failed:", storageErr);
+        }
+      }
+
+      toast({ 
+        title: "Resident Removed", 
+        description: `${deletingResident.name} has been removed from the sanctuary records.` 
+      });
+    } catch (error) {
+      toast({ 
+        variant: "destructive", 
+        title: "Delete Failed", 
+        description: "Could not remove resident records. Please check permissions." 
+      });
+    }
   };
 
   const handleSaveHealthLog = async (birdId: string, notes: string) => {
@@ -211,8 +255,19 @@ export default function AdminDashboard() {
           ) : birds?.map((bird) => {
             const isHen = bird.sex === 'female';
             const isFounding = !!bird.isFoundingResident;
+            const offspringCount = birds?.filter(b => b.motherId === bird.id || b.fatherId === bird.id).length || 0;
+
             return (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col group">
+              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col group relative">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:bg-destructive/10"
+                  onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+
                 <div className="flex items-center p-4 gap-5">
                   <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner">
                     <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
@@ -283,6 +338,13 @@ export default function AdminDashboard() {
         onOpenChange={setIsHealthLogOpen} 
         onSave={(notes) => handleSaveHealthLog(loggingResident?.id || '', notes)} 
         residentName={loggingResident?.name || ''} 
+      />
+      <DeleteResidentDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        resident={deletingResident}
+        offspringCount={birds?.filter(b => b.motherId === deletingResident?.id || b.fatherId === deletingResident?.id).length || 0}
+        onConfirm={handleDeleteResident}
       />
     </div>
   );
