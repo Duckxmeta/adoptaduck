@@ -17,10 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, X, Upload, ShieldCheck } from 'lucide-react';
+import { Bird, Loader2, Camera, X, Upload, ShieldCheck, TreePine, Info } from 'lucide-react';
 import Image from 'next/image';
-import { useStorage } from '@/firebase/provider';
+import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 interface ResidentDialogProps {
@@ -28,12 +29,21 @@ interface ResidentDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (data: Partial<Resident>) => void;
   resident?: Resident | null;
+  initialData?: Partial<Resident>;
 }
 
-export function ResidentDialog({ open, onOpenChange, onSave, resident }: ResidentDialogProps) {
+export function ResidentDialog({ open, onOpenChange, onSave, resident, initialData }: ResidentDialogProps) {
   const storage = useStorage();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const birdsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
+  }, [firestore]);
+
+  const { data: birds } = useCollection<Resident>(birdsQuery);
   
   const [formData, setFormData] = useState<Partial<Resident>>({
     name: '',
@@ -43,7 +53,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     backstory: '',
     primaryImageUrl: '',
     galleryImageUrls: [],
-    isCommunityDuck: false
+    isCommunityDuck: false,
+    source: 'Original',
+    mother_id: '',
+    father_id: '',
+    hatch_date: '',
+    isFoundingResident: false
   });
 
   const [uploading, setUploading] = useState(false);
@@ -55,9 +70,25 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       setFormData({
         ...resident,
         galleryImageUrls: resident.galleryImageUrls || [],
-        isCommunityDuck: !!resident.isCommunityDuck
+        isCommunityDuck: !!resident.isCommunityDuck,
+        source: resident.source || 'Original',
+        mother_id: resident.mother_id || '',
+        father_id: resident.father_id || '',
+        hatch_date: resident.hatch_date || '',
+        isFoundingResident: !!resident.isFoundingResident
       });
       setPreviewUrl(resident.primaryImageUrl || null);
+    } else if (initialData) {
+      setFormData({
+        ...formData,
+        ...initialData,
+        isCommunityDuck: !!initialData.isCommunityDuck,
+        source: initialData.source || 'Original',
+        mother_id: initialData.mother_id || '',
+        father_id: initialData.father_id || '',
+        hatch_date: initialData.hatch_date || ''
+      });
+      setPreviewUrl(initialData.primaryImageUrl || null);
     } else {
       setFormData({
         name: '',
@@ -67,12 +98,17 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         backstory: '',
         primaryImageUrl: '',
         galleryImageUrls: [],
-        isCommunityDuck: false
+        isCommunityDuck: false,
+        source: 'Original',
+        mother_id: '',
+        father_id: '',
+        hatch_date: '',
+        isFoundingResident: false
       });
       setPreviewUrl(null);
     }
     setSelectedFile(null);
-  }, [resident, open]);
+  }, [resident, initialData, open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -119,13 +155,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     }
   };
 
-  const removeGalleryImage = (index: number) => {
-    const i = index;
-    const newGallery = [...(formData.galleryImageUrls || [])];
-    newGallery.splice(i, 1);
-    setFormData({ ...formData, galleryImageUrls: newGallery });
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card text-card-foreground border-border max-w-lg max-h-[90vh] overflow-y-auto">
@@ -139,51 +168,58 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground font-medium">
-            Maintain accurate sanctuary records. SNAP or UPLOAD a profile photo.
+            Maintain accurate sanctuary records and lineage data.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* Community Duck Toggle */}
-          <div className="flex items-center justify-between p-4 bg-secondary/5 border border-secondary/20 rounded-xl">
-            <div className="space-y-0.5">
-              <Label className="text-xs font-black uppercase tracking-widest text-secondary flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" /> Community Resident
-              </Label>
-              <p className="text-[10px] text-muted-foreground font-medium">Available via partner referral codes.</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between p-4 bg-secondary/5 border border-secondary/20 rounded-xl">
+              <div className="space-y-0.5">
+                <Label className="text-[9px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                  <ShieldCheck className="h-3 w-3" /> Community
+                </Label>
+              </div>
+              <Switch 
+                checked={formData.isCommunityDuck} 
+                onCheckedChange={(checked) => setFormData({...formData, isCommunityDuck: checked})} 
+              />
             </div>
-            <Switch 
-              checked={formData.isCommunityDuck} 
-              onCheckedChange={(checked) => setFormData({...formData, isCommunityDuck: checked})} 
-            />
+            <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl">
+              <div className="space-y-0.5">
+                <Label className="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <TreePine className="h-3 w-3" /> Founding
+                </Label>
+              </div>
+              <Switch 
+                checked={formData.isFoundingResident} 
+                onCheckedChange={(checked) => setFormData({...formData, isFoundingResident: checked})} 
+              />
+            </div>
           </div>
 
-          {/* Profile Photo Upload Section */}
           <div className="space-y-4">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Profile Identity</Label>
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex items-center justify-center group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                {previewUrl ? (
-                  <>
-                    <Image src={previewUrl} alt="Preview" fill className="object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Camera className="h-8 w-8 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-                    <Camera className="h-10 w-10" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Tap to snap or upload</span>
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-border bg-background flex items-center justify-center group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              {previewUrl ? (
+                <>
+                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Camera className="h-8 w-8 text-white" />
                   </div>
-                )}
-                <input 
-                  type="file" 
-                  ref={fileInputRef}
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
+                  <Camera className="h-10 w-10" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to snap or upload profile photo</span>
+                </div>
+              )}
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden" 
+                accept="image/*"
+                onChange={handleFileChange}
+              />
             </div>
           </div>
 
@@ -212,21 +248,87 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-2">
+              <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>
+              <Select 
+                value={formData.sex} 
+                onValueChange={v => setFormData({...formData, sex: v as any})}
+              >
+                <SelectTrigger className="bg-background border-border h-11">
+                  <SelectValue placeholder="Select sex" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="male">Male (Drake)</SelectItem>
+                  <SelectItem value="female">Female (Hen)</SelectItem>
+                  <SelectItem value="unknown">Unknown</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="source" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Source</Label>
+              <Select 
+                value={formData.source} 
+                onValueChange={v => setFormData({...formData, source: v as any})}
+              >
+                <SelectTrigger className="bg-background border-border h-11">
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="Original">Original</SelectItem>
+                  <SelectItem value="Rehomed">Rehomed</SelectItem>
+                  <SelectItem value="Hatched">Hatched (Sanctuary Born)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mother (Optional)</Label>
+              <Select 
+                value={formData.mother_id} 
+                onValueChange={v => setFormData({...formData, mother_id: v})}
+              >
+                <SelectTrigger className="bg-background border-border h-11">
+                  <SelectValue placeholder="Select mother" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="">None / Unknown</SelectItem>
+                  {birds?.filter(b => b.sex === 'female').map(b => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Father (Optional)</Label>
+              <Select 
+                value={formData.father_id} 
+                onValueChange={v => setFormData({...formData, father_id: v})}
+              >
+                <SelectTrigger className="bg-background border-border h-11">
+                  <SelectValue placeholder="Select father" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="">None / Unknown</SelectItem>
+                  {birds?.filter(b => b.sex === 'male').map(b => (
+                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>
-            <Select 
-              value={formData.sex} 
-              onValueChange={v => setFormData({...formData, sex: v as any})}
-            >
-              <SelectTrigger className="bg-background border-border h-11">
-                <SelectValue placeholder="Select sex" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="male">Male (Drake)</SelectItem>
-                <SelectItem value="female">Female (Hen)</SelectItem>
-                <SelectItem value="unknown">Unknown / Not Yet Determined</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="hatch_date" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hatch Date / Arrival Date</Label>
+            <Input 
+              id="hatch_date" 
+              type="date"
+              value={formData.hatch_date} 
+              onChange={e => setFormData({...formData, hatch_date: e.target.value})}
+              className="bg-background border-border h-11"
+            />
           </div>
 
           <div className="space-y-2">
@@ -241,12 +343,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="story" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Story & History</Label>
+            <Label htmlFor="story" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Story & Heritage Notes</Label>
             <Textarea 
               id="story" 
               value={formData.backstory} 
               onChange={e => setFormData({...formData, backstory: e.target.value})}
-              placeholder="Tell the story of how they joined the sanctuary..."
+              placeholder="Describe origin story or incubation notes..."
               className="bg-background border-border min-h-[120px] resize-none"
             />
           </div>

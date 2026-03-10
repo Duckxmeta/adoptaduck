@@ -14,6 +14,11 @@ export type Resident = {
   updatedAt?: string;
   adopterEmail?: string; 
   isCommunityDuck?: boolean;
+  mother_id?: string;
+  father_id?: string;
+  source?: 'Original' | 'Rehomed' | 'Hatched';
+  hatch_date?: string;
+  isFoundingResident?: boolean;
 };
 
 export type UserProfile = {

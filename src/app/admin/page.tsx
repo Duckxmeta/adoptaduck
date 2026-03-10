@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { 
   Plus, 
   Minus,
@@ -20,7 +21,9 @@ import {
   ChevronRight,
   ClipboardList,
   RotateCcw,
-  LayoutDashboard
+  LayoutDashboard,
+  TreePine,
+  Baby
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -42,6 +45,7 @@ export default function AdminDashboard() {
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
+  const [hatcheryInitialData, setHatcheryInitialData] = useState<Partial<Resident> | undefined>(undefined);
   
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
   const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
@@ -77,7 +81,6 @@ export default function AdminDashboard() {
     if (!firestore) return;
     try {
       const birdRef = doc(firestore, 'birds', suggestion.birdId);
-      // Link the bird to the adopter's email for the member dashboard
       await updateDoc(birdRef, { 
         name: suggestion.suggestedName,
         adopterEmail: suggestion.donorEmail || null,
@@ -120,6 +123,20 @@ export default function AdminDashboard() {
     toast({ title: "Egg Removed" });
   };
 
+  const handleHatchEgg = (mother: Resident) => {
+    if (!firestore || mother.eggCounter <= 0) return;
+    
+    setHatcheryInitialData({
+      mother_id: mother.id,
+      breed: mother.breed,
+      source: 'Hatched',
+      hatch_date: new Date().toISOString().split('T')[0],
+      backstory: `Hatched in the sanctuary. Biological mother is ${mother.name}.`
+    });
+    setEditingResident(null);
+    setIsDialogOpen(true);
+  };
+
   const handleSaveResident = (data: Partial<Resident>) => {
     if (!firestore) return;
     if (editingResident) {
@@ -127,6 +144,12 @@ export default function AdminDashboard() {
       toast({ title: "Resident Updated" });
     } else {
       const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+      
+      // If hatching, decrement mother's egg counter
+      if (data.source === 'Hatched' && data.mother_id) {
+        updateDocumentNonBlocking(doc(firestore, 'birds', data.mother_id), { eggCounter: increment(-1) });
+      }
+
       setDoc(doc(firestore, 'birds', newId), {
         ...data,
         id: newId,
@@ -137,6 +160,7 @@ export default function AdminDashboard() {
       });
       toast({ title: "Resident Added" });
     }
+    setHatcheryInitialData(undefined);
     setIsDialogOpen(false);
   };
 
@@ -148,7 +172,7 @@ export default function AdminDashboard() {
         logDate: new Date().toISOString(),
         notes,
       });
-      toast({ title: "Care Log Saved", description: "Members will see this update in real-time." });
+      toast({ title: "Care Log Saved" });
       setIsHealthLogOpen(false);
     } catch (error) {
       toast({ variant: "destructive", title: "Error", description: "Failed to save health log." });
@@ -171,7 +195,7 @@ export default function AdminDashboard() {
       nightlyPenUp: false,
       lastReset: new Date().toISOString()
     }, { merge: true });
-    toast({ title: "Checklist Reset", description: "A fresh start for a new day." });
+    toast({ title: "Checklist Reset" });
   };
 
   if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
@@ -182,27 +206,28 @@ export default function AdminDashboard() {
     );
   }
 
+  const incubatorBirds = birds?.filter(b => b.sex === 'female' && b.eggCounter > 0) || [];
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
       <Navbar />
 
       <main className="container mx-auto p-4 space-y-12 mt-8">
-        {/* Dashboard Title Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
            <div className="space-y-1">
               <h1 className="font-headline font-black text-4xl uppercase tracking-tighter flex items-center gap-3">
                 <LayoutDashboard className="h-8 w-8 text-primary" /> 
                 MANAGER <span className="text-primary">PORTAL</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Virtual Sanctuary Control Center</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">FLOCK LINEAGE & OPERATIONS</p>
            </div>
         </div>
 
-        {/* Daily Sanctuary Routine Checklist */}
+        {/* Daily Routine Checklist */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-              <ClipboardList className="h-4 w-4" /> DAILY SANCTUARY ROUTINE
+              <ClipboardList className="h-4 w-4" /> DAILY ROUTINE
             </h2>
             <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
               <RotateCcw className="h-3 w-3 mr-1" /> Reset Day
@@ -211,11 +236,11 @@ export default function AdminDashboard() {
           <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl">
             <CardContent className="p-6 grid grid-cols-1 md:grid-cols-5 gap-6">
               {[
-                { label: "Morning Feeding", icon: "🌾", key: "morningFeeding" },
-                { label: "Fresh Water", icon: "💧", key: "freshWater" },
-                { label: "Egg Counter", icon: "🥚", key: "eggCounter" },
-                { label: "Health Check", icon: "🩺", key: "healthCheck" },
-                { label: "Nightly Pen Up", icon: "🌙", key: "nightlyPenUp" }
+                { label: "Feeding", icon: "🌾", key: "morningFeeding" },
+                { label: "Water", icon: "💧", key: "freshWater" },
+                { label: "Eggs", icon: "🥚", key: "eggCounter" },
+                { label: "Health", icon: "🩺", key: "healthCheck" },
+                { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
               ].map((task) => (
                 <div key={task.key} className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-xl border border-border">
                   <span className="text-2xl">{task.icon}</span>
@@ -231,33 +256,31 @@ export default function AdminDashboard() {
           </Card>
         </section>
 
-        {/* Pending Name Suggestions Notification Panel */}
-        {suggestions && suggestions.length > 0 && (
+        {/* Hatchery Log / Egg to Duck Pipeline */}
+        {incubatorBirds.length > 0 && (
           <section className="space-y-4">
              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
-               <MessageSquare className="h-4 w-4" /> PENDING NAME SUGGESTIONS
+               <Baby className="h-4 w-4" /> SANCTUARY HATCHERY LOG
              </h2>
-             <div className="grid gap-4">
-               {suggestions.map((s) => (
-                 <Card key={s.id} className="bg-secondary/5 border-secondary/20 rounded-2xl overflow-hidden shadow-lg">
-                    <CardContent className="p-4 flex items-center justify-between">
-                       <div className="space-y-1">
-                          <p className="text-xs font-black uppercase tracking-tight flex items-center">
-                            <span className="text-muted-foreground">{s.birdOriginalName}</span> 
-                            <ChevronRight className="h-3 w-3 mx-2 opacity-50" /> 
-                            <span className="text-secondary">{s.suggestedName}</span>
-                          </p>
-                          <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Donor: {s.donorEmail}</p>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+               {incubatorBirds.map(hen => (
+                 <Card key={hen.id} className="bg-secondary/5 border-secondary/20 rounded-2xl overflow-hidden p-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                       <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-secondary/20">
+                          <Image src={hen.primaryImageUrl} alt={hen.name} fill className="object-cover" />
                        </div>
-                       <div className="flex gap-2">
-                          <Button size="icon" className="bg-[#14F195] hover:bg-[#14F195]/80 text-black rounded-full h-8 w-8" onClick={() => handleApproveSuggestion(s)}>
-                             <Check className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="text-destructive rounded-full h-8 w-8" onClick={() => handleRejectSuggestion(s.id)}>
-                             <CloseIcon className="h-4 w-4" />
-                          </Button>
+                       <div className="flex-1 min-w-0">
+                          <p className="font-black text-[10px] uppercase truncate">{hen.name}</p>
+                          <p className="text-[9px] text-muted-foreground uppercase">{hen.eggCounter} Eggs Available</p>
                        </div>
-                    </CardContent>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-secondary text-secondary-foreground font-black text-[9px] uppercase tracking-widest h-9"
+                      onClick={() => handleHatchEgg(hen)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Convert Egg to Duck
+                    </Button>
                  </Card>
                ))}
              </div>
@@ -265,8 +288,8 @@ export default function AdminDashboard() {
         )}
 
         <div className="flex justify-between items-center">
-           <h2 className="font-headline font-black text-sm uppercase tracking-[0.3em]">FLOCK DIRECTORY</h2>
-           <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl h-11 px-6 shadow-lg shadow-primary/20">
+           <h2 className="font-headline font-black text-sm uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2>
+           <Button onClick={() => { setEditingResident(null); setHatcheryInitialData(undefined); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl h-11 px-6 shadow-lg">
              <Plus className="h-4 w-4 mr-2" /> ADD BIRD
            </Button>
         </div>
@@ -276,23 +299,25 @@ export default function AdminDashboard() {
              [1,2,3].map(i => <div key={i} className="h-48 bg-card animate-pulse rounded-2xl" />)
           ) : birds?.map((bird) => {
             const isHen = bird.sex === 'female';
+            const isFounding = !!bird.isFoundingResident;
             return (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col">
+              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col group">
                 <div className="flex items-center p-4 gap-5">
                   <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner">
                     <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-headline font-black text-2xl truncate uppercase tracking-tight">{bird.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-headline font-black text-2xl truncate uppercase tracking-tight">{bird.name}</h3>
+                      {isFounding && <TreePine className="h-4 w-4 text-primary shrink-0" />}
+                    </div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">{bird.breed} • {bird.sex}</p>
-                    {bird.adopterEmail && (
-                      <Badge variant="outline" className="mt-1 text-[8px] border-primary/30 text-primary/80">Adopted by member</Badge>
-                    )}
+                    <Badge variant="outline" className="mt-1 text-[8px] border-primary/30 text-primary/80 uppercase">Gen: {bird.source || 'Original'}</Badge>
                   </div>
                   {isHen && (
-                    <div className="flex flex-col items-center bg-primary/10 p-3 rounded-xl border border-primary/20 min-w-[60px] shadow-sm">
+                    <div className="flex flex-col items-center bg-primary/10 p-3 rounded-xl border border-primary/20 min-w-[60px]">
                       <span className="text-2xl font-headline font-black text-primary leading-none">{bird.eggCounter}</span>
-                      <span className="text-[8px] font-black uppercase text-primary/60 tracking-tighter mt-1">EGGS</span>
+                      <span className="text-[8px] font-black uppercase text-primary/60 mt-1">EGGS</span>
                     </div>
                   )}
                 </div>
@@ -300,34 +325,34 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 border-t border-border divide-x divide-border mt-auto">
                   {isHen ? (
                     <>
-                      <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => handleAddEgg(bird)}>
-                        <Plus className="h-5 w-5 text-[#14F195] group-hover:scale-125 transition-transform" />
-                        <span className="text-[9px] font-black text-[#14F195] tracking-widest uppercase">ADD EGG</span>
+                      <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => handleAddEgg(bird)}>
+                        <Plus className="h-4 w-4 text-[#14F195]" />
+                        <span className="text-[8px] font-black text-[#14F195] tracking-widest uppercase">ADD EGG</span>
                       </Button>
-                      <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => handleRemoveEgg(bird)} disabled={bird.eggCounter <= 0}>
-                        <Minus className="h-5 w-5 text-red-500 group-hover:scale-125 transition-transform" />
-                        <span className="text-[9px] font-black text-red-500 tracking-widest uppercase">SUB EGG</span>
+                      <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => handleRemoveEgg(bird)} disabled={bird.eggCounter <= 0}>
+                        <Minus className="h-4 w-4 text-red-500" />
+                        <span className="text-[8px] font-black text-red-500 tracking-widest uppercase">SUB EGG</span>
                       </Button>
                     </>
                   ) : (
-                    <div className="col-span-2 h-16 bg-muted/20 flex items-center justify-center">
-                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] italic">Sanctuary Guardian (No Eggs)</span>
+                    <div className="col-span-2 h-14 bg-muted/20 flex items-center justify-center">
+                      <span className="text-[8px] font-black text-muted-foreground uppercase tracking-[0.3em]">Sanctuary Guardian</span>
                     </div>
                   )}
                 </div>
 
                 <div className="grid grid-cols-3 border-t border-border divide-x divide-border">
-                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
-                    <Stethoscope className="h-5 w-5 text-secondary group-hover:scale-125 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">LOG CARE</span>
+                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
+                    <Stethoscope className="h-4 w-4 text-secondary" />
+                    <span className="text-[7px] font-black uppercase tracking-widest">LOG</span>
                   </Button>
-                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
-                    <Settings className="h-5 w-5 text-muted-foreground group-hover:scale-125 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">EDIT</span>
+                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => { setEditingResident(bird); setHatcheryInitialData(undefined); setIsDialogOpen(true); }}>
+                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-[7px] font-black uppercase tracking-widest">EDIT</span>
                   </Button>
-                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => toast({ title: "AI Generation...", description: "Feature ready for Lore update." })}>
-                    <Sparkles className="h-5 w-5 text-primary group-hover:scale-125 transition-transform" />
-                    <span className="text-[8px] font-black uppercase tracking-widest">LORE</span>
+                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => router.push(`/residents/${bird.id}`)}>
+                    <ChevronRight className="h-4 w-4 text-primary" />
+                    <span className="text-[7px] font-black uppercase tracking-widest">TREE</span>
                   </Button>
                 </div>
               </Card>
@@ -336,7 +361,13 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
+      <ResidentDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        onSave={handleSaveResident} 
+        resident={editingResident}
+        initialData={hatcheryInitialData}
+      />
       <HealthLogDialog 
         open={isHealthLogOpen} 
         onOpenChange={setIsHealthLogOpen} 

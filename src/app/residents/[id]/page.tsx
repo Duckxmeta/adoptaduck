@@ -7,13 +7,14 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
-import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock, CheckCircle2 } from 'lucide-react';
+import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock, CheckCircle2, TreePine, ChevronRight, User } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { Resident, HealthLogEntry } from '@/lib/types';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
 
@@ -32,8 +33,41 @@ export default function ResidentProfile() {
     return query(collection(firestore, 'birds', id, 'healthLogs'), orderBy('logDate', 'desc'));
   }, [firestore, id, user]);
 
+  const offspringQuery = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return query(
+      collection(firestore, 'birds'), 
+      where('mother_id', '==', id)
+    );
+  }, [firestore, id]);
+  
+  const fatherOffspringQuery = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return query(
+      collection(firestore, 'birds'), 
+      where('father_id', '==', id)
+    );
+  }, [firestore, id]);
+
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
   const { data: logs } = useCollection<HealthLogEntry>(logsQuery);
+  const { data: motherChildren } = useCollection<Resident>(offspringQuery);
+  const { data: fatherChildren } = useCollection<Resident>(fatherOffspringQuery);
+
+  const children = [...(motherChildren || []), ...(fatherChildren || [])].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+
+  const motherRef = useMemoFirebase(() => {
+    if (!firestore || !bird?.mother_id) return null;
+    return doc(firestore, 'birds', bird.mother_id);
+  }, [firestore, bird?.mother_id]);
+
+  const fatherRef = useMemoFirebase(() => {
+    if (!firestore || !bird?.father_id) return null;
+    return doc(firestore, 'birds', bird.father_id);
+  }, [firestore, bird?.father_id]);
+
+  const { data: mother } = useDoc<Resident>(motherRef);
+  const { data: father } = useDoc<Resident>(fatherRef);
 
   if (isLoading) {
     return (
@@ -50,6 +84,7 @@ export default function ResidentProfile() {
 
   const isHen = bird?.sex === 'female';
   const isCommunity = bird ? (COMMUNITY_NAMES.includes(bird.name) || !!bird.isCommunityDuck) : false;
+  const isFounding = !!bird?.isFoundingResident || COMMUNITY_NAMES.includes(bird?.name || '');
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -76,6 +111,9 @@ export default function ResidentProfile() {
                    {isCommunity && (
                      <Badge className="bg-secondary text-secondary-foreground border-none font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">Community Resident</Badge>
                    )}
+                   {isFounding && (
+                     <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">Founding Resident</Badge>
+                   )}
                 </div>
               </div>
             </div>
@@ -90,44 +128,14 @@ export default function ResidentProfile() {
                 </div>
               </div>
 
-              {isCommunity && (
-                <div className="bg-secondary/10 border-2 border-secondary/20 p-6 rounded-2xl">
-                  <p className="text-sm font-black uppercase tracking-tight text-secondary mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" /> Community Partnership
-                  </p>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    This resident is already part of a community partnership and is not available for individual adoption. Use a partner code in your dashboard to follow their progress.
-                  </p>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-6">
-                {isHen ? (
-                  <div className="bg-card p-8 rounded-2xl border border-border glow-primary relative overflow-hidden">
-                    {user ? (
-                      <>
-                        <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                          <Egg className="h-5 w-5 text-primary" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Rescued Eggs</span>
-                        </div>
-                        <span className="text-5xl font-headline font-black">{bird?.eggCounter || 0}</span>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 opacity-60">
-                        <Lock className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-center">Production Hidden</span>
-                      </div>
-                    )}
+                <div className="bg-card p-8 rounded-2xl border border-border flex flex-col justify-between">
+                  <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                    <History className="h-5 w-5 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Source</span>
                   </div>
-                ) : (
-                  <div className="bg-card p-8 rounded-2xl border border-border opacity-50">
-                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                      <Bird className="h-5 w-5 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Identity</span>
-                    </div>
-                    <span className="text-2xl font-headline font-black uppercase">Guardian</span>
-                  </div>
-                )}
+                  <span className="text-2xl font-headline font-black uppercase tracking-tight">{bird?.source || 'Original'}</span>
+                </div>
                 <div className="bg-card p-8 rounded-2xl border border-border">
                   <div className="flex items-center gap-3 text-muted-foreground mb-4">
                     <Heart className="h-5 w-5 text-secondary" />
@@ -148,51 +156,8 @@ export default function ResidentProfile() {
 
               <div className="pt-6">
                 {bird && <AdoptionModal resident={bird as any} />}
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
-                    100% of proceeds fund sanctuary operations
-                  </p>
-                </div>
               </div>
             </div>
-          </div>
-
-          {/* Life at the Sanctuary Gallery */}
-          <div className="mt-24 space-y-8">
-            <div className="flex items-center justify-between border-b border-border pb-4">
-               <h2 className="font-headline font-black text-2xl uppercase tracking-tight flex items-center gap-3">
-                 <Camera className="h-6 w-6 text-primary" /> Life at the Sanctuary
-               </h2>
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Gallery Updates</span>
-            </div>
-            
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex w-max space-x-6 p-1">
-                {bird?.galleryImageUrls && bird.galleryImageUrls.length > 0 ? (
-                  bird.galleryImageUrls.map((url, i) => (
-                    <div key={i} className="relative w-[300px] h-[300px] rounded-2xl overflow-hidden border border-border group">
-                      <Image
-                        src={url}
-                        alt={`${bird.name} Gallery ${i}`}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                  ))
-                ) : (
-                  [1, 2, 3].map(i => (
-                    <div key={i} className="relative w-[300px] h-[300px] rounded-2xl overflow-hidden border border-border bg-card/50 flex items-center justify-center opacity-40 italic font-black text-[10px] uppercase tracking-widest text-muted-foreground">
-                      <div className="text-center">
-                        <Camera className="h-8 w-8 mb-2 block mx-auto opacity-20" />
-                        Awaiting Updates
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
           </div>
 
           <div className="mt-24">
@@ -201,19 +166,106 @@ export default function ResidentProfile() {
                 <TabsTrigger value="story" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                   <History className="h-4 w-4" /> Rescue Story
                 </TabsTrigger>
+                <TabsTrigger value="lineage" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
+                   <TreePine className="h-4 w-4" /> Lineage & Heritage
+                </TabsTrigger>
                 <TabsTrigger value="logs" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                   <Stethoscope className="h-4 w-4" /> Sanctuary Log
-                </TabsTrigger>
-                <TabsTrigger value="lineage" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
-                   <Info className="h-4 w-4" /> Heritage
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="story" className="py-16">
-                <div className="max-w-3xl">
-                  <p className="text-xl leading-relaxed text-muted-foreground font-medium border-l-4 border-primary pl-8 py-4">
-                    {bird?.backstory}
-                  </p>
+                <div className="max-w-3xl space-y-12">
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary">Resident Background</h4>
+                    <p className="text-xl leading-relaxed text-muted-foreground font-medium border-l-4 border-primary pl-8 py-4">
+                      {bird?.backstory}
+                    </p>
+                  </div>
+                  
+                  {bird?.source === 'Rehomed' && (
+                    <div className="bg-primary/5 p-8 rounded-2xl border border-primary/20">
+                      <h5 className="text-[10px] font-black uppercase tracking-widest text-primary mb-3">Rehoming History</h5>
+                      <p className="text-sm text-muted-foreground italic">
+                        This resident was rescued and rehomed into our care from a domestic environment where they could no longer be supported.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="lineage" className="py-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                   <div className="space-y-10">
+                     <div className="space-y-6">
+                        <h4 className="font-headline font-black text-xl flex items-center gap-3"><ChevronRight className="text-primary h-6 w-6" /> PARENTS</h4>
+                        <div className="grid gap-4">
+                           {mother ? (
+                             <Link href={`/residents/${mother.id}`} className="group flex items-center gap-4 p-4 bg-card border border-border rounded-2xl hover:border-primary transition-colors">
+                               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
+                                 <Image src={mother.primaryImageUrl} alt={mother.name} fill className="object-cover" />
+                               </div>
+                               <div>
+                                 <p className="text-[9px] font-black uppercase tracking-widest text-primary">Mother</p>
+                                 <p className="font-headline font-black uppercase text-lg group-hover:text-primary transition-colors">{mother.name}</p>
+                               </div>
+                             </Link>
+                           ) : (
+                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Mother Unknown / Founding</div>
+                           )}
+
+                           {father ? (
+                             <Link href={`/residents/${father.id}`} className="group flex items-center gap-4 p-4 bg-card border border-border rounded-2xl hover:border-primary transition-colors">
+                               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
+                                 <Image src={father.primaryImageUrl} alt={father.name} fill className="object-cover" />
+                               </div>
+                               <div>
+                                 <p className="text-[9px] font-black uppercase tracking-widest text-primary">Father</p>
+                                 <p className="font-headline font-black uppercase text-lg group-hover:text-primary transition-colors">{father.name}</p>
+                               </div>
+                             </Link>
+                           ) : (
+                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Father Unknown / Founding</div>
+                           )}
+                        </div>
+                     </div>
+
+                     <div className="space-y-6">
+                        <h4 className="font-headline font-black text-xl flex items-center gap-3"><ChevronRight className="text-primary h-6 w-6" /> OFFSPRING</h4>
+                        {children.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {children.map(child => (
+                              <Link key={child.id} href={`/residents/${child.id}`} className="group flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-primary transition-colors">
+                                <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-primary/20">
+                                  <Image src={child.primaryImageUrl} alt={child.name} fill className="object-cover" />
+                                </div>
+                                <p className="font-headline font-black uppercase text-sm group-hover:text-primary transition-colors truncate">{child.name}</p>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic font-medium">No sanctuary-born offspring recorded for this resident.</p>
+                        )}
+                     </div>
+                   </div>
+
+                   <div className="space-y-8">
+                      <Card className="bg-primary/5 border-2 border-primary/20 p-8 rounded-3xl relative overflow-hidden">
+                        <div className="relative z-10 space-y-4">
+                           <h4 className="font-headline font-black text-2xl tracking-tighter uppercase">Sanctuary Heritage</h4>
+                           <p className="text-sm leading-relaxed text-muted-foreground font-medium">
+                             {bird?.heritageTree || "Historical records for this resident are verified by the sanctuary medical team. Every resident marks a new chapter in our flock's story."}
+                           </p>
+                           {isFounding && (
+                             <div className="pt-4 flex items-center gap-3">
+                               <div className="p-2 bg-primary rounded-lg text-primary-foreground"><TreePine className="h-5 w-5" /></div>
+                               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Founding Gen Resident</span>
+                             </div>
+                           )}
+                        </div>
+                        <Sparkles className="absolute -bottom-10 -right-10 h-32 w-32 text-primary/10 -rotate-12" />
+                      </Card>
+                   </div>
                 </div>
               </TabsContent>
 
@@ -223,7 +275,7 @@ export default function ResidentProfile() {
                     <div className="bg-secondary/5 border-2 border-secondary/20 p-10 rounded-3xl flex flex-col justify-center items-center text-center">
                       <Lock className="h-16 w-16 text-secondary mb-6" />
                       <h4 className="font-headline font-black text-2xl mb-3 tracking-tighter uppercase">Member Exclusive</h4>
-                      <p className="text-muted-foreground font-medium">Detailed Care Logs are reserved for our Adopters and Sanctuary Viewers. Sign up for free to access daily wellness updates.</p>
+                      <p className="text-muted-foreground font-medium">Wellness updates are reserved for our Adopters and Sanctuary Viewers.</p>
                     </div>
                   ) : logs && logs.length > 0 ? (
                     <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary before:via-secondary before:to-transparent">
@@ -234,10 +286,9 @@ export default function ResidentProfile() {
                           </div>
                           <div className="flex-1 bg-card/50 border border-border p-6 rounded-2xl ml-12">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                                <Calendar className="h-3 w-3" /> {format(new Date(log.logDate), 'MMMM dd, yyyy')}
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary">
+                                {format(new Date(log.logDate), 'MMMM dd, yyyy')}
                               </span>
-                              <Badge variant="outline" className="text-[#14F195] border-[#14F195] text-[8px] font-black uppercase tracking-widest px-2">Daily Care Log</Badge>
                             </div>
                             <p className="text-muted-foreground leading-relaxed text-sm">
                               {log.notes}
@@ -248,31 +299,9 @@ export default function ResidentProfile() {
                     </div>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground italic font-medium">
-                      Staff are currently archiving historical care logs for {bird?.name}.
+                      No health logs available for this resident yet.
                     </div>
                   )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="lineage" className="py-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                   <div className="bg-card p-10 rounded-3xl border border-border">
-                     <h4 className="font-headline font-black text-xl mb-8 flex items-center gap-3"><History className="text-primary h-6 w-6" /> LINEAGE RECORDS</h4>
-                     <p className="text-muted-foreground text-lg leading-relaxed">
-                       {user ? (
-                         bird?.heritageTree || "Historical data for this resident is currently being archived by sanctuary staff."
-                       ) : (
-                         <span className="flex items-center gap-2">
-                           <Lock className="h-4 w-4" /> Sign in as a member to view detailed heritage trees and rescue lineage.
-                         </span>
-                       )}
-                     </p>
-                   </div>
-                   <div className="bg-secondary/5 border-2 border-secondary/20 p-10 rounded-3xl flex flex-col justify-center items-center text-center">
-                      <ShieldCheck className="h-16 w-16 text-secondary mb-6" />
-                      <h4 className="font-headline font-black text-2xl mb-3 tracking-tighter">VERIFIED RECORD</h4>
-                      <p className="text-muted-foreground font-medium">This profile is managed and verified by the Decent Ducks Sanctuary medical team.</p>
-                   </div>
                 </div>
               </TabsContent>
             </Tabs>
