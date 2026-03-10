@@ -84,7 +84,7 @@ export default function ResidentProfile() {
 
   const isHen = bird?.sex === 'female';
   const isCommunity = bird ? (COMMUNITY_NAMES.includes(bird.name) || !!bird.isCommunityDuck) : false;
-  const isFounding = !!bird?.isFoundingResident || COMMUNITY_NAMES.includes(bird?.name || '');
+  const isFounding = !bird?.motherId && !bird?.fatherId;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -145,6 +145,47 @@ export default function ResidentProfile() {
                 </div>
               </div>
 
+              {/* Sanctuary Lineage Component */}
+              <div className="space-y-4 pt-4">
+                <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                  <TreePine className="h-4 w-4" /> Sanctuary Lineage
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {isFounding ? (
+                    <div className="col-span-full">
+                       <Badge className="bg-primary/10 text-primary border-primary/20 py-3 px-6 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] w-full flex justify-center items-center gap-2 border shadow-lg">
+                         <Sparkles className="h-4 w-4" /> Founding Resident
+                       </Badge>
+                       <p className="text-[9px] text-muted-foreground uppercase font-black text-center mt-3 tracking-widest opacity-60">One of the original Sanctuary Founders</p>
+                    </div>
+                  ) : (
+                    <>
+                      {mother ? (
+                        <Link href={`/residents/${mother.id}`} className="group p-4 bg-card border border-border rounded-2xl hover:border-primary transition-all shadow-md hover:shadow-primary/5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Mother:</span>
+                          <span className="font-headline font-black text-lg uppercase group-hover:text-primary transition-colors">{mother.name}</span>
+                        </Link>
+                      ) : (
+                        <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground italic opacity-50">
+                          Mother: Unknown / Original
+                        </div>
+                      )}
+                      
+                      {father ? (
+                        <Link href={`/residents/${father.id}`} className="group p-4 bg-card border border-border rounded-2xl hover:border-primary transition-all shadow-md hover:shadow-primary/5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Father:</span>
+                          <span className="font-headline font-black text-lg uppercase group-hover:text-primary transition-colors">{father.name}</span>
+                        </Link>
+                      ) : (
+                        <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-[10px] font-black uppercase tracking-widest text-muted-foreground italic opacity-50">
+                          Father: Unknown / Original
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
                   <Sparkles className="h-4 w-4" /> Personality Profile
@@ -167,7 +208,7 @@ export default function ResidentProfile() {
                   <History className="h-4 w-4" /> Rescue Story
                 </TabsTrigger>
                 <TabsTrigger value="lineage" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
-                   <TreePine className="h-4 w-4" /> Family Tree
+                   <TreePine className="h-4 w-4" /> Offspring & History
                 </TabsTrigger>
                 <TabsTrigger value="logs" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                   <Stethoscope className="h-4 w-4" /> Sanctuary Log
@@ -198,44 +239,11 @@ export default function ResidentProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                    <div className="space-y-10">
                      <div className="space-y-6">
-                        <h4 className="font-headline font-black text-xl flex items-center gap-3"><ChevronRight className="text-primary h-6 w-6" /> PARENTS</h4>
-                        <div className="grid gap-4">
-                           {mother ? (
-                             <Link href={`/residents/${mother.id}`} className="group flex items-center gap-4 p-4 bg-card border border-border rounded-2xl hover:border-primary transition-colors">
-                               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
-                                 <Image src={mother.primaryImageUrl} alt={mother.name} fill className="object-cover" />
-                               </div>
-                               <div>
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-primary">Mother</p>
-                                 <p className="font-headline font-black uppercase text-lg group-hover:text-primary transition-colors">{mother.name}</p>
-                               </div>
-                             </Link>
-                           ) : (
-                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Mother Unknown / Original</div>
-                           )}
-
-                           {father ? (
-                             <Link href={`/residents/${father.id}`} className="group flex items-center gap-4 p-4 bg-card border border-border rounded-2xl hover:border-primary transition-colors">
-                               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
-                                 <Image src={father.primaryImageUrl} alt={father.name} fill className="object-cover" />
-                               </div>
-                               <div>
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-primary">Father</p>
-                                 <p className="font-headline font-black uppercase text-lg group-hover:text-primary transition-colors">{father.name}</p>
-                               </div>
-                             </Link>
-                           ) : (
-                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Father Unknown / Original</div>
-                           )}
-                        </div>
-                     </div>
-
-                     <div className="space-y-6">
-                        <h4 className="font-headline font-black text-xl flex items-center gap-3"><ChevronRight className="text-primary h-6 w-6" /> OFFSPRING</h4>
+                        <h4 className="font-headline font-black text-xl flex items-center gap-3 text-primary"><ChevronRight className="h-6 w-6" /> SANCTUARY OFFSPRING</h4>
                         {children.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {children.map(child => (
-                              <Link key={child.id} href={`/residents/${child.id}`} className="group flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-primary transition-colors">
+                              <Link key={child.id} href={`/residents/${child.id}`} className="group flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-primary transition-all shadow-sm">
                                 <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-primary/20">
                                   <Image src={child.primaryImageUrl} alt={child.name} fill className="object-cover" />
                                 </div>
@@ -244,7 +252,9 @@ export default function ResidentProfile() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground italic font-medium">No sanctuary-born offspring recorded for this resident.</p>
+                          <div className="p-6 bg-muted/5 border border-dashed border-border rounded-2xl text-center">
+                            <p className="text-xs text-muted-foreground uppercase font-black tracking-widest italic">No sanctuary-born offspring recorded.</p>
+                          </div>
                         )}
                      </div>
                    </div>
@@ -258,7 +268,7 @@ export default function ResidentProfile() {
                            </p>
                            {isFounding && (
                              <div className="pt-4 flex items-center gap-3">
-                               <div className="p-2 bg-primary rounded-lg text-primary-foreground"><TreePine className="h-5 w-5" /></div>
+                               <div className="p-2 bg-primary rounded-lg text-primary-foreground shadow-lg"><TreePine className="h-5 w-5" /></div>
                                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Founding Gen Resident</span>
                              </div>
                            )}
