@@ -53,7 +53,7 @@ const REFERRAL_MAP: Record<string, string> = {
   'STRAY-G0': 'Joey',
   'QUAKK-G0': 'Jordie',
   'QUAKEY-G0': 'Cutie Pie',
-  'GODS-G0': 'SolGods'
+  'GODS-G0': 'Huey'
 };
 
 export default function MemberDashboard() {
@@ -230,7 +230,9 @@ export default function MemberDashboard() {
         setUnlockedName(targetName);
         toast({
           title: "Welcome to the flock!",
-          description: `You are now a community adopter of ${targetName}.`,
+          description: code === 'GODS-G0' 
+            ? "Success! You've joined Huey’s flock, proudly sponsored by SolGods."
+            : `You are now a community adopter of ${targetName}.`,
         });
         setReferralCode('');
       }
@@ -314,7 +316,11 @@ export default function MemberDashboard() {
           <div className="bg-[#14F195]/10 border-2 border-[#14F195]/20 p-6 rounded-2xl text-center animate-in zoom-in duration-500">
              <PartyPopper className="h-8 w-8 text-[#14F195] mx-auto mb-2" />
              <h3 className="text-xl font-headline font-black uppercase text-[#14F195]">Code Success!</h3>
-             <p className="text-sm font-medium">Welcome to the flock! You are now a community adopter of <strong>{unlockedName === 'Huey' ? 'SolGods' : unlockedName}</strong>.</p>
+             <p className="text-sm font-medium">
+               {unlockedName === 'Huey' 
+                ? "Success! You've joined Huey’s flock, proudly sponsored by SolGods."
+                : `Welcome to the flock! You are now a community adopter of ${unlockedName}.`}
+             </p>
              <Button variant="ghost" size="sm" onClick={() => setUnlockedName(null)} className="mt-2 text-[10px] font-black uppercase tracking-widest opacity-60">Dismiss</Button>
           </div>
         )}
@@ -421,7 +427,10 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
   const { user } = useUser();
   const isHen = bird.sex === 'female';
   
-  const displayName = bird.name === 'Huey' ? 'SolGods' : bird.name;
+  const displayName = bird.name;
+  const altText = displayName === 'Huey' 
+    ? 'Huey, a rescued duck at the Virtual Sanctuary, adopted by SolGods.'
+    : `${displayName} Community Duck`;
 
   const logsQuery = useMemoFirebase(() => {
     if (!firestore || !bird.id || !user) return null;
@@ -442,7 +451,7 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
       <div className="relative aspect-video overflow-hidden">
         <Image 
           src={bird.primaryImageUrl} 
-          alt={`${displayName} Community Duck`} 
+          alt={altText} 
           fill 
           className="object-cover transition-transform duration-700 group-hover:scale-110" 
         />
@@ -451,6 +460,9 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
            <div>
               <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter">{displayName}</h3>
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.breed}</p>
+              {displayName === 'Huey' && (
+                <Badge variant="outline" className="mt-1 text-[8px] border-secondary/50 text-secondary bg-secondary/10">Adopted by SolGods</Badge>
+              )}
            </div>
            {hasRecentEgg && (
              <Badge className="bg-[#14F195] text-black font-black flex items-center gap-1.5 px-3 py-1.5 rounded-lg border-none animate-bounce">
@@ -565,7 +577,7 @@ function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlocke
 
 function BirdLogs({ bird }: { bird: Resident }) {
   const firestore = useFirestore();
-  const displayName = bird.name === 'Huey' ? 'SolGods' : bird.name;
+  const displayName = bird.name;
   
   const logsQuery = useMemoFirebase(() => {
     if (!firestore || !bird.id) return null;
@@ -583,7 +595,7 @@ function BirdLogs({ bird }: { bird: Resident }) {
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
               <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
-                <Image src={bird.primaryImageUrl} alt={`${displayName} Community Duck`} fill className="object-cover" />
+                <Image src={bird.primaryImageUrl} alt={`${displayName} Daily Log`} fill className="object-cover" />
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between">

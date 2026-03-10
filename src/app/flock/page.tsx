@@ -19,8 +19,8 @@ const PARTNER_MAP: Record<string, string> = {
   'Joey': 'Solana Strays',
   'Jordie': 'Quakk',
   'Cutie Pie': 'Quakey',
-  'Huey': 'Solana Gods',
-  'SolGods': 'Solana Gods'
+  'Huey': 'SolGods',
+  'SolGods': 'SolGods'
 };
 
 export default function BrowseFlock() {
@@ -49,9 +49,13 @@ export default function BrowseFlock() {
     const nameNorm = bird.name?.trim().toLowerCase().replace(/\s+/g, '');
     const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!bird.isCommunityDuck;
     
-    const displayName = bird.name === 'Huey' ? 'SolGods' : bird.name;
+    // Keep name as stored, but check for Huey/SolGods branding
+    const displayName = bird.name;
     const partnerKey = COMMUNITY_NAMES.find(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm);
     const partnerName = partnerKey ? PARTNER_MAP[partnerKey] : null;
+    const altText = displayName === 'Huey' 
+      ? 'Huey, a rescued duck at the Virtual Sanctuary, adopted by SolGods.'
+      : `${displayName} Community Duck`;
 
     return (
       <Card 
@@ -64,7 +68,7 @@ export default function BrowseFlock() {
         <div className="relative aspect-[4/5] overflow-hidden">
           <Image 
             src={bird.primaryImageUrl} 
-            alt={`${displayName} Community Duck`} 
+            alt={altText} 
             fill 
             className="object-cover transition-transform duration-700 group-hover:scale-110" 
           />

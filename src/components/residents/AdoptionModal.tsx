@@ -32,7 +32,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
 
   const nameNorm = resident.name?.trim().toLowerCase().replace(/\s+/g, '');
   const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase().replace(/\s+/g, '') === nameNorm) || !!resident.isCommunityDuck;
-  const displayName = resident.name === 'Huey' ? 'SolGods' : resident.name;
+  const displayName = resident.name;
 
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);
