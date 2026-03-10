@@ -3,11 +3,12 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * DECENT DUCKS SANCTUARY SECURITY MODEL
+     * VIRTUAL SANCTUARY SECURITY MODEL
      * 
      * Core Philosophy:
      * This ruleset secures the sanctuary platform by strictly limiting administrative 
      * capabilities to a single authorized manager email: flowmarket1@gmail.com.
+     * Members (signed-in users) can access exclusive content like egg stats and health logs.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -32,15 +33,25 @@ service cloud.firestore {
       allow write: if isAdmin();
 
       /**
-       * @description Private health logs strictly restricted to the sanctuary manager.
+       * @description Care logs accessible to all members, manageable only by admin.
        */
       match /healthLogs/{healthLogEntryId} {
-        allow read, write: if isAdmin();
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
       }
     }
 
     /**
-     * @description Aggregated sanctuary metrics for public real-time display.
+     * @description Collection for name suggestions from donors.
+     */
+    match /nameSuggestions/{suggestionId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Aggregated sanctuary metrics.
      */
     match /sanctuaryStats/{statId} {
       allow read: if true;

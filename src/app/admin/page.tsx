@@ -1,40 +1,34 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   Plus, 
   Minus,
-  LayoutGrid, 
   LogOut, 
-  Image as ImageIcon, 
   Settings, 
   Sparkles, 
   Loader2, 
-  Egg,
-  Heart,
-  Bird as BirdIcon,
-  Camera,
   MessageSquare,
   Check,
-  X as CloseIcon
+  X as CloseIcon,
+  ArrowRight,
+  Stethoscope,
+  ChevronRight
 } from 'lucide-react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, arrayUnion, updateDoc, increment, deleteDoc } from 'firebase/firestore';
-import { Resident, SanctuaryStatistic, NameSuggestion } from '@/lib/types';
-import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { generateDuckPersonalityAndLore } from '@/ai/flows/generate-duck-personality-and-lore-flow';
+import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc } from 'firebase/firestore';
+import { Resident, NameSuggestion } from '@/lib/types';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
+import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -44,10 +38,12 @@ export default function AdminDashboard() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
-  const [uploadingBirdId, setUploadingBirdId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
+  const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -102,14 +98,20 @@ export default function AdminDashboard() {
   const handleAddEgg = (resident: Resident) => {
     if (!firestore || resident.sex !== 'female') return;
     const birdRef = doc(firestore, 'birds', resident.id);
-    updateDocumentNonBlocking(birdRef, { eggCounter: increment(1), updatedAt: new Date().toISOString() });
-    toast({ title: "Egg Added" });
+    updateDocumentNonBlocking(birdRef, { 
+      eggCounter: increment(1), 
+      updatedAt: new Date().toISOString() 
+    });
+    toast({ title: "Egg Added", description: `${resident.name} laid an egg!` });
   };
 
   const handleRemoveEgg = (resident: Resident) => {
     if (!firestore || resident.sex !== 'female' || (resident.eggCounter || 0) <= 0) return;
     const birdRef = doc(firestore, 'birds', resident.id);
-    updateDocumentNonBlocking(birdRef, { eggCounter: increment(-1), updatedAt: new Date().toISOString() });
+    updateDocumentNonBlocking(birdRef, { 
+      eggCounter: increment(-1), 
+      updatedAt: new Date().toISOString() 
+    });
     toast({ title: "Egg Removed" });
   };
 
@@ -124,13 +126,28 @@ export default function AdminDashboard() {
         ...data,
         id: newId,
         eggCounter: 0,
-        galleryImageUrls: [],
+        galleryImageUrls: data.galleryImageUrls || [],
         createdAt: new Date().toISOString(),
         primaryImageUrl: data.primaryImageUrl || `https://picsum.photos/seed/${newId}/600/600`
       });
       toast({ title: "Resident Added" });
     }
     setIsDialogOpen(false);
+  };
+
+  const handleSaveHealthLog = async (birdId: string, notes: string) => {
+    if (!firestore) return;
+    try {
+      await addDoc(collection(firestore, 'birds', birdId, 'healthLogs'), {
+        birdId,
+        logDate: new Date().toISOString(),
+        notes,
+      });
+      toast({ title: "Care Log Saved", description: "Members will see this update in real-time." });
+      setIsHealthLogOpen(false);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to save health log." });
+    }
   };
 
   if (isUserLoading || !user || user.email !== ADMIN_EMAIL) {
@@ -142,7 +159,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24">
+    <div className="min-h-screen bg-background text-foreground pb-24 font-body">
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border p-4 flex justify-between items-center">
         <h1 className="font-headline font-black text-xl uppercase tracking-tighter">SANCTUARY <span className="text-primary">MANAGER</span></h1>
         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground"><LogOut className="h-5 w-5" /></Button>
@@ -157,18 +174,18 @@ export default function AdminDashboard() {
              </h2>
              <div className="grid gap-4">
                {suggestions.map((s) => (
-                 <Card key={s.id} className="bg-secondary/5 border-secondary/20 rounded-2xl">
+                 <Card key={s.id} className="bg-secondary/5 border-secondary/20 rounded-2xl overflow-hidden shadow-lg">
                     <CardContent className="p-4 flex items-center justify-between">
                        <div className="space-y-1">
-                          <p className="text-xs font-black uppercase tracking-tight">
+                          <p className="text-xs font-black uppercase tracking-tight flex items-center">
                             <span className="text-muted-foreground">{s.birdOriginalName}</span> 
-                            <ArrowRight className="inline h-3 w-3 mx-2 opacity-50" /> 
+                            <ChevronRight className="h-3 w-3 mx-2 opacity-50" /> 
                             <span className="text-secondary">{s.suggestedName}</span>
                           </p>
                           <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Donor: {s.donorEmail}</p>
                        </div>
                        <div className="flex gap-2">
-                          <Button size="icon" className="bg-emerald-500 hover:bg-emerald-600 rounded-full h-8 w-8" onClick={() => handleApproveSuggestion(s)}>
+                          <Button size="icon" className="bg-[#14F195] hover:bg-[#14F195]/80 text-black rounded-full h-8 w-8" onClick={() => handleApproveSuggestion(s)}>
                              <Check className="h-4 w-4" />
                           </Button>
                           <Button size="icon" variant="ghost" className="text-destructive rounded-full h-8 w-8" onClick={() => handleRejectSuggestion(s.id)}>
@@ -184,40 +201,66 @@ export default function AdminDashboard() {
 
         <div className="flex justify-between items-center">
            <h2 className="font-headline font-black text-sm uppercase tracking-[0.3em]">FLOCK DIRECTORY</h2>
-           <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl">
+           <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary text-primary-foreground font-black rounded-xl h-11 px-6 shadow-lg shadow-primary/20">
              <Plus className="h-4 w-4 mr-2" /> ADD BIRD
            </Button>
         </div>
 
-        <div className="space-y-6">
-          {birds?.map((bird) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {birdsLoading ? (
+             [1,2,3].map(i => <div key={i} className="h-48 bg-card animate-pulse rounded-2xl" />)
+          ) : birds?.map((bird) => {
             const isHen = bird.sex === 'female';
             return (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl">
-                <div className="flex items-center p-4 gap-4">
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0 border border-border">
+              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                <div className="flex items-center p-4 gap-5">
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner">
                     <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-headline font-black text-lg uppercase truncate">{bird.name}</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{bird.breed} • {bird.sex}</p>
+                    <h3 className="font-headline font-black text-2xl truncate uppercase tracking-tight">{bird.name}</h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">{bird.breed} • {bird.sex}</p>
                   </div>
                   {isHen && (
-                    <div className="flex flex-col items-center bg-background/50 p-2 rounded-lg border border-border min-w-[50px]">
-                      <span className="text-lg font-headline font-black text-primary">{bird.eggCounter}</span>
+                    <div className="flex flex-col items-center bg-primary/10 p-3 rounded-xl border border-primary/20 min-w-[60px] shadow-sm">
+                      <span className="text-2xl font-headline font-black text-primary leading-none">{bird.eggCounter}</span>
+                      <span className="text-[8px] font-black uppercase text-primary/60 tracking-tighter mt-1">EGGS</span>
                     </div>
                   )}
                 </div>
                 
-                <div className={cn("grid border-t border-border divide-x divide-border", isHen ? "grid-cols-4" : "grid-cols-2")}>
-                  {isHen && (
+                <div className="grid grid-cols-2 border-t border-border divide-x divide-border mt-auto">
+                  {isHen ? (
                     <>
-                      <Button variant="ghost" className="rounded-none h-16 text-[9px] font-black uppercase text-emerald-500" onClick={() => handleAddEgg(bird)}><Plus className="h-4 w-4" /></Button>
-                      <Button variant="ghost" className="rounded-none h-16 text-[9px] font-black uppercase text-red-500" onClick={() => handleRemoveEgg(bird)} disabled={bird.eggCounter <= 0}><Minus className="h-4 w-4" /></Button>
+                      <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => handleAddEgg(bird)}>
+                        <Plus className="h-5 w-5 text-[#14F195] group-hover:scale-125 transition-transform" />
+                        <span className="text-[9px] font-black text-[#14F195] tracking-widest uppercase">ADD EGG</span>
+                      </Button>
+                      <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => handleRemoveEgg(bird)} disabled={bird.eggCounter <= 0}>
+                        <Minus className="h-5 w-5 text-red-500 group-hover:scale-125 transition-transform" />
+                        <span className="text-[9px] font-black text-red-500 tracking-widest uppercase">SUB EGG</span>
+                      </Button>
                     </>
+                  ) : (
+                    <div className="col-span-2 h-16 bg-muted/20 flex items-center justify-center">
+                      <span className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.4em] italic">Sanctuary Guardian (No Eggs)</span>
+                    </div>
                   )}
-                  <Button variant="ghost" className="rounded-none h-16 text-[9px] font-black uppercase" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}><Settings className="h-4 w-4" /></Button>
-                  <Button variant="ghost" className="rounded-none h-16 text-[9px] font-black uppercase" onClick={() => toast({ title: "AI Generation...", description: "Feature ready forLore update." })}><Sparkles className="h-4 w-4 text-primary" /></Button>
+                </div>
+
+                <div className="grid grid-cols-3 border-t border-border divide-x divide-border">
+                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
+                    <Stethoscope className="h-5 w-5 text-secondary group-hover:scale-125 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">LOG CARE</span>
+                  </Button>
+                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
+                    <Settings className="h-5 w-5 text-muted-foreground group-hover:scale-125 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">EDIT</span>
+                  </Button>
+                  <Button variant="ghost" className="rounded-none h-16 flex flex-col gap-1 group" onClick={() => toast({ title: "AI Generation...", description: "Feature ready for Lore update." })}>
+                    <Sparkles className="h-5 w-5 text-primary group-hover:scale-125 transition-transform" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">LORE</span>
+                  </Button>
                 </div>
               </Card>
             );
@@ -226,6 +269,12 @@ export default function AdminDashboard() {
       </main>
 
       <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
+      <HealthLogDialog 
+        open={isHealthLogOpen} 
+        onOpenChange={setIsHealthLogOpen} 
+        onSave={(notes) => handleSaveHealthLog(loggingResident?.id || '', notes)} 
+        residentName={loggingResident?.name || ''} 
+      />
     </div>
   );
 }

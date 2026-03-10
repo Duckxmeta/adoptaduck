@@ -9,15 +9,14 @@ import {
   Bird, 
   Egg, 
   Heart, 
-  Crown, 
-  TrendingUp, 
   ShieldCheck, 
   Users, 
   CheckCircle2, 
-  Lock,
   ArrowRight,
   Droplets,
-  Utensils
+  Utensils,
+  Calendar,
+  Stethoscope
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -252,7 +251,7 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-6">
-                  <h3 className="font-headline font-black text-xs text-primary uppercase tracking-[0.4em]">Supporter Perks</h3>
+                  <h3 className="font-headline font-black text-xs text-primary uppercase tracking-[0.4em]">Exclusive Adopter & Member Benefits</h3>
                   <ul className="space-y-4">
                     <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
                       <div className="p-2 bg-primary/10 rounded-lg text-primary"><Sparkles className="h-5 w-5" /></div>
@@ -266,6 +265,20 @@ export default function Home() {
                       <div>
                         <p className="font-black text-sm uppercase tracking-tight">Name a Duck</p>
                         <p className="text-xs text-muted-foreground">Donors of $25+ get to suggest a new name for a sanctuary resident!</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Calendar className="h-5 w-5" /></div>
+                      <div>
+                        <p className="font-black text-sm uppercase tracking-tight">Daily Duck Updates</p>
+                        <p className="text-xs text-muted-foreground">Real-time photos and stories from the sanctuary.</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-4 bg-background/50 p-5 rounded-2xl border border-border group hover:border-primary/30 transition-all">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary"><Stethoscope className="h-5 w-5" /></div>
+                      <div>
+                        <p className="font-black text-sm uppercase tracking-tight">Detailed Care Logs</p>
+                        <p className="text-xs text-muted-foreground">Access to health checks, feeding schedules, and wellness updates.</p>
                       </div>
                     </li>
                   </ul>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -7,12 +6,13 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
-import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock } from 'lucide-react';
+import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock, CheckCircle2 } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Resident } from '@/lib/types';
+import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { Resident, HealthLogEntry } from '@/lib/types';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { format } from 'date-fns';
 
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
@@ -24,7 +24,13 @@ export default function ResidentProfile() {
     return doc(firestore, 'birds', id);
   }, [firestore, id]);
 
+  const logsQuery = useMemoFirebase(() => {
+    if (!firestore || !id) return null;
+    return query(collection(firestore, 'birds', id, 'healthLogs'), orderBy('logDate', 'desc'));
+  }, [firestore, id]);
+
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
+  const { data: logs } = useCollection<HealthLogEntry>(logsQuery);
 
   if (isLoading) {
     return (
@@ -177,6 +183,9 @@ export default function ResidentProfile() {
                 <TabsTrigger value="story" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                   <History className="h-4 w-4" /> Rescue Story
                 </TabsTrigger>
+                <TabsTrigger value="logs" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
+                  <Stethoscope className="h-4 w-4" /> Sanctuary Log
+                </TabsTrigger>
                 <TabsTrigger value="lineage" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                    <Info className="h-4 w-4" /> Heritage
                 </TabsTrigger>
@@ -187,6 +196,43 @@ export default function ResidentProfile() {
                   <p className="text-xl leading-relaxed text-muted-foreground font-medium border-l-4 border-primary pl-8 py-4">
                     {bird?.backstory}
                   </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="logs" className="py-16">
+                <div className="max-w-3xl">
+                  {!user ? (
+                    <div className="bg-secondary/5 border-2 border-secondary/20 p-10 rounded-3xl flex flex-col justify-center items-center text-center">
+                      <Lock className="h-16 w-16 text-secondary mb-6" />
+                      <h4 className="font-headline font-black text-2xl mb-3 tracking-tighter uppercase">Member Exclusive</h4>
+                      <p className="text-muted-foreground font-medium">Detailed Care Logs are reserved for our Adopters and Sanctuary Viewers. Sign up for free to access daily wellness updates.</p>
+                    </div>
+                  ) : logs && logs.length > 0 ? (
+                    <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary before:via-secondary before:to-transparent">
+                      {logs.map((log) => (
+                        <div key={log.id} className="relative flex items-start gap-8 group">
+                          <div className="absolute left-0 mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-card border-2 border-primary z-10 group-hover:scale-110 transition-transform">
+                            <CheckCircle2 className="h-5 w-5 text-[#14F195]" />
+                          </div>
+                          <div className="flex-1 bg-card/50 border border-border p-6 rounded-2xl ml-12">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                <Calendar className="h-3 w-3" /> {format(new Date(log.logDate), 'MMMM dd, yyyy')}
+                              </span>
+                              <Badge variant="outline" className="text-[#14F195] border-[#14F195] text-[8px] font-black uppercase tracking-widest px-2">Daily Care Log</Badge>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed text-sm">
+                              {log.notes}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground italic font-medium">
+                      Staff are currently archiving historical care logs for {bird?.name}.
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
