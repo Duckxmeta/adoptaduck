@@ -26,6 +26,8 @@ interface AdoptionModalProps {
   trigger?: React.ReactNode;
 }
 
+const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
+
 export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const [suggestedName, setSuggestedName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +36,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const { toast } = useToast();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
-  const isCommunity = !!resident.isCommunityDuck;
+  const isCommunity = COMMUNITY_NAMES.includes(resident.name) || !!resident.isCommunityDuck;
 
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);
@@ -96,13 +98,13 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
               </div>
               <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Community Resident</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed">
-                This resident is part of a special community adoption program with our partners.
+                This is a Community Duck! You can join this flock by entering the special partner referral code in your Member Dashboard.
               </DialogDescription>
             </div>
             <div className="p-8 space-y-6">
               <div className="bg-secondary/5 border-2 border-secondary/20 p-6 rounded-2xl text-center space-y-4">
                 <p className="text-sm font-medium leading-relaxed text-foreground">
-                  "This resident is part of a community adoption. To join this flock, please enter the referral code provided by our partners."
+                  This resident is already part of a community partnership and is not available for individual adoption.
                 </p>
               </div>
               <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">

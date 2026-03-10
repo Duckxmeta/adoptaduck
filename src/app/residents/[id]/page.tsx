@@ -15,6 +15,8 @@ import { Resident, HealthLogEntry } from '@/lib/types';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
 
+const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
+
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
@@ -26,8 +28,6 @@ export default function ResidentProfile() {
   }, [firestore, id]);
 
   const logsQuery = useMemoFirebase(() => {
-    // Only attempt to fetch the health logs if a user is signed in,
-    // as per the Firestore security rules.
     if (!firestore || !id || !user) return null;
     return query(collection(firestore, 'birds', id, 'healthLogs'), orderBy('logDate', 'desc'));
   }, [firestore, id, user]);
@@ -49,6 +49,7 @@ export default function ResidentProfile() {
   }
 
   const isHen = bird?.sex === 'female';
+  const isCommunity = bird ? (COMMUNITY_NAMES.includes(bird.name) || !!bird.isCommunityDuck) : false;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -72,6 +73,9 @@ export default function ResidentProfile() {
                 <div className="absolute bottom-6 left-6 flex flex-wrap gap-2">
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">{bird?.breed}</Badge>
                    <Badge className="bg-white/20 backdrop-blur-md text-white border-white/30 font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">{bird?.sex}</Badge>
+                   {isCommunity && (
+                     <Badge className="bg-secondary text-secondary-foreground border-none font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">Community Resident</Badge>
+                   )}
                 </div>
               </div>
             </div>
@@ -85,6 +89,17 @@ export default function ResidentProfile() {
                    <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-success" /> Verified Resident</span>
                 </div>
               </div>
+
+              {isCommunity && (
+                <div className="bg-secondary/10 border-2 border-secondary/20 p-6 rounded-2xl">
+                  <p className="text-sm font-black uppercase tracking-tight text-secondary mb-2 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" /> Community Partnership
+                  </p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    This resident is already part of a community partnership and is not available for individual adoption. Use a partner code in your dashboard to follow their progress.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-6">
                 {isHen ? (
