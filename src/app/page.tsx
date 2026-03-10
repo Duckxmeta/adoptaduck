@@ -47,6 +47,11 @@ export default function Home() {
     ? [...birds].filter(b => b.sex === 'female').sort((a, b) => (b.eggCounter || 0) - (a.eggCounter || 0))[0] 
     : null;
 
+  // Official Image URLs
+  const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
+  const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
+  const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/download.jpg?alt=media";
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
@@ -114,11 +119,11 @@ export default function Home() {
 
         {/* Hero Section */}
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent z-10" />
+          {/* 0.6 opacity dark overlay for readability */}
+          <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
             className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
-            style={{ backgroundImage: `url('https://picsum.photos/seed/duckhero/1920/1080')` }}
-            data-ai-hint="bird sanctuary"
+            style={{ backgroundImage: `url('${heroImageUrl}')` }}
           />
           
           <div className="container mx-auto px-4 relative z-20 text-center">
@@ -160,11 +165,10 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
                     <Image 
-                      src="https://picsum.photos/seed/pekin/600/600" 
+                      src={domesticImageUrl} 
                       alt="Domestic Duck" 
                       fill 
                       className="object-cover transition-all duration-700" 
-                      data-ai-hint="pekin duck"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                     <div className="absolute bottom-4 left-4 right-4">
@@ -185,11 +189,10 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="relative aspect-square">
                     <Image 
-                      src="https://picsum.photos/seed/mallard-wild/600/600" 
+                      src={wildImageUrl} 
                       alt="Wild Mallard" 
                       fill 
                       className="object-cover transition-all duration-700" 
-                      data-ai-hint="mallard duck"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
                     <div className="absolute bottom-4 left-4 right-4">
