@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -14,19 +13,18 @@ import {
   ShieldCheck, 
   Users, 
   ArrowRight,
-  ShieldAlert
+  ShieldAlert,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, where, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
+import { initiateGoogleSignIn, handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
-
-const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -34,6 +32,7 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const [isVerifying, setIsVerifying] = useState(false);
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
   const birdsQuery = useMemoFirebase(() => {
@@ -42,31 +41,66 @@ export default function Home() {
   }, [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+
+  useEffect(() => {
+    if (!auth) return;
+
+    // Configure persistence for mobile stability
+    configureAuthPersistence(auth);
+
+    // Check for redirect result on mount
+    const checkRedirect = async () => {
+      try {
+        setIsVerifying(true);
+        const result = await handleGoogleRedirectResult(auth);
+        if (result) {
+          toast({
+            title: "Account Verified",
+            description: `Welcome back, ${result.user.displayName || 'Friend'}.`,
+          });
+        }
+      } catch (error: any) {
+        console.error("Auth Redirect Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+           toast({
+            variant: "destructive",
+            title: "Verification Failed",
+            description: "Could not complete the sign-in process. Please try again.",
+          });
+        }
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    checkRedirect();
+  }, [auth, toast]);
   
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     try {
       await initiateGoogleSignIn(auth);
     } catch (error: any) {
-      if (error.code === 'auth/operation-not-allowed') {
-        toast({
-          variant: "destructive",
-          title: "Setup Required",
-          description: "Google Sign-in is not enabled in the Firebase Console.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Sign-in Error",
-          description: "Could not complete the sign-in process.",
-        });
-      }
+      toast({
+        variant: "destructive",
+        title: "Sign-in Error",
+        description: "Could not initiate the sign-in process.",
+      });
     }
   };
 
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin" />
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-xs">Verifying Account...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
