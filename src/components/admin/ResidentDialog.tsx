@@ -54,9 +54,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
     primaryImageUrl: '',
     galleryImageUrls: [],
     isCommunityDuck: false,
-    source: 'Original',
-    mother_id: '',
-    father_id: '',
+    source: 'Founding',
+    motherId: '',
+    fatherId: '',
     hatch_date: '',
     isFoundingResident: false
   });
@@ -71,9 +71,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         ...resident,
         galleryImageUrls: resident.galleryImageUrls || [],
         isCommunityDuck: !!resident.isCommunityDuck,
-        source: resident.source || 'Original',
-        mother_id: resident.mother_id || '',
-        father_id: resident.father_id || '',
+        source: resident.source || 'Founding',
+        motherId: resident.motherId || '',
+        fatherId: resident.fatherId || '',
         hatch_date: resident.hatch_date || '',
         isFoundingResident: !!resident.isFoundingResident
       });
@@ -83,9 +83,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         ...formData,
         ...initialData,
         isCommunityDuck: !!initialData.isCommunityDuck,
-        source: initialData.source || 'Original',
-        mother_id: initialData.mother_id || '',
-        father_id: initialData.father_id || '',
+        source: initialData.source || 'Founding',
+        motherId: initialData.motherId || '',
+        fatherId: initialData.fatherId || '',
         hatch_date: initialData.hatch_date || ''
       });
       setPreviewUrl(initialData.primaryImageUrl || null);
@@ -99,9 +99,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         primaryImageUrl: '',
         galleryImageUrls: [],
         isCommunityDuck: false,
-        source: 'Original',
-        mother_id: '',
-        father_id: '',
+        source: 'Founding',
+        motherId: '',
+        fatherId: '',
         hatch_date: '',
         isFoundingResident: false
       });
@@ -139,10 +139,16 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
         finalImageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      onSave({
+      // Ensure null is saved for empty parent IDs
+      const submissionData = {
         ...formData,
-        primaryImageUrl: finalImageUrl
-      });
+        primaryImageUrl: finalImageUrl,
+        motherId: formData.motherId || null,
+        fatherId: formData.fatherId || null,
+        isFoundingResident: formData.source === 'Founding'
+      };
+
+      onSave(submissionData);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -192,8 +198,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
                 </Label>
               </div>
               <Switch 
-                checked={formData.isFoundingResident} 
-                onCheckedChange={(checked) => setFormData({...formData, isFoundingResident: checked})} 
+                checked={formData.source === 'Founding'} 
+                onCheckedChange={(checked) => setFormData({...formData, source: checked ? 'Founding' : 'Rehomed', isFoundingResident: checked})} 
               />
             </div>
           </div>
@@ -269,13 +275,13 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
               <Label htmlFor="source" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Source</Label>
               <Select 
                 value={formData.source} 
-                onValueChange={v => setFormData({...formData, source: v as any})}
+                onValueChange={v => setFormData({...formData, source: v as any, isFoundingResident: v === 'Founding'})}
               >
                 <SelectTrigger className="bg-background border-border h-11">
                   <SelectValue placeholder="Select source" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="Original">Original</SelectItem>
+                  <SelectItem value="Founding">Founding</SelectItem>
                   <SelectItem value="Rehomed">Rehomed</SelectItem>
                   <SelectItem value="Hatched">Hatched (Sanctuary Born)</SelectItem>
                 </SelectContent>
@@ -285,34 +291,34 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident, initialDa
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mother (Optional)</Label>
+              <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Mother</Label>
               <Select 
-                value={formData.mother_id} 
-                onValueChange={v => setFormData({...formData, mother_id: v})}
+                value={formData.motherId || "unknown"} 
+                onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}
               >
                 <SelectTrigger className="bg-background border-border h-11">
                   <SelectValue placeholder="Select mother" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="">None / Unknown</SelectItem>
-                  {birds?.filter(b => b.sex === 'female').map(b => (
+                  <SelectItem value="unknown">Unknown / Original</SelectItem>
+                  {birds?.filter(b => b.sex === 'female' && b.id !== resident?.id).map(b => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Father (Optional)</Label>
+              <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Father</Label>
               <Select 
-                value={formData.father_id} 
-                onValueChange={v => setFormData({...formData, father_id: v})}
+                value={formData.fatherId || "unknown"} 
+                onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}
               >
                 <SelectTrigger className="bg-background border-border h-11">
                   <SelectValue placeholder="Select father" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="">None / Unknown</SelectItem>
-                  {birds?.filter(b => b.sex === 'male').map(b => (
+                  <SelectItem value="unknown">Unknown / Original</SelectItem>
+                  {birds?.filter(b => b.sex === 'male' && b.id !== resident?.id).map(b => (
                     <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
                   ))}
                 </SelectContent>

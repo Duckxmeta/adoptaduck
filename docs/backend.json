@@ -21,9 +21,9 @@
         "updatedAt": { "type": "string", "format": "date-time" },
         "adopterEmail": { "type": "string" },
         "isCommunityDuck": { "type": "boolean" },
-        "mother_id": { "type": "string", "description": "ID of the biological mother resident." },
-        "father_id": { "type": "string", "description": "ID of the biological father resident." },
-        "source": { "type": "string", "enum": ["Original", "Rehomed", "Hatched"], "description": "The origin of the resident." },
+        "motherId": { "type": "string", "description": "ID of the biological mother resident." },
+        "fatherId": { "type": "string", "description": "ID of the biological father resident." },
+        "source": { "type": "string", "enum": ["Founding", "Rehomed", "Hatched"], "description": "The origin of the resident." },
         "hatch_date": { "type": "string", "format": "date", "description": "The date the resident hatched." },
         "isFoundingResident": { "type": "boolean", "description": "Whether this duck is a first-generation sanctuary resident." }
       },

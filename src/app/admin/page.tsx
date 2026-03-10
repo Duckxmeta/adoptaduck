@@ -127,7 +127,7 @@ export default function AdminDashboard() {
     if (!firestore || mother.eggCounter <= 0) return;
     
     setHatcheryInitialData({
-      mother_id: mother.id,
+      motherId: mother.id,
       breed: mother.breed,
       source: 'Hatched',
       hatch_date: new Date().toISOString().split('T')[0],
@@ -146,8 +146,8 @@ export default function AdminDashboard() {
       const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
       
       // If hatching, decrement mother's egg counter
-      if (data.source === 'Hatched' && data.mother_id) {
-        updateDocumentNonBlocking(doc(firestore, 'birds', data.mother_id), { eggCounter: increment(-1) });
+      if (data.source === 'Hatched' && data.motherId) {
+        updateDocumentNonBlocking(doc(firestore, 'birds', data.motherId), { eggCounter: increment(-1) });
       }
 
       setDoc(doc(firestore, 'birds', newId), {
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
                       {isFounding && <TreePine className="h-4 w-4 text-primary shrink-0" />}
                     </div>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">{bird.breed} • {bird.sex}</p>
-                    <Badge variant="outline" className="mt-1 text-[8px] border-primary/30 text-primary/80 uppercase">Gen: {bird.source || 'Original'}</Badge>
+                    <Badge variant="outline" className="mt-1 text-[8px] border-primary/30 text-primary/80 uppercase">Gen: {bird.source || 'Founding'}</Badge>
                   </div>
                   {isHen && (
                     <div className="flex flex-col items-center bg-primary/10 p-3 rounded-xl border border-primary/20 min-w-[60px]">

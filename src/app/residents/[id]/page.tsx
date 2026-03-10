@@ -37,7 +37,7 @@ export default function ResidentProfile() {
     if (!firestore || !id) return null;
     return query(
       collection(firestore, 'birds'), 
-      where('mother_id', '==', id)
+      where('motherId', '==', id)
     );
   }, [firestore, id]);
   
@@ -45,7 +45,7 @@ export default function ResidentProfile() {
     if (!firestore || !id) return null;
     return query(
       collection(firestore, 'birds'), 
-      where('father_id', '==', id)
+      where('fatherId', '==', id)
     );
   }, [firestore, id]);
 
@@ -57,14 +57,14 @@ export default function ResidentProfile() {
   const children = [...(motherChildren || []), ...(fatherChildren || [])].filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
 
   const motherRef = useMemoFirebase(() => {
-    if (!firestore || !bird?.mother_id) return null;
-    return doc(firestore, 'birds', bird.mother_id);
-  }, [firestore, bird?.mother_id]);
+    if (!firestore || !bird?.motherId) return null;
+    return doc(firestore, 'birds', bird.motherId);
+  }, [firestore, bird?.motherId]);
 
   const fatherRef = useMemoFirebase(() => {
-    if (!firestore || !bird?.father_id) return null;
-    return doc(firestore, 'birds', bird.father_id);
-  }, [firestore, bird?.father_id]);
+    if (!firestore || !bird?.fatherId) return null;
+    return doc(firestore, 'birds', bird.fatherId);
+  }, [firestore, bird?.fatherId]);
 
   const { data: mother } = useDoc<Resident>(motherRef);
   const { data: father } = useDoc<Resident>(fatherRef);
@@ -134,7 +134,7 @@ export default function ResidentProfile() {
                     <History className="h-5 w-5 text-primary" />
                     <span className="text-[10px] font-black uppercase tracking-widest">Source</span>
                   </div>
-                  <span className="text-2xl font-headline font-black uppercase tracking-tight">{bird?.source || 'Original'}</span>
+                  <span className="text-2xl font-headline font-black uppercase tracking-tight">{bird?.source || 'Founding'}</span>
                 </div>
                 <div className="bg-card p-8 rounded-2xl border border-border">
                   <div className="flex items-center gap-3 text-muted-foreground mb-4">
@@ -167,7 +167,7 @@ export default function ResidentProfile() {
                   <History className="h-4 w-4" /> Rescue Story
                 </TabsTrigger>
                 <TabsTrigger value="lineage" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
-                   <TreePine className="h-4 w-4" /> Lineage & Heritage
+                   <TreePine className="h-4 w-4" /> Family Tree
                 </TabsTrigger>
                 <TabsTrigger value="logs" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-4 border-primary rounded-none px-0 py-6 font-headline font-black uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                   <Stethoscope className="h-4 w-4" /> Sanctuary Log
@@ -211,7 +211,7 @@ export default function ResidentProfile() {
                                </div>
                              </Link>
                            ) : (
-                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Mother Unknown / Founding</div>
+                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Mother Unknown / Original</div>
                            )}
 
                            {father ? (
@@ -225,7 +225,7 @@ export default function ResidentProfile() {
                                </div>
                              </Link>
                            ) : (
-                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Father Unknown / Founding</div>
+                             <div className="p-4 bg-muted/5 border border-dashed border-border rounded-2xl text-xs text-muted-foreground uppercase tracking-widest font-black text-center italic">Father Unknown / Original</div>
                            )}
                         </div>
                      </div>
