@@ -35,6 +35,15 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
 /** Initiate Google Sign-in via Redirect. Mobile browsers handle this much better than popups. */
 export function initiateGoogleSignIn(authInstance: Auth): Promise<void> {
   const provider = new GoogleAuthProvider();
+  
+  /** 
+   * Force 'select_account' to ensure users can choose the specific email 
+   * added to the Google Cloud Console Test Users list. 
+   */
+  provider.setCustomParameters({
+    prompt: 'select_account'
+  });
+  
   return signInWithRedirect(authInstance, provider);
 }
 
