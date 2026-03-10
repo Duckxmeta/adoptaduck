@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export function Footer() {
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
-  const logoUrl = "https://picsum.photos/seed/duck-logo/200/200";
+  const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   return (
     <footer className="w-full bg-background border-t border-secondary/20 pt-16 pb-8">
