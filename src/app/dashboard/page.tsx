@@ -6,9 +6,20 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc, limit, getDocs, updateDoc } from 'firebase/firestore';
-import { Resident, DailyStatus, HealthLogEntry } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  doc, 
+  limit, 
+  getDocs, 
+  setDoc, 
+  arrayUnion,
+  or
+} from 'firebase/firestore';
+import { Resident, DailyStatus, HealthLogEntry, UserProfile } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,11 +73,33 @@ export default function MemberDashboard() {
     }
   }, [user, isUserLoading, router]);
 
-  // Query for birds adopted by the user
+  // Query for user profile to get linked birds
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  // Query for birds adopted by the user or linked via community codes
   const flockQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
+    
+    const unlockedIds = userProfile?.my_flock || [];
+    
+    if (unlockedIds.length > 0) {
+      // Use 'or' query to fetch both adopted and community ducks
+      return query(
+        collection(firestore, 'birds'), 
+        or(
+          where('adopterEmail', '==', user.email),
+          where('id', 'in', unlockedIds)
+        )
+      );
+    }
+    
     return query(collection(firestore, 'birds'), where('adopterEmail', '==', user.email));
-  }, [firestore, user?.email]);
+  }, [firestore, user?.email, userProfile?.my_flock]);
 
   // Global daily status
   const dailyStatusRef = useMemoFirebase(() => {
@@ -86,7 +119,7 @@ export default function MemberDashboard() {
 
   const handleReferralCode = async () => {
     const code = referralCode.trim().toUpperCase();
-    if (!code || !REFERRAL_MAP[code] || !firestore || !user?.email) {
+    if (!code || !REFERRAL_MAP[code] || !firestore || !user?.uid) {
       toast({
         variant: "destructive",
         title: "Invalid Code",
@@ -110,11 +143,16 @@ export default function MemberDashboard() {
         });
       } else {
         const birdDoc = querySnapshot.docs[0];
-        await updateDoc(doc(firestore, 'birds', birdDoc.id), {
-          adopterEmail: user.email,
-          isCommunityDuck: true,
+        
+        // Link to user profile instead of modifying the bird document (which users can't write to)
+        const userRef = doc(firestore, 'users', user.uid);
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          my_flock: arrayUnion(birdDoc.id),
+          community_codes: arrayUnion(code),
           updatedAt: new Date().toISOString()
-        });
+        }, { merge: true });
         
         setUnlockedName(targetName);
         toast({
@@ -123,11 +161,12 @@ export default function MemberDashboard() {
         });
         setReferralCode('');
       }
-    } catch (e) {
+    } catch (e: any) {
+      console.error(e);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Could not link the community resident."
+        title: "Link Failed",
+        description: e.message || "Could not link the community resident."
       });
     } finally {
       setIsVerifying(false);
@@ -182,6 +221,7 @@ export default function MemberDashboard() {
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value)}
                       className="bg-background border-secondary/20 h-10 text-xs font-black tracking-widest uppercase"
+                      disabled={isVerifying}
                     />
                     <Button 
                       size="sm" 
@@ -192,6 +232,7 @@ export default function MemberDashboard() {
                       {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     </Button>
                  </div>
+                 {isVerifying && <p className="text-[9px] font-black uppercase text-center animate-pulse text-secondary">Checking Code...</p>}
               </div>
            </Card>
         </section>
@@ -292,7 +333,7 @@ export default function MemberDashboard() {
               </h2>
            </div>
            <div className="max-w-4xl mx-auto space-y-6">
-              <NewsFeed adopterEmail={user?.email || ''} />
+              <NewsFeed adopterEmail={user?.email || ''} unlockedIds={userProfile?.my_flock || []} />
            </div>
         </section>
       </main>
@@ -403,13 +444,25 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
   );
 }
 
-function NewsFeed({ adopterEmail }: { adopterEmail: string }) {
+function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlockedIds: string[] }) {
   const firestore = useFirestore();
   
   const flockQuery = useMemoFirebase(() => {
-    if (!firestore || !adopterEmail) return null;
+    if (!firestore || (!adopterEmail && unlockedIds.length === 0)) return null;
+    
+    if (unlockedIds.length > 0) {
+      return query(
+        collection(firestore, 'birds'), 
+        or(
+          where('adopterEmail', '==', adopterEmail),
+          where('id', 'in', unlockedIds)
+        ),
+        limit(5)
+      );
+    }
+    
     return query(collection(firestore, 'birds'), where('adopterEmail', '==', adopterEmail), limit(5));
-  }, [firestore, adopterEmail]);
+  }, [firestore, adopterEmail, unlockedIds]);
 
   const { data: flock } = useCollection<Resident>(flockQuery);
 

@@ -18,9 +18,25 @@
         "primaryImageUrl": { "type": "string", "format": "uri" },
         "galleryImageUrls": { "type": "array", "items": { "type": "string" } },
         "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "adopterEmail": { "type": "string" },
+        "isCommunityDuck": { "type": "boolean" }
       },
       "required": ["id", "name", "breed", "sex", "eggCounter", "primaryImageUrl", "createdAt"]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Member profile information including unlocked community ducks.",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "my_flock": { "type": "array", "items": { "type": "string" }, "description": "Array of bird IDs linked to this user." },
+        "community_codes": { "type": "array", "items": { "type": "string" }, "description": "Array of referral codes used." },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
     },
     "NameSuggestion": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -65,6 +81,14 @@
           "entityName": "Bird",
           "schema": { "$ref": "#/backend/entities/Bird" },
           "description": "Public bird profiles."
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": { "$ref": "#/backend/entities/UserProfile" },
+          "description": "User account and flock data."
         }
       },
       {

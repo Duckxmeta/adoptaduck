@@ -12,8 +12,17 @@ export type Resident = {
   galleryImageUrls: string[];
   createdAt: string;
   updatedAt?: string;
-  adopterEmail?: string; // Track who has adopted/named this resident
-  isCommunityDuck?: boolean; // Flag for community referral ducks
+  adopterEmail?: string; 
+  isCommunityDuck?: boolean;
+};
+
+export type UserProfile = {
+  id: string;
+  uid: string;
+  email: string;
+  my_flock: string[];
+  community_codes: string[];
+  updatedAt: string;
 };
 
 export type NameSuggestion = {

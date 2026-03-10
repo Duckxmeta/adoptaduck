@@ -3,16 +3,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * VIRTUAL SANCTUARY SECURITY MODEL
-     */
-
     function isSignedIn() {
       return request.auth != null;
     }
 
     function isAdmin() {
       return isSignedIn() && (request.auth.token.email == 'flowmarket1@gmail.com');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     match /birds/{birdId} {
@@ -23,6 +23,10 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow write: if isAdmin();
       }
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
     }
 
     match /nameSuggestions/{suggestionId} {
