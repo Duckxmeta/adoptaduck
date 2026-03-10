@@ -4,12 +4,6 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * 
-     * Implementations:
-     * 1. Dual-Admin Authorization: Access granted via email list or roles_admin collection.
-     * 2. Public Transparency: Duck profiles are publicly readable.
-     * 3. Member Privacy: User profiles and daily sanctuary status are restricted to signed-in members.
-     * 4. Operational Security: Sensitive logs and database modifications are Admin-only.
      */
 
     // --- GLOBAL HELPER FUNCTIONS ---
@@ -24,7 +18,8 @@ service cloud.firestore {
      */
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email in ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'] ||
+        request.auth.token.email == 'decentducksorg@gmail.com' || 
+        request.auth.token.email == 'flowmarket1@gmail.com' ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
     }
@@ -35,7 +30,7 @@ service cloud.firestore {
     match /roles_admin/{uid} {
       allow get: if isSignedIn() && (request.auth.uid == uid || isAdmin());
       allow list: if isAdmin();
-      allow create, update, delete: if false; 
+      allow write: if false; 
     }
 
     /** Publicly viewable duck profiles */
@@ -51,7 +46,7 @@ service cloud.firestore {
 
     /** Global sanctuary routine status (Viewable by all members) */
     match /daily_status/{statusId} {
-      allow get: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow write: if isAdmin();
     }
 
