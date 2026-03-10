@@ -93,14 +93,14 @@ export default function AdminDashboard() {
     } else {
       const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
       
-      setDoc(doc(firestore, 'birds', newId), {
+      setDocumentNonBlocking(doc(firestore, 'birds', newId), {
         ...data,
         id: newId,
         eggCounter: 0,
         galleryImageUrls: data.galleryImageUrls || [],
         createdAt: new Date().toISOString(),
         primaryImageUrl: data.primaryImageUrl || `https://picsum.photos/seed/${newId}/600/600`
-      });
+      }, { merge: true });
       toast({ title: "Resident Added" });
     }
     setIsDialogOpen(false);
@@ -124,7 +124,8 @@ export default function AdminDashboard() {
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
     if (!dailyStatusRef) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
-    updateDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue });
+    // Use setDocumentNonBlocking with merge: true instead of update to handle initial creation
+    setDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
   const resetDailyTasks = () => {
