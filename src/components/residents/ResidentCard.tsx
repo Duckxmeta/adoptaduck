@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Resident } from '@/lib/types';
-import { ChevronRight, Egg, Bird } from 'lucide-react';
+import { ChevronRight, Egg } from 'lucide-react';
 import { useUser } from '@/firebase';
 
 interface ResidentCardProps {
@@ -15,7 +15,12 @@ interface ResidentCardProps {
 export function ResidentCard({ resident }: ResidentCardProps) {
   const { user } = useUser();
   const isHen = resident.sex === 'female';
-  const hasImage = !!resident.primaryImageUrl && resident.primaryImageUrl.startsWith('http');
+  
+  // Strict image validation
+  const hasImage = !!resident.primaryImageUrl && 
+                   resident.primaryImageUrl.startsWith('http') && 
+                   !resident.primaryImageUrl.includes('placeholder') &&
+                   !resident.primaryImageUrl.includes('picsum.photos');
 
   return (
     <Link href={`/residents/${resident.id}`}>
@@ -33,9 +38,9 @@ export function ResidentCard({ resident }: ResidentCardProps) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
             </>
           ) : (
-            <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center p-6 text-center">
-              <Bird className="h-20 w-20 text-muted-foreground/40 mb-2" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60">Photo Coming Soon!</span>
+            <div className="w-full h-full bg-[#1a1a1a] flex flex-col items-center justify-center p-6 text-center border-b border-border">
+              <span className="text-7xl mb-4 transition-transform group-hover:scale-125 duration-500">🦆</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
             </div>
           )}
           

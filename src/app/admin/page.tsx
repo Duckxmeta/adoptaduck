@@ -18,8 +18,7 @@ import {
   RotateCcw,
   LayoutDashboard,
   TreePine,
-  Trash2,
-  Bird as BirdIcon
+  Trash2
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -251,7 +250,10 @@ export default function AdminDashboard() {
           ) : birds?.map((bird) => {
             const isHen = bird.sex === 'female';
             const isFounding = !!bird.isFoundingResident;
-            const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.startsWith('http');
+            const hasImage = !!bird.primaryImageUrl && 
+                             bird.primaryImageUrl.startsWith('http') && 
+                             !bird.primaryImageUrl.includes('placeholder') &&
+                             !bird.primaryImageUrl.includes('picsum.photos');
 
             return (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col group relative">
@@ -265,13 +267,13 @@ export default function AdminDashboard() {
                 </Button>
 
                 <div className="flex items-center p-4 gap-5">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner bg-slate-800 flex flex-col items-center justify-center">
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-border shadow-inner bg-[#1a1a1a] flex flex-col items-center justify-center">
                     {hasImage ? (
                       <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
                     ) : (
                       <>
-                        <BirdIcon className="h-8 w-8 text-muted-foreground/40 mb-1" />
-                        <span className="text-[6px] font-black uppercase tracking-widest text-muted-foreground/40 text-center">No Photo</span>
+                        <span className="text-3xl mb-1">🦆</span>
+                        <span className="text-[6px] font-black uppercase tracking-widest text-primary/40 text-center">No Photo</span>
                       </>
                     )}
                   </div>

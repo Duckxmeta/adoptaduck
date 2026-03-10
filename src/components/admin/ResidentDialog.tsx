@@ -110,8 +110,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     e.preventDefault();
     setUploading(true);
 
-    // Default fallback if no image exists or is uploaded
-    let finalImageUrl = formData.primaryImageUrl || `https://picsum.photos/seed/${formData.name || 'duck'}/600/600`;
+    let finalImageUrl = formData.primaryImageUrl || "";
 
     try {
       if (selectedFile && storage) {
@@ -121,7 +120,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         });
         
         const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-${Date.now()}`;
-        // Saving to the /resident-photos/ folder as requested
         const fileRef = storageRef(storage, `resident-photos/${fileName}`);
         
         const snapshot = await uploadBytes(fileRef, selectedFile);
@@ -168,7 +166,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* Photo Upload Section with Preview */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
               <Camera className="h-3 w-3" /> Upload Resident Photo
@@ -198,11 +195,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 onChange={handleFileChange}
               />
             </div>
-            {selectedFile && (
-              <p className="text-[9px] font-black uppercase text-secondary text-center">
-                Selected: {selectedFile.name}
-              </p>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

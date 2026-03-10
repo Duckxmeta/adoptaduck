@@ -17,8 +17,7 @@ import {
   Sparkles, 
   Loader2, 
   Dna,
-  ShieldCheck,
-  Bird
+  ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -83,7 +82,10 @@ export default function LineageTreePage() {
     if (!bird) return null;
 
     const isG0 = !bird.motherId && !bird.fatherId;
-    const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.startsWith('http');
+    const hasImage = !!bird.primaryImageUrl && 
+                     bird.primaryImageUrl.startsWith('http') && 
+                     !bird.primaryImageUrl.includes('placeholder') &&
+                     !bird.primaryImageUrl.includes('picsum.photos');
 
     return (
       <Link href={`/residents/${bird.id}`} className={cn("w-[260px] h-[350px] group relative shrink-0", className)}>
@@ -97,9 +99,9 @@ export default function LineageTreePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             </div>
           ) : (
-            <div className="h-full w-full bg-slate-800 flex flex-col items-center justify-center p-6 text-center">
-              <Bird className="h-16 w-16 text-muted-foreground/40 mb-2" />
-              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-muted-foreground/40">Photo Coming Soon!</span>
+            <div className="h-full w-full bg-[#1a1a1a] flex flex-col items-center justify-center p-6 text-center">
+              <span className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-500">🦆</span>
+              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
             </div>
           )}
           
