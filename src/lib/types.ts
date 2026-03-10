@@ -12,6 +12,7 @@ export type Resident = {
   galleryImageUrls: string[];
   createdAt: string;
   updatedAt?: string;
+  adopterEmail?: string; // Track who has adopted/named this resident
 };
 
 export type NameSuggestion = {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -76,7 +77,12 @@ export default function AdminDashboard() {
     if (!firestore) return;
     try {
       const birdRef = doc(firestore, 'birds', suggestion.birdId);
-      await updateDoc(birdRef, { name: suggestion.suggestedName });
+      // Link the bird to the adopter's email for the member dashboard
+      await updateDoc(birdRef, { 
+        name: suggestion.suggestedName,
+        adopterEmail: suggestion.donorEmail || null,
+        updatedAt: new Date().toISOString()
+      });
       await deleteDoc(doc(firestore, 'nameSuggestions', suggestion.id));
       toast({ title: "Name Updated", description: `Resident is now officially ${suggestion.suggestedName}.` });
     } catch (e) {
@@ -279,6 +285,9 @@ export default function AdminDashboard() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-headline font-black text-2xl truncate uppercase tracking-tight">{bird.name}</h3>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">{bird.breed} • {bird.sex}</p>
+                    {bird.adopterEmail && (
+                      <Badge variant="outline" className="mt-1 text-[8px] border-primary/30 text-primary/80">Adopted by member</Badge>
+                    )}
                   </div>
                   {isHen && (
                     <div className="flex flex-col items-center bg-primary/10 p-3 rounded-xl border border-primary/20 min-w-[60px] shadow-sm">
@@ -337,4 +346,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

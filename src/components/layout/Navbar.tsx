@@ -1,9 +1,10 @@
+
 "use client";
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart, Menu, ShieldCheck, LogOut, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Heart, Menu, ShieldCheck, LogOut, LayoutDashboard, ArrowLeft, User } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -12,6 +13,7 @@ import {
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -73,6 +75,17 @@ export function Navbar() {
                 <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logout
               </Button>
             </>
+          ) : user ? (
+            <>
+              <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
+              <Link href="/dashboard" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/dashboard' && "text-primary")}>
+                <User className="h-3.5 w-3.5" /> My Dashboard
+              </Link>
+              <Link href={donateUrl} target="_blank" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Adopt</Link>
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-destructive transition-colors p-0 h-auto">
+                <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logout
+              </Button>
+            </>
           ) : (
             <>
               <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
@@ -113,6 +126,12 @@ export function Navbar() {
                     <Link href="/admin" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">Dashboard</Link>
                     <button onClick={handleLogout} className="text-left text-2xl font-headline font-black uppercase tracking-tighter text-destructive">Logout</button>
                   </>
+                ) : user ? (
+                  <>
+                    <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">Home</Link>
+                    <Link href="/dashboard" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">My Dashboard</Link>
+                    <button onClick={handleLogout} className="text-left text-2xl font-headline font-black uppercase tracking-tighter text-destructive">Logout</button>
+                  </>
                 ) : (
                   <>
                     <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">Home</Link>
@@ -134,5 +153,3 @@ export function Navbar() {
     </nav>
   );
 }
-
-import { cn } from '@/lib/utils';

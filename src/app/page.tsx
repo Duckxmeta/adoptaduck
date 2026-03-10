@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ResidentCard } from '@/components/residents/ResidentCard';
@@ -30,20 +32,32 @@ import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { cn } from '@/lib/utils';
 
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
+
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
+  // Automatically redirect logged-in users to the dashboard
+  useEffect(() => {
+    if (user && !isUserLoading) {
+      if (user.email === ADMIN_EMAIL) {
+        // Admins can stay or go to admin portal
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isUserLoading, router]);
+
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    // Only attempt to fetch the daily status if a user is signed in,
-    // as per the Firestore security rules.
     if (!firestore || !user) return null;
     return doc(firestore, 'daily_status', 'today');
   }, [firestore, user]);
@@ -53,7 +67,6 @@ export default function Home() {
   
   const totalEggsRescued = birds?.reduce((sum, bird) => sum + (bird.eggCounter || 0), 0) || 0;
 
-  // Official Image URLs
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
