@@ -1,16 +1,14 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { 
   Plus, 
   Minus,
-  LogOut, 
   Settings, 
   Sparkles, 
   Loader2, 
@@ -20,7 +18,8 @@ import {
   Stethoscope,
   ChevronRight,
   ClipboardList,
-  RotateCcw
+  RotateCcw,
+  LayoutDashboard
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -30,15 +29,13 @@ import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/no
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
-import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { Navbar } from '@/components/layout/Navbar';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -54,13 +51,11 @@ export default function AdminDashboard() {
   }, [firestore]);
 
   const suggestionsQuery = useMemoFirebase(() => {
-    // Only fetch suggestions if an admin user is signed in
     if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
     return query(collection(firestore, 'nameSuggestions'), orderBy('createdAt', 'desc'));
   }, [firestore, user]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    // Only fetch daily status if an admin user is signed in
     if (!firestore || !user || user.email !== ADMIN_EMAIL) return null;
     return doc(firestore, 'daily_status', 'today');
   }, [firestore, user]);
@@ -76,13 +71,6 @@ export default function AdminDashboard() {
       }
     }
   }, [user, isUserLoading, router]);
-
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      router.push('/admin/login');
-    }
-  };
 
   const handleApproveSuggestion = async (suggestion: NameSuggestion) => {
     if (!firestore) return;
@@ -190,12 +178,20 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-md border-b border-border p-4 flex justify-between items-center">
-        <h1 className="font-headline font-black text-xl uppercase tracking-tighter">SANCTUARY <span className="text-primary">MANAGER</span></h1>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-muted-foreground"><LogOut className="h-5 w-5" /></Button>
-      </header>
+      <Navbar />
 
-      <main className="container mx-auto p-4 space-y-12">
+      <main className="container mx-auto p-4 space-y-12 mt-8">
+        {/* Dashboard Title Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+           <div className="space-y-1">
+              <h1 className="font-headline font-black text-4xl uppercase tracking-tighter flex items-center gap-3">
+                <LayoutDashboard className="h-8 w-8 text-primary" /> 
+                MANAGER <span className="text-primary">PORTAL</span>
+              </h1>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Virtual Sanctuary Control Center</p>
+           </div>
+        </div>
+
         {/* Daily Sanctuary Routine Checklist */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
@@ -341,3 +337,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
