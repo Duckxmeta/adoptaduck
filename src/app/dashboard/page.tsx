@@ -119,18 +119,32 @@ export default function MemberDashboard() {
 
   const handleReferralCode = async () => {
     const code = referralCode.trim().toUpperCase();
-    if (!code || !REFERRAL_MAP[code] || !firestore || !user?.uid) {
+    
+    // 1. Validation
+    if (!code) return;
+    
+    if (!REFERRAL_MAP[code]) {
       toast({
         variant: "destructive",
         title: "Invalid Code",
-        description: "Please check your community referral code and try again."
+        description: "Invalid Community Code. Please check the spelling and try again."
+      });
+      return;
+    }
+
+    const targetName = REFERRAL_MAP[code];
+
+    // 2. Duplicate Use Check
+    if (userProfile?.community_codes?.includes(code)) {
+      toast({
+        title: "Already Adopted",
+        description: `You are already a community adopter for ${targetName}!`,
       });
       return;
     }
 
     setIsVerifying(true);
     try {
-      const targetName = REFERRAL_MAP[code];
       const birdsRef = collection(firestore, 'birds');
       const q = query(birdsRef, where('name', '==', targetName));
       const querySnapshot = await getDocs(q);
@@ -143,13 +157,25 @@ export default function MemberDashboard() {
         });
       } else {
         const birdDoc = querySnapshot.docs[0];
+        const birdId = birdDoc.id;
+
+        // Check if bird is already in flock (via different code or email)
+        if (userProfile?.my_flock?.includes(birdId)) {
+          toast({
+            title: "Already Adopted",
+            description: `You are already a community adopter for ${targetName}!`,
+          });
+          setIsVerifying(false);
+          return;
+        }
         
-        // Link to user profile instead of modifying the bird document (which users can't write to)
+        // 3. Unlimited Use Logic & Success State
+        // Link to user profile. Real-time listener on userProfile will update the flock grid instantly.
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
-          my_flock: arrayUnion(birdDoc.id),
+          my_flock: arrayUnion(birdId),
           community_codes: arrayUnion(code),
           updatedAt: new Date().toISOString()
         }, { merge: true });
@@ -166,7 +192,7 @@ export default function MemberDashboard() {
       toast({
         variant: "destructive",
         title: "Link Failed",
-        description: e.message || "Could not link the community resident."
+        description: "Could not link the community resident. Please try again."
       });
     } finally {
       setIsVerifying(false);
