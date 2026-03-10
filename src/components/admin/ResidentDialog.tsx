@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -14,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, X, Upload } from 'lucide-react';
+import { Bird, Loader2, Camera, X, Upload, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage } from '@/firebase/provider';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -40,7 +42,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     personalityTraits: '',
     backstory: '',
     primaryImageUrl: '',
-    galleryImageUrls: []
+    galleryImageUrls: [],
+    isCommunityDuck: false
   });
 
   const [uploading, setUploading] = useState(false);
@@ -51,7 +54,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     if (resident) {
       setFormData({
         ...resident,
-        galleryImageUrls: resident.galleryImageUrls || []
+        galleryImageUrls: resident.galleryImageUrls || [],
+        isCommunityDuck: !!resident.isCommunityDuck
       });
       setPreviewUrl(resident.primaryImageUrl || null);
     } else {
@@ -62,7 +66,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         personalityTraits: '',
         backstory: '',
         primaryImageUrl: '',
-        galleryImageUrls: []
+        galleryImageUrls: [],
+        isCommunityDuck: false
       });
       setPreviewUrl(null);
     }
@@ -115,8 +120,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   };
 
   const removeGalleryImage = (index: number) => {
+    const i = index;
     const newGallery = [...(formData.galleryImageUrls || [])];
-    newGallery.splice(index, 1);
+    newGallery.splice(i, 1);
     setFormData({ ...formData, galleryImageUrls: newGallery });
   };
 
@@ -138,6 +144,20 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Community Duck Toggle */}
+          <div className="flex items-center justify-between p-4 bg-secondary/5 border border-secondary/20 rounded-xl">
+            <div className="space-y-0.5">
+              <Label className="text-xs font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" /> Community Resident
+              </Label>
+              <p className="text-[10px] text-muted-foreground font-medium">Available via partner referral codes.</p>
+            </div>
+            <Switch 
+              checked={formData.isCommunityDuck} 
+              onCheckedChange={(checked) => setFormData({...formData, isCommunityDuck: checked})} 
+            />
+          </div>
+
           {/* Profile Photo Upload Section */}
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Profile Identity</Label>
@@ -164,11 +184,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   onChange={handleFileChange}
                 />
               </div>
-              {selectedFile && (
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse">
-                  New photo ready for upload
-                </p>
-              )}
             </div>
           </div>
 
@@ -212,27 +227,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 <SelectItem value="unknown">Unknown / Not Yet Determined</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-3">
-             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Gallery Management</Label>
-             <div className="grid grid-cols-4 gap-2">
-               {formData.galleryImageUrls?.map((url, i) => (
-                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
-                   <Image src={url} alt="Gallery item" fill className="object-cover" />
-                   <button 
-                     type="button"
-                     onClick={() => removeGalleryImage(i)}
-                     className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                   >
-                     <X className="h-3 w-3" />
-                   </button>
-                 </div>
-               ))}
-               <div className="aspect-square rounded-lg border-2 border-dashed border-border flex items-center justify-center opacity-40">
-                 <Upload className="h-5 w-5" />
-               </div>
-             </div>
           </div>
 
           <div className="space-y-2">

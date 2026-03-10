@@ -1,17 +1,18 @@
 
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, doc, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, limit, getDocs, updateDoc } from 'firebase/firestore';
 import { Resident, DailyStatus, HealthLogEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
   Heart, 
   Bird, 
@@ -27,17 +28,32 @@ import {
   Utensils,
   Droplets,
   Calendar,
-  LayoutDashboard
+  LayoutDashboard,
+  Ticket,
+  Check
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+
+const REFERRAL_MAP: Record<string, string> = {
+  'STRAY-G0': 'Joey',
+  'QUAKK-G0': 'Jordie',
+  'QUAKEY-G0': 'Cutie Pie',
+  'GODS-G0': 'Huey'
+};
 
 export default function MemberDashboard() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const [referralCode, setReferralCode] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [unlockedName, setUnlockedName] = useState<string | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -68,6 +84,56 @@ export default function MemberDashboard() {
     return (completed / tasks.length) * 100;
   };
 
+  const handleReferralCode = async () => {
+    const code = referralCode.trim().toUpperCase();
+    if (!code || !REFERRAL_MAP[code] || !firestore || !user?.email) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Code",
+        description: "Please check your community referral code and try again."
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const targetName = REFERRAL_MAP[code];
+      const birdsRef = collection(firestore, 'birds');
+      const q = query(birdsRef, where('name', '==', targetName));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        toast({
+          variant: "destructive",
+          title: "Resident Not Found",
+          description: `We couldn't find ${targetName} in the sanctuary records.`
+        });
+      } else {
+        const birdDoc = querySnapshot.docs[0];
+        await updateDoc(doc(firestore, 'birds', birdDoc.id), {
+          adopterEmail: user.email,
+          isCommunityDuck: true,
+          updatedAt: new Date().toISOString()
+        });
+        
+        setUnlockedName(targetName);
+        toast({
+          title: "Welcome to the flock!",
+          description: `You are now a community adopter of ${targetName}.`,
+        });
+        setReferralCode('');
+      }
+    } catch (e) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not link the community resident."
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const routineTasks = [
     { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
     { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
@@ -92,15 +158,52 @@ export default function MemberDashboard() {
 
       <main className="flex-1 container mx-auto px-4 py-12 space-y-16">
         {/* Welcome Header */}
-        <section className="space-y-4">
-           <div className="flex items-center gap-3 text-primary">
-              <LayoutDashboard className="h-6 w-6" />
-              <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Viewer Portal</span>
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+           <div className="space-y-4">
+              <div className="flex items-center gap-3 text-primary">
+                 <LayoutDashboard className="h-6 w-6" />
+                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Viewer Portal</span>
+              </div>
+              <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase">
+                WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'HERO'}</span>
+              </h1>
            </div>
-           <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase">
-             WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'HERO'}</span>
-           </h1>
+
+           {/* Community Code Entry */}
+           <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-80 shadow-lg">
+              <div className="space-y-4">
+                 <div className="flex items-center gap-2 text-secondary">
+                    <Ticket className="h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Community Code</span>
+                 </div>
+                 <div className="flex gap-2">
+                    <Input 
+                      placeholder="ENTER CODE" 
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      className="bg-background border-secondary/20 h-10 text-xs font-black tracking-widest uppercase"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={handleReferralCode} 
+                      disabled={isVerifying}
+                      className="bg-secondary text-secondary-foreground font-black px-4"
+                    >
+                      {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                 </div>
+              </div>
+           </Card>
         </section>
+
+        {unlockedName && (
+          <div className="bg-[#14F195]/10 border-2 border-[#14F195]/20 p-6 rounded-2xl text-center animate-in zoom-in duration-500">
+             <PartyPopper className="h-8 w-8 text-[#14F195] mx-auto mb-2" />
+             <h3 className="text-xl font-headline font-black uppercase text-[#14F195]">Code Success!</h3>
+             <p className="text-sm font-medium">Welcome to the flock! You are now a community adopter of <strong>{unlockedName}</strong>.</p>
+             <Button variant="ghost" size="sm" onClick={() => setUnlockedName(null)} className="mt-2 text-[10px] font-black uppercase tracking-widest opacity-60">Dismiss</Button>
+          </div>
+        )}
 
         {/* Global Sanctuary Routine & Health */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -144,7 +247,7 @@ export default function MemberDashboard() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-xl font-headline font-black uppercase">Live Impact</h3>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">You are currently supporting 100% of the birds in our recovery program.</p>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Your support directly fuels the daily health check progress shown here.</p>
               </div>
            </Card>
         </section>
@@ -233,6 +336,11 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
                 <PartyPopper className="h-3.5 w-3.5" /> LAID TODAY
              </Badge>
            )}
+           {bird.isCommunityDuck && (
+             <Badge className="bg-secondary text-secondary-foreground font-black px-3 py-1.5 rounded-lg border-none">
+                COMMUNITY
+             </Badge>
+           )}
         </div>
       </div>
 
@@ -298,8 +406,6 @@ function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, 
 function NewsFeed({ adopterEmail }: { adopterEmail: string }) {
   const firestore = useFirestore();
   
-  // To show "Supporter News", we ideally query a collection of logs. 
-  // Since logs are subcollections, we'll fetch a mix of birds the user adopted and show their logs.
   const flockQuery = useMemoFirebase(() => {
     if (!firestore || !adopterEmail) return null;
     return query(collection(firestore, 'birds'), where('adopterEmail', '==', adopterEmail), limit(5));
@@ -310,7 +416,7 @@ function NewsFeed({ adopterEmail }: { adopterEmail: string }) {
   if (!flock || flock.length === 0) {
     return (
       <Card className="bg-muted/10 border-border p-12 text-center rounded-3xl border-dashed">
-        <p className="text-muted-foreground font-medium italic">News feed will populate once you adopt a resident.</p>
+        <p className="text-muted-foreground font-medium italic">News feed will populate once you adopt a resident or use a community code.</p>
       </Card>
     );
   }

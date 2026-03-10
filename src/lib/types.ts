@@ -13,6 +13,7 @@ export type Resident = {
   createdAt: string;
   updatedAt?: string;
   adopterEmail?: string; // Track who has adopted/named this resident
+  isCommunityDuck?: boolean; // Flag for community referral ducks
 };
 
 export type NameSuggestion = {
