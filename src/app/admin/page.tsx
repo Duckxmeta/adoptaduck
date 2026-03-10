@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -260,7 +261,7 @@ export default function AdminDashboard() {
                     <Settings className="h-4 w-4 text-muted-foreground" />
                     <span className="text-[7px] font-black uppercase tracking-widest">EDIT</span>
                   </Button>
-                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => router.push(`/residents/${bird.id}`)}>
+                  <Button variant="ghost" className="rounded-none h-14 flex flex-col gap-1" onClick={() => router.push(`/residents/${bird.id}/tree`)}>
                     <ChevronRight className="h-4 w-4 text-primary" />
                     <span className="text-[7px] font-black uppercase tracking-widest">TREE</span>
                   </Button>

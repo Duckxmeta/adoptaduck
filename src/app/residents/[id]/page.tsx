@@ -7,14 +7,31 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
-import { Egg, Heart, History, Info, ShieldCheck, Stethoscope, Sparkles, MapPin, Camera, Lock, CheckCircle2, TreePine, ChevronRight, User } from 'lucide-react';
-import { notFound, useParams } from 'next/navigation';
+import { 
+  Egg, 
+  Heart, 
+  History, 
+  Info, 
+  ShieldCheck, 
+  Stethoscope, 
+  Sparkles, 
+  MapPin, 
+  Camera, 
+  Lock, 
+  CheckCircle2, 
+  TreePine, 
+  ChevronRight, 
+  User,
+  GitBranch
+} from 'lucide-react';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy, where } from 'firebase/firestore';
 import { Resident, HealthLogEntry } from '@/lib/types';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey'];
 
@@ -22,6 +39,7 @@ export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
   const { user } = useUser();
+  const router = useRouter();
 
   const birdRef = useMemoFirebase(() => {
     if (!firestore || !id) return null;
@@ -120,12 +138,20 @@ export default function ResidentProfile() {
 
             {/* Content Section */}
             <div className="space-y-10">
-              <div>
-                <h1 className="text-7xl font-headline font-black text-primary tracking-tighter leading-[0.8] mb-4 uppercase">{bird?.name}</h1>
-                <div className="flex items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
-                   <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Main Aviary</span>
-                   <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-success" /> Verified Resident</span>
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-7xl font-headline font-black text-primary tracking-tighter leading-[0.8] mb-4 uppercase">{bird?.name}</h1>
+                  <div className="flex items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
+                     <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Main Aviary</span>
+                     <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-success" /> Verified Resident</span>
+                  </div>
                 </div>
+                <Button 
+                  onClick={() => router.push(`/residents/${bird?.id}/tree`)}
+                  className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-lg hover:scale-105 transition-transform"
+                >
+                  <GitBranch className="mr-2 h-4 w-4" /> VIEW FULL TREE
+                </Button>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
