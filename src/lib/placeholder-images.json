@@ -41,6 +41,18 @@
       "description": "Male Mallard Duck",
       "imageUrl": "https://picsum.photos/seed/mallard-wild/600/600",
       "imageHint": "mallard duck"
+    },
+    {
+      "id": "story-discovery",
+      "description": "A hatching duckling",
+      "imageUrl": "https://picsum.photos/seed/hatchling/800/600",
+      "imageHint": "duckling hatching"
+    },
+    {
+      "id": "story-lake",
+      "description": "Ducks at a public lake",
+      "imageUrl": "https://picsum.photos/seed/lake/800/600",
+      "imageHint": "ducks lake"
     }
   ]
 }
