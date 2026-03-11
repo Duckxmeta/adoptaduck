@@ -29,18 +29,16 @@ export default function SignUpPage() {
     
     setLoading(true);
     try {
-      // 1. Sequential Registration: Create user in Firebase Auth first
       const userCredential = await initiateEmailSignUp(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Initial Data Structure: Create user document in Firestore
       try {
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
-          my_flock: [], // Initial data structure
-          role: 'member', // Default role
+          my_flock: [], 
+          role: 'member', 
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
@@ -50,7 +48,6 @@ export default function SignUpPage() {
           description: "Your sanctuary member profile has been created.",
         });
       } catch (dbError: any) {
-        // 3. Sequential Failure Handling: Don't roll back Auth if Firestore fails
         console.error("Firestore Profile Init Failed:", dbError);
         toast({
           title: "Partial Success",
@@ -83,7 +80,7 @@ export default function SignUpPage() {
             <Bird className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-3xl font-headline font-black uppercase tracking-tight">JOIN THE FLOCK</CardTitle>
-          <CardDescription className="text-muted-foreground font-medium">Create your Sanctuary Viewer account today.</CardDescription>
+          <CardDescription className="text-muted-foreground font-medium">Create your Sanctuary Member account today.</CardDescription>
         </CardHeader>
         <CardContent className="pb-10">
           <form onSubmit={handleSignUp} className="space-y-6">

@@ -277,16 +277,16 @@ export default function MemberDashboard() {
   const globalHealth = calculateProgress();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
+    <div className="min-h-screen bg-background text-foreground font-body">
       <Navbar />
 
-      <main className="flex-1 container mx-auto px-4 py-12 space-y-16">
+      <main className="container mx-auto px-4 py-12 space-y-16">
         {/* Welcome Header */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
                  <LayoutDashboard className="h-6 w-6" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Viewer Portal</span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Member Portal</span>
               </div>
               <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase">
                 WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'HERO'}</span>
@@ -317,7 +317,6 @@ export default function MemberDashboard() {
                       {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                     </Button>
                  </div>
-                 {isVerifying && <p className="text-[9px] font-black uppercase text-center animate-pulse text-secondary">Checking Code...</p>}
               </div>
            </Card>
         </section>
@@ -396,7 +395,7 @@ export default function MemberDashboard() {
                    </div>
                    <div className="space-y-2">
                       <h3 className="text-2xl font-headline font-black uppercase">Start your flock today</h3>
-                      <p className="text-muted-foreground max-w-sm mx-auto">Your support directly funds life-saving care. Find a resident to name and adopt today.</p>
+                      <p className="text-muted-foreground max-w-sm mx-auto">Your support directly funds life-saving care. Find a resident to support today.</p>
                    </div>
                    <Button asChild className="bg-primary text-primary-foreground font-black px-10 h-12 rounded-xl">
                       <Link href="/flock">BROWSE RESIDENTS <ArrowRight className="ml-2 h-4 w-4" /></Link>
@@ -420,182 +419,6 @@ export default function MemberDashboard() {
       </main>
 
       <Footer />
-    </div>
-  );
-}
-
-function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[] | null, totalBirds: number }) {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const isHen = bird.sex === 'female';
-  
-  const displayName = bird.name;
-
-  const monthlyCareCost = useMemo(() => {
-    if (!expenses) return 0;
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
-
-    const monthlyExpenses = expenses.filter(e => {
-      const d = new Date(e.date);
-      return d.getMonth() === m && d.getFullYear() === y;
-    });
-
-    const specificCost = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + e.cost, 0);
-    const sharedCost = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + e.cost, 0);
-    const overhead = sharedCost / (totalBirds || 1);
-
-    return specificCost + overhead;
-  }, [expenses, bird.id, totalBirds]);
-
-  const logsQuery = useMemoFirebase(() => {
-    if (!firestore || !bird.id || !user) return null;
-    return query(collection(firestore, 'birds', bird.id, 'healthLogs'), orderBy('logDate', 'desc'), limit(1));
-  }, [firestore, bird.id, user]);
-
-  const { data: logs } = useCollection<HealthLogEntry>(logsQuery);
-  const latestLog = logs?.[0];
-
-  return (
-    <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col group hover:glow-purple transition-all duration-500">
-      <div className="relative aspect-video overflow-hidden">
-        <Image 
-          src={bird.primaryImageUrl} 
-          alt={displayName} 
-          fill 
-          className="object-cover transition-transform duration-700 group-hover:scale-110" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
-           <div>
-              <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter">{displayName}</h3>
-              <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.breed}</p>
-           </div>
-           <Badge className="bg-primary text-black font-black px-3 py-1.5 rounded-lg border-none">
-              ${monthlyCareCost.toFixed(0)}/MO
-           </Badge>
-        </div>
-      </div>
-
-      <CardContent className="p-6 space-y-8">
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-             <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-               <Clock className="h-3.5 w-3.5 text-secondary" /> Care Progress
-             </span>
-             <span className="text-[11px] font-black text-foreground">{Math.round(dailyStatusProgress)}%</span>
-          </div>
-          <Progress value={dailyStatusProgress} className="h-2.5 bg-muted/20" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-           {isHen ? (
-             <div className="bg-background/50 border border-border p-4 rounded-2xl flex flex-col items-center justify-center">
-                <Egg className="h-5 w-5 text-primary mb-1" />
-                <span className="text-2xl font-headline font-black">{bird.eggCounter}</span>
-                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Rescued Eggs</span>
-             </div>
-           ) : (
-             <div className="bg-background/50 border border-border p-4 rounded-2xl flex flex-col items-center justify-center">
-                <ShieldCheck className="h-5 w-5 text-secondary mb-1" />
-                <span className="text-lg font-headline font-black uppercase">Guardian</span>
-                <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Role</span>
-             </div>
-           )}
-           <div className="bg-background/50 border border-border p-4 rounded-2xl flex flex-col items-center justify-center">
-              <Stethoscope className="h-5 w-5 text-[#14F195] mb-1" />
-              <span className="text-lg font-headline font-black uppercase text-[#14F195]">Healthy</span>
-              <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Status</span>
-           </div>
-        </div>
-
-        <Button variant="ghost" className="w-full h-12 border border-border rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10 group" asChild>
-           <Link href={`/residents/${bird.id}`}>
-             VIEW FULL PROFILE <ArrowRight className="ml-2 h-3 w-3 group-hover:translate-x-1 transition-transform" />
-           </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlockedIds: string[] }) {
-  const firestore = useFirestore();
-  
-  const flockQuery = useMemoFirebase(() => {
-    if (!firestore || (!adopterEmail && unlockedIds.length === 0)) return null;
-    
-    if (unlockedIds.length > 0) {
-      return query(
-        collection(firestore, 'birds'), 
-        or(
-          where('adopterEmail', '==', adopterEmail),
-          where('id', 'in', unlockedIds)
-        ),
-        limit(5)
-      );
-    }
-    
-    return query(collection(firestore, 'birds'), where('adopterEmail', '==', adopterEmail), limit(5));
-  }, [firestore, adopterEmail, unlockedIds]);
-
-  const { data: flock } = useCollection<Resident>(flockQuery);
-
-  if (!flock || flock.length === 0) {
-    return (
-      <Card className="bg-muted/10 border-border p-12 text-center rounded-3xl border-dashed">
-        <p className="text-muted-foreground font-medium italic">News feed will populate once you adopt a resident.</p>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {flock.map(bird => (
-        <BirdLogs key={bird.id} bird={bird} />
-      ))}
-    </div>
-  );
-}
-
-function BirdLogs({ bird }: { bird: Resident }) {
-  const firestore = useFirestore();
-  const displayName = bird.name;
-  
-  const logsQuery = useMemoFirebase(() => {
-    if (!firestore || !bird.id) return null;
-    return query(collection(firestore, 'birds', bird.id, 'healthLogs'), orderBy('logDate', 'desc'), limit(2));
-  }, [firestore, bird.id]);
-
-  const { data: logs } = useCollection<HealthLogEntry>(logsQuery);
-
-  if (!logs || logs.length === 0) return null;
-
-  return (
-    <div className="space-y-4">
-      {logs.map(log => (
-        <Card key={log.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 border border-primary/20">
-                <Image src={bird.primaryImageUrl} alt={displayName} fill className="object-cover" />
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">{displayName} • Daily Care Log</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                    {format(new Date(log.logDate), 'MMM dd, yyyy')}
-                  </span>
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90 font-medium">
-                  {log.notes}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }

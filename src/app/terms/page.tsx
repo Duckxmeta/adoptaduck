@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -55,10 +56,10 @@ export default function TermsPage() {
                  <Info className="h-6 w-6 text-primary" />
               </div>
               <p className="text-lg text-foreground/80 font-medium leading-relaxed">
-                Provided <span className="text-primary font-black uppercase">'As-Is'</span> During Alpha
+                Provided <span className="text-primary font-black uppercase">'As-Is'</span> During Development
               </p>
               <p className="text-sm text-muted-foreground">
-                While we strive for 100% data accuracy in the 'Ledger' and 'Lineage', the platform is provided 'as-is' during this private alpha phase. We are not liable for any temporary technical discrepancies.
+                While we strive for 100% data accuracy in the 'Ledger' and 'Lineage', the platform is provided 'as-is' during this development phase. We are not liable for any temporary technical discrepancies.
               </p>
             </div>
           </section>

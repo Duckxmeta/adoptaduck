@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -58,24 +59,21 @@ export default function Home() {
         const result = await handleGoogleRedirectResult(auth);
         
         if (result && result.user) {
-          // Sequential Registration: Auth is already successful
           const userRef = doc(firestore, 'users', result.user.uid);
           
           try {
-            // Initialize user profile with Alpha/Founding status
             await setDoc(userRef, {
               uid: result.user.uid,
               email: result.user.email,
               my_flock: [], 
               role: 'member',
-              isFoundingMember: true, // Alpha tester group
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp()
             }, { merge: true });
 
             toast({
               title: "Account Verified",
-              description: `Welcome to the sanctuary Alpha, ${result.user.displayName || 'Friend'}.`,
+              description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
             });
             
             router.push('/dashboard');
@@ -83,13 +81,12 @@ export default function Home() {
             console.error("Profile Setup Error:", dbError);
             setAuthError({ 
               code: dbError.code || 'firestore/permission-denied', 
-              message: "Auth succeeded but profile creation failed. Check Firestore rules." 
+              message: "Auth succeeded but profile creation failed." 
             });
           }
         }
       } catch (error: any) {
         console.error("Auth Redirect Error:", error);
-        // Display specific error code for debugging 403/unauthorized issues
         setAuthError({ 
           code: error.code, 
           message: error.message 
@@ -99,7 +96,7 @@ export default function Home() {
            toast({
             variant: "destructive",
             title: "Verification Failed",
-            description: `Error: ${error.code}. Please ensure your email is in the Test Users list.`,
+            description: `Error: ${error.code}. Please try again or use another method.`,
           });
         }
       } finally {
@@ -133,7 +130,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary space-y-4">
         <Loader2 className="h-12 w-12 animate-spin" />
-        <p className="font-headline font-black uppercase tracking-[0.3em] text-xs">Verifying Alpha Access...</p>
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-xs">Entering the Sanctuary...</p>
       </div>
     );
   }
@@ -149,7 +146,7 @@ export default function Home() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Authentication Error: {authError.code}</AlertTitle>
               <AlertDescription>
-                {authError.message}. If this is a 403, ensure your email is added to the Google Cloud Console "Test Users" list.
+                {authError.message}
               </AlertDescription>
             </Alert>
           </div>
@@ -172,7 +169,7 @@ export default function Home() {
                 onClick={handleGoogleSignIn}
                 className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
               >
-                Sign up for Alpha access to see daily sanctuary progress and member-only stats.
+                Join the community to see daily sanctuary progress and member-only stats.
               </button>
             )}
           </div>
@@ -188,7 +185,7 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
               <Sparkles className="h-3.5 w-3.5" />
-              Alpha Tester Sanctuary
+              Virtual Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
               VIRTUAL <span className="text-primary">SANCTUARY</span>
@@ -278,19 +275,34 @@ export default function Home() {
                 </div>
                 <div className="space-y-4">
                   <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none text-center">
-                    Become a <span className="text-secondary">Sanctuary Alpha</span> – It’s Free!
+                    Join the <span className="text-secondary">Flock</span>
                   </h2>
                   <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
-                    Join our early tester group to unlock real-time access to the sanctuary dashboard, detailed heritage trees, and the live egg ticker.
+                    Get real-time updates from the sanctuary, explore the heritage of our residents, and follow every rescue story.
                   </p>
                 </div>
                 
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto py-8">
+                  <div className="space-y-2">
+                    <p className="font-headline font-black text-primary uppercase text-xs">Dashboard</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Live Sanctuary Dashboard</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-headline font-black text-primary uppercase text-xs">Heritage</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Interactive Family Trees</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-headline font-black text-primary uppercase text-xs">Logs</p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Daily Care Logs & Updates</p>
+                  </div>
+                </div>
+
                 <Button 
                   onClick={handleGoogleSignIn}
                   size="lg" 
                   className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                 >
-                  <Users className="mr-3 h-5 w-5" /> SIGN UP WITH GOOGLE
+                  <Users className="mr-3 h-5 w-5" /> JOIN THE SANCTUARY
                 </Button>
               </div>
             </div>
