@@ -21,7 +21,8 @@ import {
   TreePine,
   Trash2,
   Wallet,
-  ArrowRight
+  ArrowRight,
+  Bird
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
