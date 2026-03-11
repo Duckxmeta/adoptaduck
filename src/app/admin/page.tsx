@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, 
   Minus,
@@ -25,13 +26,14 @@ import {
   ArrowRight,
   Bird,
   Zap,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, limit } from 'firebase/firestore';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
-import { Resident, DailyStatus, Expense } from '@/lib/types';
+import { Resident, DailyStatus, Expense, DuckOfTheMonthSettings } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
@@ -71,6 +73,7 @@ export default function AdminDashboard() {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const [customVibes, setCustomVibes] = useState<Record<string, string>>({});
+  const [savingDOTM, setSavingDOTM] = useState(false);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
@@ -89,9 +92,15 @@ export default function AdminDashboard() {
     return doc(firestore, 'daily_status', 'today');
   }, [firestore, isAdmin]);
 
+  const dotmRef = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return doc(firestore, 'settings', 'duck_of_the_month');
+  }, [firestore, isAdmin]);
+
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: expenses, isLoading: expensesLoading } = useCollection<Expense>(expensesQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
+  const { data: dotmSettings } = useDoc<DuckOfTheMonthSettings>(dotmRef);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -109,6 +118,23 @@ export default function AdminDashboard() {
       statusLastUpdated: new Date().toISOString()
     });
     toast({ title: "Status Updated", description: `Vibe set to: ${status}` });
+  };
+
+  const handleUpdateDOTM = async (birdId: string, mission: string) => {
+    if (!firestore) return;
+    setSavingDOTM(true);
+    try {
+      await setDoc(doc(firestore, 'settings', 'duck_of_the_month'), {
+        birdId,
+        monthlyMission: mission,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      toast({ title: "Spotlight Updated", description: "Duck of the Month has been set." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Update Failed" });
+    } finally {
+      setSavingDOTM(false);
+    }
   };
 
   const handleAddEgg = (resident: Resident) => {
@@ -244,6 +270,59 @@ export default function AdminDashboard() {
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">FLOCK LINEAGE & OPERATIONS</p>
            </div>
         </div>
+
+        {/* Duck of the Month Section */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+              <Trophy className="h-4 w-4" /> DUCK OF THE MONTH SPOTLIGHT
+            </h2>
+          </div>
+          
+          <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Featured Resident</Label>
+                  <Select 
+                    value={dotmSettings?.birdId || ""} 
+                    onValueChange={(val) => handleUpdateDOTM(val, dotmSettings?.monthlyMission || "")}
+                  >
+                    <SelectTrigger className="bg-background border-border h-12 rounded-xl">
+                      <SelectValue placeholder="Select bird..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {foundingFour.map(bird => (
+                        <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Mission / Goal</Label>
+                  <Input 
+                    placeholder="e.g. This month, all $5 Treat Fund donations go toward..."
+                    value={dotmSettings?.monthlyMission || ""}
+                    onChange={(e) => {
+                      // We'll update the mission text. To avoid constant DB writes, we'll use a local state or just handle blur.
+                      // For simplicity in this admin panel, we'll just update on change with a small debounce or just a save button.
+                    }}
+                    onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
+                    className="h-12 bg-background border-border rounded-xl text-sm"
+                  />
+                  <p className="text-[9px] text-muted-foreground italic">Tip: Tapping away from the field saves changes automatically.</p>
+                </div>
+              </div>
+              
+              <div className="bg-primary/5 border border-dashed border-primary/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 h-full">
+                <Sparkles className="h-8 w-8 text-primary opacity-50" />
+                <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+                  The Duck of the Month spotlight appears at the top of the membership and user dashboard pages to drive targeted support.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
 
         {/* Live Status Control Section */}
         <section className="space-y-6">

@@ -55,6 +55,7 @@ import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
+import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 
 const GOALS = {
   feed: 300,
@@ -250,6 +251,11 @@ export default function MemberDashboard() {
                  </div>
               </div>
            </Card>
+        </section>
+
+        {/* Duck of the Month Spotlight */}
+        <section className="animate-in fade-in duration-1000">
+          <DOTMSpotlight />
         </section>
 
         {/* Live Status Ticker */}

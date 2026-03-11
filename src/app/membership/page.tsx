@@ -40,6 +40,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { doc, updateDoc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
+import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
 const PLAN_MONTHLY = "P-06W06412XR994193YNGYLYTI";
@@ -132,7 +133,7 @@ export default function MembershipPage() {
 
         <main className="flex-1 pb-32">
           {/* Hero Section */}
-          <section className="relative py-32 bg-secondary/5 border-b border-border overflow-hidden">
+          <section className="relative pt-24 pb-12 bg-secondary/5 border-b border-border overflow-hidden">
             <div className="container mx-auto px-4 text-center space-y-6 relative z-10">
               <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
                 Guardianship Program
@@ -146,6 +147,11 @@ export default function MembershipPage() {
             </div>
             <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/5 blur-[120px] rounded-full" />
             <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full" />
+          </section>
+
+          {/* Duck of the Month Spotlight */}
+          <section className="py-12 container mx-auto px-4">
+            <DOTMSpotlight />
           </section>
 
           {/* Community Impact Tracking */}
@@ -193,7 +199,7 @@ export default function MembershipPage() {
           </section>
 
           {/* Support Options */}
-          <section className="py-24 container mx-auto px-4 border-t border-border/50">
+          <section id="support-options" className="py-24 container mx-auto px-4 border-t border-border/50">
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
               
               <div className="lg:col-span-7 space-y-12">

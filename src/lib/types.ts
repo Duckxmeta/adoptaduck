@@ -82,3 +82,9 @@ export type DailyStatus = {
   nightlyPenUp: boolean;
   lastReset: string;
 };
+
+export type DuckOfTheMonthSettings = {
+  birdId: string;
+  monthlyMission: string;
+  updatedAt: string;
+};
