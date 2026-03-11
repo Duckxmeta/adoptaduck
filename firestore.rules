@@ -3,105 +3,66 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * DECENT DUCKS SANCTUARY SECURITY RULES - PROTOTYPING MODE
+     * DECENT DUCKS SANCTUARY SECURITY RULES
      * 
      * Core Philosophy:
-     * This ruleset implements a Database Access Control (DBAC) model for administrative tasks 
-     * and a Public-Consumption model for sanctuary transparency. Administrative privileges 
-     * are managed by the existence of a user's UID within the /admins collection.
-     * 
-     * Data Structure:
-     * - /residentBirds: Publicly visible directory of ducks.
-     * - /residentBirds/{id}/healthLogEntries: Sensitive medical data, restricted to admins.
-     * - /donations: Publicly readable ledger to drive real-time impact visualizations.
-     * - /admins: A mapping of UIDs to administrative status.
-     * 
-     * Key Security Decisions:
-     * 1. Public Visibility: Resident duck profiles and donation totals are public to 
-     *    encourage community engagement and trust.
-     * 2. DBAC (Database Access Control): Admin rights are validated by checking for 
-     *    the presence of the user's UID in the /admins collection, avoiding custom claims.
-     * 3. System-Locked Writes: Donation records are intended to be written by trusted 
-     *    backend services (e.g., PayPal webhooks). Client-side write access is strictly denied 
-     *    to prevent balance manipulation.
-     * 4. Denormalization for Authorization: Health logs and donations contain 
-     *    residentBirdId directly to ensure relationship integrity without complex lookups.
+     * - Public Read: Birds, Ledger (transparency), Donations (impact tracking), Daily Status.
+     * - Member Read: Detailed Health Logs.
+     * - Admin Write: Birds, Ledger, Daily Status.
+     * - Public Create: Donations (recorded after PayPal success), Name Suggestions.
      */
 
-    // --- Global Helper Functions ---
-
-    /** Checks if the current request is from an authenticated user. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** 
-     * Checks if the authenticated user has an entry in the admins collection.
-     * This is the core of the DBAC authorization model.
-     */
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
-    /** 
-     * Verifies a document exists before performing state-changing operations. 
-     * Used for updates and deletes to prevent logic errors.
-     */
-    function isExisting(resource) {
-      return resource != null;
+      return isSignedIn() && (
+        request.auth.token.email == 'decentducksorg@gmail.com' || 
+        request.auth.token.email == 'flowmarket1@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
     }
 
     // --- Collection Rules ---
 
-    /**
-     * @description Publicly readable bird residents; writes restricted to sanctuary staff.
-     * @path /residentBirds/{residentBirdId}
-     * @allow (get, list) for any visitor to view duck profiles.
-     * @deny (create, update) if the user is not a verified administrator.
-     * @principle Public Read with Admin-Only Writes.
-     */
-    match /residentBirds/{residentBirdId} {
-      allow get, list: if true;
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin() && isExisting(resource);
+    match /birds/{birdId} {
+      allow read: if true;
+      allow write: if isAdmin();
       
-      /**
-       * @description Sensitive medical history for specific ducks.
-       * @path /residentBirds/{residentBirdId}/healthLogEntries/{healthLogEntryId}
-       * @allow (create) if the user is an admin and links the log to the correct bird.
-       * @deny (read) for non-admin users to protect sensitive sanctuary operations.
-       * @principle Admin-Only Shared Access with Relational Integrity.
-       */
-      match /healthLogEntries/{healthLogEntryId} {
-        allow get, list: if isAdmin();
-        allow create: if isAdmin() && request.resource.data.residentBirdId == residentBirdId;
-        allow update: if isAdmin() && isExisting(resource) && request.resource.data.residentBirdId == resource.data.residentBirdId;
-        allow delete: if isAdmin() && isExisting(resource);
+      match /healthLogs/{logId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
       }
     }
 
-    /**
-     * @description Public donation ledger for live progress bars and activity tickers.
-     * @path /donations/{donationId}
-     * @allow (get, list) for public impact tracking and transparency.
-     * @deny (create, update, delete) from the client; these are managed by backend webhooks.
-     * @principle Public Read with System-Only Writes.
-     */
-    match /donations/{donationId} {
-      allow get, list: if true;
-      allow create, update, delete: if false; // Managed by trusted system/backend only.
+    match /ledger/{expenseId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    /**
-     * @description Administrative access control list.
-     * @path /admins/{uid}
-     * @allow (get) for a user to check their own administrative status.
-     * @deny (list) to prevent discovering the full list of staff UIDs.
-     * @principle DBAC (Database Access Control) Entry.
-     */
+    match /donations/{donationId} {
+      allow read: if true;
+      allow create: if true; // Record results after PayPal
+      allow update, delete: if isAdmin();
+    }
+
+    match /daily_status/{statusId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+    
     match /admins/{uid} {
-      allow get: if isSignedIn() && request.auth.uid == uid;
-      allow list, create, update, delete: if false; // Membership managed via GCP Console/Admin SDK.
+      allow read: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /nameSuggestions/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

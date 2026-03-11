@@ -1,10 +1,15 @@
 'use client';
 import {
-  Auth, // Import Auth type for type hinting
+  Auth,
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
+  type UserCredential
 } from 'firebase/auth';
 
 /** Initiate anonymous sign-in (non-blocking). */
@@ -14,16 +19,32 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
   // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
 }
 
-/** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-  createUserWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+/** Initiate email/password sign-up. 
+ * Note: Returns promise for cases where immediate access to user object is needed for profile creation.
+ */
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
+  return createUserWithEmailAndPassword(authInstance, email, password);
 }
 
 /** Initiate email/password sign-in (non-blocking). */
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
+  // CRITICAL: Call signInWithEmailAndPassword directly.
   signInWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+}
+
+/** Initiate Google sign-in via redirect (non-blocking). */
+export function initiateGoogleSignIn(authInstance: Auth): void {
+  const provider = new GoogleAuthProvider();
+  // Using redirect for better compatibility with in-app browsers (TikTok/Instagram)
+  signInWithRedirect(authInstance, provider);
+}
+
+/** Handles the result of a Google redirect sign-in. */
+export async function handleGoogleRedirectResult(authInstance: Auth): Promise<UserCredential | null> {
+  return getRedirectResult(authInstance);
+}
+
+/** Configures Auth persistence for session stability across reloads. */
+export function configureAuthPersistence(authInstance: Auth): void {
+  setPersistence(authInstance, browserLocalPersistence);
 }

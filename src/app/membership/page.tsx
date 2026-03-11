@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -20,67 +19,99 @@ import {
 import { 
   Heart, 
   ShieldCheck, 
-  History, 
   Wallet, 
-  Camera, 
   ArrowRight,
   Sparkles,
   Lock,
-  Zap,
-  Coffee,
   Loader2,
   Waves,
-  Utensils,
-  Stethoscope,
-  TreePine,
   Trophy,
-  CheckCircle2,
-  BellRing
+  BellRing,
+  TreePine,
+  TrendingUp,
+  Activity
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { useUser, useFirestore } from '@/firebase';
-import { doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, updateDoc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { Progress } from '@/components/ui/progress';
+import { format } from 'date-fns';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
 const PLAN_MONTHLY = "P-06W06412XR994193YNGYLYTI";
 const PLAN_YEARLY = "P-7K507415GG316890YNGYLZNQ";
 
+const GOALS = {
+  feed: 300,
+  medical: 500,
+  infrastructure: 1000
+};
+
 export default function MembershipPage() {
   const router = useRouter();
   const { user } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
   
   const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
   const [amount, setAmount] = useState<string>('25');
   const [designation, setDesignation] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePaymentSuccess = async (details: any) => {
-    if (user && firestore) {
-      const userRef = doc(firestore, 'users', user.uid);
-      try {
-        await updateDoc(userRef, {
+  // Live Tracking Queries
+  const donationsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'donations'), orderBy('timestamp', 'desc'), limit(50));
+  }, [firestore]);
+
+  const { data: donations } = useCollection(donationsQuery);
+
+  const stats = useMemo(() => {
+    if (!donations) return { feed: 0, medical: 0, infrastructure: 0 };
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const monthly = donations.filter(d => {
+      const date = new Date(d.timestamp);
+      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+    });
+
+    return {
+      feed: monthly.filter(d => d.designation === 'feed').reduce((s, d) => s + d.amount, 0),
+      medical: monthly.filter(d => d.designation === 'medical').reduce((s, d) => s + d.amount, 0),
+      infrastructure: monthly.filter(d => d.designation === 'infrastructure').reduce((s, d) => s + d.amount, 0)
+    };
+  }, [donations]);
+
+  const handlePaymentSuccess = async (details: any, amountValue: number, isOneTime: boolean) => {
+    if (!firestore) return;
+
+    try {
+      if (isOneTime) {
+        await addDoc(collection(firestore, 'donations'), {
+          amount: amountValue,
+          designation: designation || 'general',
+          timestamp: new Date().toISOString(),
+          donorDisplayInfo: user?.displayName || 'A Guardian',
+          uid: user?.uid || null
+        });
+      }
+
+      if (user) {
+        const userRef = doc(firestore, 'users', user.uid);
+        await setDoc(userRef, {
           role: 'guardian',
           updatedAt: serverTimestamp()
-        });
-      } catch (e) {
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          role: 'guardian',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          my_flock: [],
-          community_codes: []
         }, { merge: true });
       }
+      
+      router.push('/welcome-guardian');
+    } catch (e) {
+      console.error("Post-payment error:", e);
+      router.push('/welcome-guardian'); // Still redirect if auth update fails
     }
-    router.push('/welcome-guardian');
   };
 
   return (
@@ -110,8 +141,52 @@ export default function MembershipPage() {
             <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full" />
           </section>
 
+          {/* Community Impact Tracking */}
+          <section className="py-16 container mx-auto px-4">
+             <div className="max-w-5xl mx-auto space-y-12">
+                <div className="text-center space-y-2">
+                   <h2 className="text-3xl font-headline font-black uppercase tracking-tight flex items-center justify-center gap-3">
+                     <TrendingUp className="h-6 w-6 text-primary" /> COMMUNITY IMPACT
+                   </h2>
+                   <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">Live Sanctuary Sustainment Goals</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   {[
+                     { label: "Flock Feed", key: "feed", icon: "🌾", goal: GOALS.feed },
+                     { label: "Medical Reserve", key: "medical", icon: "🏥", goal: GOALS.medical },
+                     { label: "Infrastructure", key: "infrastructure", icon: "🔨", goal: GOALS.infrastructure }
+                   ].map((item) => (
+                     <Card key={item.key} className="bg-card border-border rounded-3xl p-6 space-y-4 shadow-xl">
+                        <div className="flex justify-between items-center">
+                           <span className="text-2xl">{item.icon}</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-primary">${Math.round(stats[item.key as keyof typeof stats])} / ${item.goal}</span>
+                        </div>
+                        <div className="space-y-2">
+                           <p className="text-xs font-black uppercase tracking-tight">{item.label}</p>
+                           <Progress value={(stats[item.key as keyof typeof stats] / item.goal) * 100} className="h-3" />
+                        </div>
+                     </Card>
+                   ))}
+                </div>
+
+                {donations && donations.length > 0 && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 overflow-hidden relative">
+                     <div className="flex items-center gap-4 animate-in fade-in duration-1000">
+                        <Activity className="h-4 w-4 text-primary shrink-0" />
+                        <div className="flex gap-8 whitespace-nowrap overflow-hidden">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-primary">
+                             LATEST ACTIVITY: {donations[0].donorDisplayInfo} just donated ${donations[0].amount} to {donations[0].designation}!
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+                )}
+             </div>
+          </section>
+
           {/* Support Options */}
-          <section className="py-24 container mx-auto px-4">
+          <section className="py-24 container mx-auto px-4 border-t border-border/50">
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
               
               <div className="lg:col-span-7 space-y-12">
@@ -212,7 +287,7 @@ export default function MembershipPage() {
                               }}
                               onApprove={async (data, actions) => {
                                 setIsProcessing(true);
-                                handlePaymentSuccess(data);
+                                handlePaymentSuccess(data, frequency === 'monthly' ? 25 : 250, false);
                               }}
                               className="w-full flex justify-center"
                             />
@@ -331,7 +406,7 @@ export default function MembershipPage() {
                               onApprove={async (data, actions) => {
                                 setIsProcessing(true);
                                 const details = await actions.order?.capture();
-                                handlePaymentSuccess(details);
+                                handlePaymentSuccess(details, Number(amount || 5), true);
                               }}
                               className="w-full flex justify-center"
                             />
@@ -407,43 +482,8 @@ export default function MembershipPage() {
                 <div className="p-6 bg-muted/20 rounded-2xl border border-border italic text-[10px] text-muted-foreground leading-relaxed">
                   *Please note: Naming Rights and Direct Duck Updates are reserved for our recurring Monthly and Yearly Guardians. One-time gifts grant full access to the Standard Member Dashboard features including the Ledger and Heritage Trees.
                 </div>
-
-                {/* Status Note */}
-                <Card className="bg-primary/5 border-2 border-primary/20 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-                   <div className="relative z-10 flex items-start gap-4">
-                      <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
-                         <ShieldCheck className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="space-y-2">
-                         <h4 className="text-[10px] font-black uppercase tracking-widest">Instant Status Upgrade</h4>
-                         <p className="text-xs text-muted-foreground leading-relaxed">
-                           Any contribution grants official **Member Status**. Log in with your donation email to unlock your personal dashboard instantly.
-                         </p>
-                      </div>
-                   </div>
-                </Card>
               </div>
             </div>
-          </section>
-
-          {/* CTA Section */}
-          <section className="container mx-auto px-4 mt-12">
-             <div className="bg-secondary/5 border-2 border-secondary/20 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden shadow-2xl">
-                <div className="relative z-10 space-y-6">
-                   <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
-                     READY TO JOIN THE <span className="text-secondary">FLOCK?</span>
-                   </h2>
-                   <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-                     Already supported us? Sign in to access your unique member benefits and explore the lineage.
-                   </p>
-                   <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                      <Button size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform" asChild>
-                         <Link href="/login"><Lock className="mr-3 h-5 w-5" /> MEMBER LOGIN</Link>
-                      </Button>
-                   </div>
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-secondary/5 blur-[150px] pointer-events-none" />
-             </div>
           </section>
         </main>
 
