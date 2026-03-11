@@ -5,7 +5,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { 
   Egg, 
@@ -25,7 +24,8 @@ import {
   GitBranch,
   Wallet,
   ArrowRight,
-  Trophy
+  Trophy,
+  BookOpen
 } from 'lucide-react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
@@ -34,6 +34,7 @@ import { Resident, HealthLogEntry, Expense } from '@/lib/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const FOREVER_NAMES = ['Joey', 'Huey', 'Jordie', 'Cutie Pie'];
 
@@ -103,6 +104,20 @@ export default function ResidentProfile() {
   const isForever = bird && FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === bird.name.toLowerCase().replace(/\s+/g, ''));
   const isHen = bird?.sex === 'female';
   const isFounding = !bird?.motherId && !bird?.fatherId;
+
+  // Narrative handling for Founding Four
+  const nameNorm = bird?.name?.trim();
+  const isFoundingGroup = FOREVER_NAMES.includes(nameNorm || '');
+  const sharedNarrative = "The story of the Founding Four began in 2022, when they were purchased as seasonal Easter ducklings. After a year of growth, it became clear their initial home wasn't equipped for their long-term needs. In 2023, they were officially rehomed to Decent Ducks Sanctuary. For years now, this bonded group has served as the heart of our mission, proving that with the right environment, every rescue can thrive long-term.";
+  const endings: Record<string, string> = {
+    'Joey': "Today, Joey has taken his second chance and turned it into a mission, serving as the flock's primary protector.",
+    'Huey': "Huey uses her loud, charismatic voice to make sure no one ever ignores the needs of the flock again.",
+    'Jordie': "Jordie celebrates her freedom by being the fastest runner to the snack bowl every single morning.",
+    'Cutie Pie': "Cutie Pie remains the silent guardian, staying by Jordie's side to ensure the family he arrived with stays safe."
+  };
+  const displayBackstory = isFoundingGroup 
+    ? `${sharedNarrative} ${endings[nameNorm!] || ''}`
+    : bird?.backstory;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -179,6 +194,15 @@ export default function ResidentProfile() {
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg italic">
                   "{bird?.personalityTraits}"
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" /> Rescue Story
+                </h3>
+                <p className="text-muted-foreground leading-relaxed text-lg">
+                  {displayBackstory}
                 </p>
               </div>
 

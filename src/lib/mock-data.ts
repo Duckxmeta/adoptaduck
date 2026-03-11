@@ -1,5 +1,7 @@
 import { Resident } from './types';
 
+const sharedNarrative = "The story of the Founding Four began in 2022, when they were purchased as seasonal Easter ducklings. After a year of growth, it became clear their initial home wasn't equipped for their long-term needs. In 2023, they were officially rehomed to Decent Ducks Sanctuary. For years now, this bonded group has served as the heart of our mission, proving that with the right environment, every rescue can thrive long-term.";
+
 export const MOCK_RESIDENTS: Resident[] = [
   {
     id: 'joey',
@@ -8,7 +10,7 @@ export const MOCK_RESIDENTS: Resident[] = [
     sex: 'male',
     eggCounter: 0,
     personalityTraits: 'Dominant, vigilant, and fiercely protective.',
-    backstory: 'Joey is the one who watches the skies and the fence line. He ensures every member of the Founding Four is safe before he even thinks about himself.',
+    backstory: `${sharedNarrative} Today, Joey has taken his second chance and turned it into a mission, serving as the flock's primary protector.`,
     primaryImageUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media',
     galleryImageUrls: [],
     createdAt: new Date().toISOString(),
@@ -23,7 +25,7 @@ export const MOCK_RESIDENTS: Resident[] = [
     sex: 'female',
     eggCounter: 120,
     personalityTraits: 'The loudest voice in the sanctuary and the mother figure of the group.',
-    backstory: 'Huey leads with her heart (and her voice). She keeps the flock in check with her big personality and makes sure no one is ever left out of the conversation.',
+    backstory: `${sharedNarrative} Huey uses her loud, charismatic voice to make sure no one ever ignores the needs of the flock again.`,
     primaryImageUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media',
     galleryImageUrls: [],
     createdAt: new Date().toISOString(),
@@ -39,7 +41,7 @@ export const MOCK_RESIDENTS: Resident[] = [
     sex: 'female',
     eggCounter: 85,
     personalityTraits: 'Fast, energetic, and highly motivated by treats.',
-    backstory: 'If there’s a snack bowl in the vicinity, Jordie is already there. She’s the group\'s "first responder" to anything delicious and the fastest runner in the sanctuary.',
+    backstory: `${sharedNarrative} Jordie celebrates her freedom by being the fastest runner to the snack bowl every single morning.`,
     primaryImageUrl: 'https://picsum.photos/seed/jordie/600/600',
     galleryImageUrls: [],
     createdAt: new Date().toISOString(),
@@ -54,7 +56,7 @@ export const MOCK_RESIDENTS: Resident[] = [
     sex: 'male',
     eggCounter: 0,
     personalityTraits: 'Quiet, loyal, and observant.',
-    backstory: 'While he isn\'t as loud as Huey, his actions speak for him. He is Jordie’s shadow, sticking by her side at all times to ensure she’s safe while she’s busy being the first at the snack bowl.',
+    backstory: `${sharedNarrative} Cutie Pie remains the silent guardian, staying by Jordie's side to ensure the family he arrived with stays safe.`,
     primaryImageUrl: 'https://picsum.photos/seed/cutiepie/600/600',
     galleryImageUrls: [],
     createdAt: new Date().toISOString(),

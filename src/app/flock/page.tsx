@@ -12,6 +12,7 @@ import { Bird, Heart, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy } from 
 import Image from 'next/image';
 import Link from 'next/link';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
+import { StoryModal } from '@/components/residents/StoryModal';
 import { cn } from '@/lib/utils';
 
 const FOREVER_NAMES = ['Joey', 'Huey', 'Jordie', 'Cutie Pie'];
@@ -131,9 +132,14 @@ export default function BrowseFlock() {
                 }
               />
             )}
-            <Button variant="ghost" asChild className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
-              <Link href={`/residents/${bird.id}`}>View Full Rescue Story <ArrowRight className="ml-2 h-3 w-3" /></Link>
-            </Button>
+            <StoryModal 
+              resident={bird}
+              trigger={
+                <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+                  View Full Rescue Story <ArrowRight className="ml-2 h-3 w-3" />
+                </Button>
+              }
+            />
           </div>
         </CardContent>
       </Card>
