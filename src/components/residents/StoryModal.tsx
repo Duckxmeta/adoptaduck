@@ -3,6 +3,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,7 +48,9 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
           <div className="absolute bottom-6 left-8">
-            <h2 className="text-4xl font-headline font-black text-white uppercase tracking-tighter leading-none">{resident.name}</h2>
+            <DialogTitle className="text-4xl font-headline font-black text-white uppercase tracking-tighter leading-none">
+              {resident.name}
+            </DialogTitle>
             <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2">
               <Sparkles className="h-3 w-3" /> RESCUE NARRATIVE
             </p>
@@ -60,9 +63,9 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
               <BookOpen className="h-5 w-5" />
               <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Story</span>
             </div>
-            <p className="text-muted-foreground text-lg leading-relaxed font-medium italic">
+            <DialogDescription className="text-muted-foreground text-lg leading-relaxed font-medium italic">
               &quot;{fullStory}&quot;
-            </p>
+            </DialogDescription>
           </div>
 
           <div className="pt-4 flex flex-col gap-4">
