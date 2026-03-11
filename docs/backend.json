@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "ResidentBird": {
@@ -24,7 +25,9 @@
         "amount": { "type": "number" },
         "designation": { "type": "string", "enum": ["feed", "medical", "infrastructure"] },
         "timestamp": { "type": "string", "format": "date-time" },
-        "donorDisplayInfo": { "type": "string" }
+        "donorDisplayName": { "type": "string", "description": "Public-facing name for the ledger." },
+        "donorPrivateName": { "type": "string", "description": "Legal name from PayPal (Admin only)." },
+        "donorPrivateEmail": { "type": "string", "description": "Email from PayPal (Admin only)." }
       }
     }
   },
@@ -38,7 +41,7 @@
     },
     "/donations/{donationId}": {
       "schema": "#/backend/entities/Donation",
-      "description": "Records of one-time financial support."
+      "description": "Records of financial support with privacy tiers."
     },
     "/ledger/{expenseId}": {
       "description": "Transparency ledger for sanctuary spending."

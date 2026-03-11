@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -19,7 +20,7 @@ import {
   or,
   collectionGroup
 } from 'firebase/firestore';
-import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense } from '@/lib/types';
+import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense, Donation } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +47,9 @@ import {
   Wallet,
   ChevronRight,
   TrendingUp,
-  Activity
+  Activity,
+  ScrollText,
+  Users
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -103,7 +106,7 @@ export default function MemberDashboard() {
     return query(collection(firestore, 'donations'), orderBy('timestamp', 'desc'), limit(50));
   }, [firestore]);
 
-  const { data: donations } = useCollection(donationsQuery);
+  const { data: donations } = useCollection<Donation>(donationsQuery);
 
   const allBirdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -286,7 +289,7 @@ export default function MemberDashboard() {
                   <div className="flex items-center gap-3 pt-2">
                      <Activity className="h-3.5 w-3.5 text-secondary animate-pulse" />
                      <p className="text-[9px] font-black uppercase tracking-widest text-secondary/80">
-                       LATEST: {donations[0].donorDisplayInfo} supported the {donations[0].designation} fund!
+                       LATEST: {donations[0].donorDisplayName} supported the {donations[0].designation} fund!
                      </p>
                   </div>
                 )}
@@ -317,9 +320,55 @@ export default function MemberDashboard() {
            </Card>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           <SanctuaryCostCard expenses={expenses} />
+        {/* Public Support Feed Section */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <div className="lg:col-span-2">
+              <SanctuaryCostCard expenses={expenses} />
+           </div>
            
+           <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+              <div className="p-6 border-b border-border bg-secondary/5">
+                 <h2 className="text-sm font-headline font-black uppercase tracking-widest flex items-center gap-2">
+                    <Users className="h-4 w-4 text-secondary" /> COMMUNITY SUPPORT
+                 </h2>
+                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-1">Live Contribution Feed</p>
+              </div>
+              <div className="flex-1 overflow-y-auto max-h-[400px] p-0 custom-scrollbar">
+                 {donations && donations.length > 0 ? (
+                    <div className="divide-y divide-border/50">
+                       {donations.map((donation) => (
+                          <div key={donation.id} className="p-4 hover:bg-muted/10 transition-colors space-y-1">
+                             <div className="flex justify-between items-start">
+                                <span className="text-[11px] font-black uppercase text-foreground">{donation.donorDisplayName}</span>
+                                <span className="text-[11px] font-black text-primary">${donation.amount.toFixed(2)}</span>
+                             </div>
+                             <div className="flex justify-between items-center">
+                                <Badge variant="outline" className="text-[8px] border-secondary/30 text-secondary uppercase px-1.5 py-0">
+                                   {donation.designation}
+                                </Badge>
+                                <span className="text-[9px] font-bold text-muted-foreground">
+                                   {donation.timestamp ? format(new Date(donation.timestamp), 'MMM dd') : ''}
+                                </span>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 ) : (
+                    <div className="p-12 text-center space-y-3">
+                       <ScrollText className="h-8 w-8 text-muted-foreground mx-auto opacity-20" />
+                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50">Awaiting Support</p>
+                    </div>
+                 )}
+              </div>
+              <div className="p-4 bg-muted/5 border-t border-border">
+                 <Button asChild variant="ghost" className="w-full text-[9px] font-black uppercase tracking-[0.2em] text-secondary hover:text-secondary hover:bg-secondary/10">
+                    <Link href="/membership">JOIN THE LEDGER <ArrowRight className="h-3 w-3 ml-2" /></Link>
+                 </Button>
+              </div>
+           </Card>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <div className="space-y-8">
               <div className="flex items-center justify-between border-b border-border pb-4">
                  <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -342,19 +391,33 @@ export default function MemberDashboard() {
                 </div>
               )}
            </div>
-        </section>
 
-        <section className="space-y-8">
-           <div className="flex items-center justify-between border-b border-border pb-4">
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
-                <Sparkles className="h-4 w-4" /> SUPPORTER NEWS FEED
-              </h2>
+           <div className="space-y-8">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                 <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
+                   <Sparkles className="h-4 w-4" /> SUPPORTER NEWS FEED
+                 </h2>
+              </div>
+              <NewsFeed adopterEmail={user?.email || ''} unlockedIds={userProfile?.my_flock || []} />
            </div>
-           <NewsFeed adopterEmail={user?.email || ''} unlockedIds={userProfile?.my_flock || []} />
         </section>
       </main>
 
       <Footer />
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--secondary);
+          border-radius: 10px;
+          opacity: 0.2;
+        }
+      `}</style>
     </div>
   );
 }

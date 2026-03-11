@@ -43,6 +43,17 @@ export type UserProfile = {
   updatedAt: string;
 };
 
+export type Donation = {
+  id: string;
+  amount: number;
+  designation: string;
+  timestamp: string;
+  donorDisplayName: string;
+  donorPrivateName?: string; // Captures legal name from PayPal
+  donorPrivateEmail?: string; // Captures email from PayPal
+  uid: string | null;
+};
+
 export type NameSuggestion = {
   id: string;
   birdId: string;

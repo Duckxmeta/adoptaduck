@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -29,7 +30,8 @@ import {
   BellRing,
   TreePine,
   TrendingUp,
-  Activity
+  Activity,
+  User
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -58,6 +60,7 @@ export default function MembershipPage() {
   const [amount, setAmount] = useState<string>('25');
   const [designation, setDesignation] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [donorDisplayName, setDonorDisplayName] = useState('');
 
   // Live Tracking Queries
   const donationsQuery = useMemoFirebase(() => {
@@ -85,16 +88,20 @@ export default function MembershipPage() {
     };
   }, [donations]);
 
-  const handlePaymentSuccess = async (details: any, amountValue: number, isOneTime: boolean) => {
+  const handlePaymentSuccess = async (paypalDetails: any, amountValue: number, isOneTime: boolean) => {
     if (!firestore) return;
 
     try {
+      // Logic for storing transaction securely
       if (isOneTime) {
+        const payer = paypalDetails.payer || {};
         await addDoc(collection(firestore, 'donations'), {
           amount: amountValue,
           designation: designation || 'general',
           timestamp: new Date().toISOString(),
-          donorDisplayInfo: user?.displayName || 'A Guardian',
+          donorDisplayName: donorDisplayName.trim() || 'A Kind Supporter',
+          donorPrivateName: `${payer.name?.given_name || ''} ${payer.name?.surname || ''}`.trim(),
+          donorPrivateEmail: payer.email_address || '',
           uid: user?.uid || null
         });
       }
@@ -110,7 +117,7 @@ export default function MembershipPage() {
       router.push('/welcome-guardian');
     } catch (e) {
       console.error("Post-payment error:", e);
-      router.push('/welcome-guardian'); // Still redirect if auth update fails
+      router.push('/welcome-guardian'); 
     }
   };
 
@@ -176,7 +183,7 @@ export default function MembershipPage() {
                         <Activity className="h-4 w-4 text-primary shrink-0" />
                         <div className="flex gap-8 whitespace-nowrap overflow-hidden">
                            <p className="text-[10px] font-black uppercase tracking-widest text-primary">
-                             LATEST ACTIVITY: {donations[0].donorDisplayInfo} just donated ${donations[0].amount} to {donations[0].designation}!
+                             LATEST ACTIVITY: {donations[0].donorDisplayName} just donated ${donations[0].amount} to {donations[0].designation}!
                            </p>
                         </div>
                      </div>
@@ -264,35 +271,51 @@ export default function MembershipPage() {
                     </div>
 
                     {frequency !== 'one-time' && (
-                      <div className="pt-4 flex flex-col items-center gap-4">
-                        {isProcessing ? (
-                          <div className="flex flex-col items-center gap-4 py-8">
-                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                            <p className="font-black uppercase tracking-widest text-[10px]">Processing Guardianship...</p>
-                          </div>
-                        ) : (
-                          <div className="w-full max-w-sm mx-auto">
-                            <PayPalButtons 
-                              key={`${frequency}-${amount}`}
-                              style={{ 
-                                layout: "vertical",
-                                shape: "rect",
-                                label: "subscribe",
-                                color: "gold"
-                              }}
-                              createSubscription={(data, actions) => {
-                                return actions.subscription.create({
-                                  plan_id: frequency === 'monthly' ? PLAN_MONTHLY : PLAN_YEARLY
-                                });
-                              }}
-                              onApprove={async (data, actions) => {
-                                setIsProcessing(true);
-                                handlePaymentSuccess(data, frequency === 'monthly' ? 25 : 250, false);
-                              }}
-                              className="w-full flex justify-center"
-                            />
-                          </div>
-                        )}
+                      <div className="pt-4 space-y-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="guardian-recognition" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                            <User className="h-3.5 w-3.5" /> Recognition Name (Optional)
+                          </Label>
+                          <Input 
+                            id="guardian-recognition"
+                            placeholder="e.g. The Smith Family"
+                            value={donorDisplayName}
+                            onChange={(e) => setDonorDisplayName(e.target.value)}
+                            className="h-12 rounded-xl border-2 border-border bg-background/50"
+                          />
+                          <p className="text-[9px] text-muted-foreground font-medium italic">How should your gift appear on our public ledger?</p>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4">
+                          {isProcessing ? (
+                            <div className="flex flex-col items-center gap-4 py-8">
+                              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                              <p className="font-black uppercase tracking-widest text-[10px]">Processing Guardianship...</p>
+                            </div>
+                          ) : (
+                            <div className="w-full max-w-sm mx-auto">
+                              <PayPalButtons 
+                                key={`${frequency}-${amount}`}
+                                style={{ 
+                                  layout: "vertical",
+                                  shape: "rect",
+                                  label: "subscribe",
+                                  color: "gold"
+                                }}
+                                createSubscription={(data, actions) => {
+                                  return actions.subscription.create({
+                                    plan_id: frequency === 'monthly' ? PLAN_MONTHLY : PLAN_YEARLY
+                                  });
+                                }}
+                                onApprove={async (data, actions) => {
+                                  setIsProcessing(true);
+                                  handlePaymentSuccess(data, frequency === 'monthly' ? 25 : 250, false);
+                                }}
+                                className="w-full flex justify-center"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -349,29 +372,45 @@ export default function MembershipPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Required Designation & Custom Amount</Label>
-                      <div className="flex flex-col md:flex-row gap-4">
-                        <Select value={designation} onValueChange={setDesignation}>
-                          <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest flex-1">
-                            <SelectValue placeholder="Where should funds go?" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-border text-foreground">
-                            <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
-                            <SelectItem value="medical">Medical & Wellness</SelectItem>
-                            <SelectItem value="infrastructure">Infrastructure & Maintenance</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="relative flex-1">
-                          <Input 
-                            placeholder="Custom Amount" 
-                            type="number"
-                            value={['5', '10', '20'].includes(amount) || frequency !== 'one-time' ? '' : amount}
-                            onChange={(e) => { setFrequency('one-time'); setAmount(e.target.value); }}
-                            className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
-                          />
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Required Designation & Custom Amount</Label>
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <Select value={designation} onValueChange={setDesignation}>
+                            <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest flex-1">
+                              <SelectValue placeholder="Where should funds go?" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border text-foreground">
+                              <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
+                              <SelectItem value="medical">Medical & Wellness</SelectItem>
+                              <SelectItem value="infrastructure">Infrastructure & Maintenance</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="relative flex-1">
+                            <Input 
+                              placeholder="Custom Amount" 
+                              type="number"
+                              value={['5', '10', '20'].includes(amount) || frequency !== 'one-time' ? '' : amount}
+                              onChange={(e) => { setFrequency('one-time'); setAmount(e.target.value); }}
+                              className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
+                          </div>
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="one-time-recognition" className="text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                          <User className="h-3.5 w-3.5" /> Recognition Name (Optional)
+                        </Label>
+                        <Input 
+                          id="one-time-recognition"
+                          placeholder="e.g. Anonymously or For the Ducks"
+                          value={donorDisplayName}
+                          onChange={(e) => setDonorDisplayName(e.target.value)}
+                          className="h-12 rounded-xl border-2 border-border bg-background/50"
+                        />
+                        <p className="text-[9px] text-muted-foreground font-medium italic">How should your gift appear on our public ledger?</p>
                       </div>
                     </div>
 
