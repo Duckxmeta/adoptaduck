@@ -2,9 +2,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Heart } from 'lucide-react';
 
 export function Footer() {
-  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
+  const membershipUrl = "/membership";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   return (
@@ -26,9 +27,10 @@ export function Footer() {
             </p>
           </div>
           <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl hover:scale-105 transition-transform shadow-lg">
-            <a href={donateUrl} target="_blank" rel="noopener noreferrer">
+            <Link href={membershipUrl} title="Support the Flock">
+              <Heart className="mr-2 h-4 w-4 fill-current" />
               SUPPORT THE FLOCK
-            </a>
+            </Link>
           </Button>
         </div>
 

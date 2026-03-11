@@ -22,7 +22,7 @@ export function Navbar() {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
+  const membershipUrl = "/membership";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
@@ -84,7 +84,7 @@ export function Navbar() {
               <Link href="/dashboard" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/dashboard' && "text-primary")}>
                 <User className="h-3.5 w-3.5" /> My Dashboard
               </Link>
-              <Link href={donateUrl} target="_blank" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Adopt</Link>
+              <Link href={membershipUrl} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors" title="View Adoption Tiers">Adopt</Link>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-destructive transition-colors p-0 h-auto">
                 <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logout
               </Button>
@@ -96,12 +96,12 @@ export function Navbar() {
               <Link href="/login" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5 group", pathname === '/login' && "text-primary")}>
                 <Lock className="h-3 w-3 text-muted-foreground group-hover:text-primary" /> Member Login
               </Link>
-              <Link href={donateUrl} target="_blank" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Adopt</Link>
+              <Link href={membershipUrl} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors" title="View Adoption Tiers">Adopt</Link>
               <Button asChild className="bg-primary text-primary-foreground hover:scale-105 transition-transform font-black rounded-xl px-6 h-11 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
-                <a href={donateUrl} target="_blank" rel="noopener noreferrer">
+                <Link href={membershipUrl} title="Support the Flock">
                   <Heart className="mr-2 h-4 w-4 fill-current" />
-                  SUPPORT US
-                </a>
+                  ADOPT NOW
+                </Link>
               </Button>
             </>
           )}
@@ -110,9 +110,9 @@ export function Navbar() {
         <div className="md:hidden flex items-center gap-2">
           {!isAdmin && (
             <Button variant="ghost" size="icon" asChild className="text-primary">
-               <a href={donateUrl} target="_blank" rel="noopener noreferrer">
+               <Link href={membershipUrl} title="Support the Flock">
                  <Heart className="h-5 w-5 fill-current" />
-               </a>
+               </Link>
             </Button>
           )}
           <Sheet>
@@ -143,11 +143,11 @@ export function Navbar() {
                     <Link href="/login" className="text-2xl font-headline font-black uppercase tracking-tighter flex items-center gap-2">
                       <Lock className="h-5 w-5" /> Member Login
                     </Link>
-                    <Link href={donateUrl} target="_blank" className="text-2xl font-headline font-black uppercase tracking-tighter">Adopt</Link>
+                    <Link href={membershipUrl} className="text-2xl font-headline font-black uppercase tracking-tighter">Adopt</Link>
                     <Button asChild className="bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl">
-                      <a href={donateUrl} target="_blank" rel="noopener noreferrer">
-                        DONATE NOW
-                      </a>
+                      <Link href={membershipUrl} title="Support the Flock">
+                        ADOPT NOW
+                      </Link>
                     </Button>
                   </>
                 )}
