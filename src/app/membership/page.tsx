@@ -28,7 +28,11 @@ import {
   Lock,
   Zap,
   Coffee,
-  Loader2
+  Loader2,
+  Waves,
+  Utensils,
+  Stethoscope,
+  TreePine
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -62,7 +66,6 @@ export default function MembershipPage() {
           updatedAt: serverTimestamp()
         });
       } catch (e) {
-        // If doc doesn't exist, try to set it
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
@@ -104,21 +107,25 @@ export default function MembershipPage() {
             <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full" />
           </section>
 
-          {/* Unified Donation Form */}
+          {/* Support Options */}
           <section className="py-24 container mx-auto px-4">
-            <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
               
-              <div className="lg:col-span-7 space-y-8">
+              <div className="lg:col-span-7 space-y-12">
+                {/* Adopt a Duck / Recurring Section */}
                 <div className="bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl space-y-8">
                   <div className="flex items-center gap-3 text-primary">
-                     <Zap className="h-6 w-6" />
-                     <span className="text-[10px] font-black uppercase tracking-[0.4em]">Direct Support Form</span>
+                     <Heart className="h-6 w-6 fill-primary" />
+                     <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Become a Guardian</h2>
                   </div>
                   
-                  <div className="space-y-10">
-                    {/* Frequency Toggle */}
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                    Full adoption provides 100% of the food, bedding, and medical care for a resident of your choice. It is the most direct way to sustain our mission.
+                  </p>
+
+                  <div className="space-y-8">
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Donation Frequency</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Commitment Level</Label>
                       <RadioGroup 
                         value={frequency} 
                         onValueChange={(v) => {
@@ -127,97 +134,153 @@ export default function MembershipPage() {
                           if (val === 'monthly') setAmount('25');
                           if (val === 'yearly') setAmount('250');
                         }}
-                        className="grid grid-cols-3 gap-3"
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
-                        {['one-time', 'monthly', 'yearly'].map((f) => (
-                          <div key={f} className="relative">
-                            <RadioGroupItem value={f} id={`freq-${f}`} className="sr-only" />
-                            <Label 
-                              htmlFor={`freq-${f}`}
-                              className={cn(
-                                "flex items-center justify-center h-12 rounded-xl border-2 transition-all cursor-pointer font-black text-[10px] uppercase tracking-widest",
-                                frequency === f ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
-                              )}
-                            >
-                              {f.replace('-', ' ')}
-                            </Label>
-                          </div>
-                        ))}
+                        <div className="relative">
+                          <RadioGroupItem value="monthly" id="freq-monthly" className="sr-only" />
+                          <Label 
+                            htmlFor="freq-monthly"
+                            className={cn(
+                              "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all cursor-pointer",
+                              frequency === 'monthly' ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                            )}
+                          >
+                            <span className="font-black text-xs uppercase tracking-widest">Monthly Guardian</span>
+                            <span className="text-3xl font-headline font-black mt-1">$25</span>
+                          </Label>
+                        </div>
+                        <div className="relative">
+                          <RadioGroupItem value="yearly" id="freq-yearly" className="sr-only" />
+                          <Label 
+                            htmlFor="freq-yearly"
+                            className={cn(
+                              "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all cursor-pointer",
+                              frequency === 'yearly' ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                            )}
+                          >
+                            <span className="font-black text-xs uppercase tracking-widest">Yearly Guardian</span>
+                            <span className="text-3xl font-headline font-black mt-1">$250</span>
+                          </Label>
+                          {frequency === 'yearly' && (
+                            <div className="absolute -bottom-6 left-0 right-0 text-center animate-in fade-in slide-in-from-top-1">
+                              <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-background px-3 py-1 rounded-full border border-primary/20">Best Value: $0.68 per day</span>
+                            </div>
+                          )}
+                        </div>
                       </RadioGroup>
                     </div>
 
-                    {/* Amount Selection */}
-                    {frequency === 'one-time' && (
-                      <div className="space-y-4 animate-in fade-in duration-300">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Amount</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          {['10', '25', '50'].map((amt) => (
-                            <Button 
-                              key={amt}
-                              variant="outline"
-                              onClick={() => setAmount(amt)}
-                              className={cn(
-                                "h-14 rounded-xl border-2 font-headline font-black text-lg",
-                                amount === amt ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/20"
-                              )}
-                            >
-                              ${amt}
-                            </Button>
-                          ))}
-                          <div className="relative">
-                            <Input 
-                              placeholder="Custom" 
-                              type="number"
-                              value={amount === '10' || amount === '25' || amount === '50' ? '' : amount}
-                              onChange={(e) => setAmount(e.target.value)}
-                              className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
-                            />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
+                    {frequency !== 'one-time' && (
+                      <div className="pt-4 flex flex-col items-center gap-4">
+                        {isProcessing ? (
+                          <div className="flex flex-col items-center gap-4 py-8">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <p className="font-black uppercase tracking-widest text-[10px]">Processing Guardianship...</p>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="w-full max-w-sm mx-auto">
+                            <PayPalButtons 
+                              key={`${frequency}-${amount}`}
+                              style={{ 
+                                layout: "vertical",
+                                shape: "rect",
+                                label: "subscribe",
+                                color: "gold"
+                              }}
+                              createSubscription={(data, actions) => {
+                                return actions.subscription.create({
+                                  plan_id: frequency === 'monthly' ? PLAN_MONTHLY : PLAN_YEARLY
+                                });
+                              }}
+                              onApprove={async (data, actions) => {
+                                setIsProcessing(true);
+                                handlePaymentSuccess(data);
+                              }}
+                              className="w-full flex justify-center"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                </div>
 
-                    {/* Designation */}
+                {/* One-Time Section */}
+                <div className="bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl space-y-8">
+                  <div className="flex items-center gap-3 text-secondary">
+                     <Waves className="h-6 w-6" />
+                     <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Make a Splash</h2>
+                  </div>
+
+                  <div className="space-y-10">
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Where should we allocate this?</Label>
-                      <Select value={designation} onValueChange={setDesignation}>
-                        <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest">
-                          <SelectValue placeholder="Select Designation" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border text-foreground">
-                          <SelectItem value="most-needed">Where it's needed most</SelectItem>
-                          <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
-                          <SelectItem value="medical">Medical Emergencies & Vet Care</SelectItem>
-                          <SelectItem value="upgrades">Sanctuary Infrastructure</SelectItem>
-                          <SelectItem value="adopt">Adopt a Specific Resident</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Support Level</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button 
+                          variant="outline"
+                          onClick={() => { setFrequency('one-time'); setAmount('10'); }}
+                          className={cn(
+                            "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1",
+                            frequency === 'one-time' && amount === '10' ? "border-secondary bg-secondary/10 text-secondary" : "border-border hover:border-secondary/20"
+                          )}
+                        >
+                          <span className="font-headline font-black text-xl">$10</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">The Snack Pack</span>
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => { setFrequency('one-time'); setAmount('50'); }}
+                          className={cn(
+                            "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1",
+                            frequency === 'one-time' && amount === '50' ? "border-secondary bg-secondary/10 text-secondary" : "border-border hover:border-secondary/20"
+                          )}
+                        >
+                          <span className="font-headline font-black text-xl">$50</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">The Wellness Check</span>
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="pt-4 space-y-4">
-                      {!user && (
-                        <p className="text-center text-[10px] font-black uppercase text-primary/80 mb-4 bg-primary/5 p-4 rounded-xl border border-primary/20">
-                          Please log in or sign up before donating to unlock your Guardian dashboard automatically.
-                        </p>
-                      )}
-                      
-                      {isProcessing ? (
-                        <div className="flex flex-col items-center gap-4 py-8">
-                          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                          <p className="font-black uppercase tracking-widest text-[10px]">Processing Donation...</p>
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Custom Support & Designation</Label>
+                      <div className="flex gap-4">
+                        <div className="relative flex-1">
+                          <Input 
+                            placeholder="Amount" 
+                            type="number"
+                            value={amount === '10' || amount === '50' || frequency !== 'one-time' ? '' : amount}
+                            onChange={(e) => { setFrequency('one-time'); setAmount(e.target.value); }}
+                            className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
+                          />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
                         </div>
-                      ) : (
-                        <div className="relative z-0">
+                        <Select value={designation} onValueChange={setDesignation}>
+                          <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest flex-1">
+                            <SelectValue placeholder="Designation" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="most-needed">Where it's needed most</SelectItem>
+                            <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
+                            <SelectItem value="medical">Medical & Vet Care</SelectItem>
+                            <SelectItem value="upgrades">Infrastructure</SelectItem>
+                            <SelectItem value="adopt">Adopt a Specific Resident</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {frequency === 'one-time' && (
+                      <div className="pt-4 flex flex-col items-center gap-4">
+                        <div className="w-full max-w-sm mx-auto">
                           <PayPalButtons 
-                            key={`${frequency}-${amount}`}
+                            key={`one-time-${amount}`}
                             style={{ 
                               layout: "vertical",
                               shape: "rect",
-                              label: frequency === 'one-time' ? "donate" : "subscribe",
+                              label: "donate",
                               color: "gold"
                             }}
-                            createOrder={frequency === 'one-time' ? (data, actions) => {
+                            createOrder={(data, actions) => {
                               return actions.order.create({
                                 intent: "CAPTURE",
                                 purchase_units: [{
@@ -228,98 +291,75 @@ export default function MembershipPage() {
                                   description: `Sanctuary Donation: ${designation}`
                                 }]
                               });
-                            } : undefined}
-                            createSubscription={frequency !== 'one-time' ? (data, actions) => {
-                              return actions.subscription.create({
-                                plan_id: frequency === 'monthly' ? PLAN_MONTHLY : PLAN_YEARLY
-                              });
-                            } : undefined}
+                            }}
                             onApprove={async (data, actions) => {
                               setIsProcessing(true);
-                              try {
-                                if (frequency === 'one-time') {
-                                  const details = await actions.order?.capture();
-                                  handlePaymentSuccess(details);
-                                } else {
-                                  handlePaymentSuccess(data);
-                                }
-                              } catch (err) {
-                                toast({ variant: "destructive", title: "Payment Error", description: "Something went wrong with the transaction." });
-                              } finally {
-                                setIsProcessing(false);
-                              }
+                              const details = await actions.order?.capture();
+                              handlePaymentSuccess(details);
                             }}
-                            onCancel={() => {
-                              toast({ title: "Donation Cancelled", description: "You can try again whenever you are ready." });
-                            }}
+                            className="w-full flex justify-center"
                           />
                         </div>
-                      )}
-                      
-                      <p className="text-center text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mt-4">
-                        Direct donations allow us to allocate funds exactly where they are needed most.
-                      </p>
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="lg:col-span-5 space-y-6">
-                {/* Adopt a Duck Tier Highlight */}
-                <Card className="bg-primary/5 border-2 border-primary/20 p-8 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden group">
-                  <div className="relative z-10 space-y-6">
-                    <Badge className="bg-primary text-black font-black uppercase text-[9px] tracking-widest">Featured Guardian Tier</Badge>
-                    <div className="space-y-1">
-                      <h3 className="text-3xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
-                        <Heart className="h-6 w-6 text-primary fill-primary" /> ADOPT A DUCK
-                      </h3>
-                      <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">Complete Life Support</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className={cn(
-                        "p-4 rounded-2xl border transition-all cursor-pointer",
-                        frequency === 'monthly' ? "bg-primary/10 border-primary" : "bg-background/50 border-primary/20"
-                      )} onClick={() => { setFrequency('monthly'); setAmount('25'); }}>
-                        <p className="text-2xl font-headline font-black text-primary">$25<span className="text-[10px] text-muted-foreground">/mo</span></p>
-                        <div className="flex items-center gap-1.5 mt-1 text-[9px] font-black text-muted-foreground uppercase tracking-tighter">
-                          <Coffee className="h-3 w-3" /> $0.83 PER DAY
-                        </div>
-                      </div>
-                      <div className={cn(
-                        "p-4 rounded-2xl border transition-all cursor-pointer",
-                        frequency === 'yearly' ? "bg-primary/10 border-primary" : "bg-background/50 border-primary/20"
-                      )} onClick={() => { setFrequency('yearly'); setAmount('250'); }}>
-                        <p className="text-2xl font-headline font-black text-primary">$250<span className="text-[10px] text-muted-foreground">/yr</span></p>
-                        <div className="flex items-center gap-1.5 mt-1 text-[9px] font-black text-muted-foreground uppercase tracking-tighter">
-                          <Coffee className="h-3 w-3" /> $0.68 PER DAY
-                        </div>
-                      </div>
-                    </div>
-
-                    <p className="text-sm font-medium leading-relaxed italic text-muted-foreground">
-                      "Provide a forever home for one resident for less than the price of a cup of coffee. This tier fully covers one bird's share of food, medical, and housing."
-                    </p>
-                    
-                    <Button variant="outline" className="w-full border-primary text-primary font-black h-12 rounded-xl hover:bg-primary/10" onClick={() => { setFrequency('monthly'); setAmount('25'); setDesignation('adopt'); }}>
-                      SELECT ADOPTION TIER
-                    </Button>
+              <div className="lg:col-span-5 space-y-8">
+                {/* Benefits Perk Grid */}
+                <div className="space-y-6">
+                  <div className="space-y-2 text-center lg:text-left">
+                    <h3 className="text-3xl font-headline font-black uppercase tracking-tight">What You Unlock</h3>
+                    <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.2em]">Guardian Benefits</p>
                   </div>
-                  <div className="absolute -bottom-6 -right-6 text-primary/10 rotate-12 group-hover:scale-110 transition-transform">
-                    <Heart className="h-32 w-32 fill-current" />
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                      { 
+                        title: "Heritage Trees", 
+                        desc: "Explore the full lineage of the sanctuary residents through interactive pedigree charts.", 
+                        icon: <TreePine className="h-6 w-6 text-primary" />,
+                        color: "primary"
+                      },
+                      { 
+                        title: "The Ledger", 
+                        desc: "View our real-time 501(c)(3) spending and see exactly how every dollar is allocated to the flock.", 
+                        icon: <Wallet className="h-6 w-6 text-secondary" />,
+                        color: "secondary"
+                      },
+                      { 
+                        title: "Early Access", 
+                        desc: "See new rescue reveals and 'Ducklopedia' updates before they hit public social media channels.", 
+                        icon: <Sparkles className="h-6 w-6 text-[#14F195]" />,
+                        color: "[#14F195]"
+                      }
+                    ].map((benefit, i) => (
+                      <Card key={i} className="bg-card border-border rounded-3xl p-6 space-y-4 hover:border-primary/20 transition-all shadow-xl group">
+                        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform", `bg-${benefit.color}/10`)}>
+                          {benefit.icon}
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-headline font-black uppercase tracking-tight">{benefit.title}</h4>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed font-medium mt-1">
+                            {benefit.desc}
+                          </p>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                </Card>
+                </div>
 
                 {/* Status Note */}
-                <Card className="bg-card border border-border p-8 rounded-[2.5rem] shadow-xl">
-                   <div className="flex items-start gap-4">
-                      <div className="h-10 w-10 bg-[#14F195]/10 rounded-xl flex items-center justify-center shrink-0">
-                         <ShieldCheck className="h-5 w-5 text-[#14F195]" />
+                <Card className="bg-primary/5 border-2 border-primary/20 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                   <div className="relative z-10 flex items-start gap-4">
+                      <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                         <ShieldCheck className="h-5 w-5 text-primary" />
                       </div>
                       <div className="space-y-2">
-                         <h4 className="text-[10px] font-black uppercase tracking-widest">Automatic Guardian Unlock</h4>
+                         <h4 className="text-[10px] font-black uppercase tracking-widest">Instant Guardian Status</h4>
                          <p className="text-xs text-muted-foreground leading-relaxed">
-                           Any donation—one-time or recurring—grants official **Guardian Status**. Use your donation email to log in and unlock your Member Dashboard instantly.
+                           Any donation grants official **Guardian Status**. Log in with your donation email to unlock your Member Dashboard instantly.
                          </p>
                       </div>
                    </div>
@@ -328,78 +368,32 @@ export default function MembershipPage() {
             </div>
           </section>
 
-          {/* Benefits Section */}
+          {/* FAQ / Impact Section */}
           <section className="py-24 bg-card/20 border-y border-border">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-16 space-y-4">
-                <Badge variant="outline" className="text-secondary border-secondary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Member Access</Badge>
-                <h2 className="text-5xl md:text-7xl font-headline font-black uppercase tracking-tighter">GUARDIAN <span className="text-secondary">BENEFITS</span></h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[
-                  { 
-                    title: "Heritage Access", 
-                    desc: "Explore the interactive family trees of G0, G1, and G2 generations to see the sanctuary's lineage.", 
-                    icon: <History className="h-8 w-8 text-primary" />,
-                    color: "primary"
-                  },
-                  { 
-                    title: "Transparency Ledger", 
-                    desc: "View the live sanctuary spend. See every dollar spent on feed, bedding, and medical care in real-time.", 
-                    icon: <Wallet className="h-8 w-8 text-secondary" />,
-                    color: "secondary"
-                  },
-                  { 
-                    title: "Daily Care Logs", 
-                    desc: "Read internal wellness updates and clinical notes that aren't shared on public social media.", 
-                    icon: <ShieldCheck className="h-8 w-8 text-[#14F195]" />,
-                    color: "[#14F195]"
-                  },
-                  { 
-                    title: "Exclusive Gallery", 
-                    desc: "Access high-res photos and 'behind the scenes' videos of our residents in their daily routines.", 
-                    icon: <Camera className="h-8 w-8 text-primary" />,
-                    color: "primary"
-                  }
-                ].map((benefit, i) => (
-                  <Card key={i} className="bg-card border-border rounded-[2.5rem] p-10 space-y-6 hover:glow-purple transition-all group shadow-xl">
-                    <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform", `bg-${benefit.color}/10`)}>
-                      {benefit.icon}
-                    </div>
-                    <h3 className="text-xl font-headline font-black uppercase tracking-tight">{benefit.title}</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                      {benefit.desc}
-                    </p>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Impact Section */}
-          <section className="py-24 container mx-auto px-4">
-             <div className="max-w-4xl mx-auto space-y-12">
+             <div className="container mx-auto px-4 max-w-4xl space-y-16">
                 <div className="text-center space-y-4">
-                  <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tighter">THE <span className="text-primary">IMPACT</span> OF DIRECT GIVING</h2>
+                  <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tighter">Impact of Direct Giving</h2>
                   <p className="text-muted-foreground font-medium italic">"100% of proceeds fund food & medical care."</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    <div className="p-8 bg-card/60 border border-border rounded-3xl text-center space-y-4 shadow-lg">
-                      <div className="text-4xl font-headline font-black text-primary">$10</div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">1 Week of Feed</p>
-                      <p className="text-xs font-medium leading-relaxed">Covers the core nutritional needs of a single sanctuary resident for 7 days.</p>
+                      <div className="flex justify-center text-primary"><Utensils className="h-8 w-8" /></div>
+                      <div className="text-3xl font-headline font-black text-primary">$10</div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Snack Pack</p>
+                      <p className="text-xs font-medium leading-relaxed">Covers a week of high-nutrition treats and mealworm snacks for one resident.</p>
                    </div>
-                   <div className="p-8 bg-card/60 border border-border rounded-3xl text-center space-y-4 shadow-lg scale-105 ring-2 ring-primary/20">
-                      <div className="text-4xl font-headline font-black text-primary">$25</div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Flock Wellness Pack</p>
-                      <p className="text-xs font-medium leading-relaxed">Funds water filtration maintenance and fresh bedding for the entire community.</p>
+                   <div className="p-8 bg-card/60 border-2 border-primary/20 rounded-3xl text-center space-y-4 shadow-lg scale-105">
+                      <div className="flex justify-center text-primary"><Coffee className="h-8 w-8" /></div>
+                      <div className="text-3xl font-headline font-black text-primary">$25</div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Guardian</p>
+                      <p className="text-xs font-medium leading-relaxed">Fully sustains one resident's food, water filtration, and maintenance costs.</p>
                    </div>
                    <div className="p-8 bg-card/60 border border-border rounded-3xl text-center space-y-4 shadow-lg">
-                      <div className="text-4xl font-headline font-black text-primary">$50</div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Vet Wellness Check</p>
-                      <p className="text-xs font-medium leading-relaxed">Provides a comprehensive clinical exam for a resident including diagnostic markers.</p>
+                      <div className="flex justify-center text-primary"><Stethoscope className="h-8 w-8" /></div>
+                      <div className="text-3xl font-headline font-black text-primary">$50</div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">The Wellness Check</p>
+                      <p className="text-xs font-medium leading-relaxed">Covers a comprehensive basic veterinary wellness exam for a rescue bird.</p>
                    </div>
                 </div>
              </div>
@@ -407,21 +401,21 @@ export default function MembershipPage() {
 
           {/* CTA Section */}
           <section className="container mx-auto px-4 mt-12">
-             <div className="bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden shadow-2xl">
+             <div className="bg-secondary/5 border-2 border-secondary/20 rounded-[3rem] p-12 md:p-20 text-center space-y-8 relative overflow-hidden shadow-2xl">
                 <div className="relative z-10 space-y-6">
                    <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
-                     READY TO JOIN THE <span className="text-primary">FLOCK?</span>
+                     READY TO JOIN THE <span className="text-secondary">FLOCK?</span>
                    </h2>
                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium leading-relaxed">
-                     Join us in providing a safe, forever home for abandoned domestic pets. Your guardianship starts here.
+                     Already supported us? Sign in to access your unique member benefits and explore the lineage.
                    </p>
                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                      <Button variant="outline" size="lg" className="border-border text-foreground font-black h-16 px-12 text-lg rounded-2xl hover:bg-muted/10" asChild>
-                         <Link href="/login"><Lock className="mr-2 h-5 w-5" /> MEMBER LOGIN</Link>
+                      <Button size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform" asChild>
+                         <Link href="/login"><Lock className="mr-3 h-5 w-5" /> MEMBER LOGIN</Link>
                       </Button>
                    </div>
                 </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/5 blur-[150px] pointer-events-none" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-secondary/5 blur-[150px] pointer-events-none" />
              </div>
           </section>
         </main>
