@@ -27,7 +27,7 @@ export function Footer() {
           </div>
           <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl hover:scale-105 transition-transform shadow-lg">
             <a href={donateUrl} target="_blank" rel="noopener noreferrer">
-              DONATE VIA PAYPAL
+              SUPPORT THE FLOCK
             </a>
           </Button>
         </div>

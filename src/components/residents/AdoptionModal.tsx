@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -8,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
         
         toast({
           title: "Suggestion Recorded!",
-          description: `We've noted your suggestion for ${displayName}. Redirecting to PayPal...`,
+          description: `We've noted your suggestion for ${displayName}. Redirecting to donation portal...`,
         });
       }
       
@@ -62,7 +62,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
       toast({
         variant: "destructive",
         title: "Submission Error",
-        description: "Could not save your suggestion. You can still donate directly.",
+        description: "Could not save your suggestion. You can still support directly.",
       });
       setIsSubmitting(false);
     }
@@ -100,7 +100,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
             <div className="p-8 space-y-6">
               <div className="bg-secondary/5 border-2 border-secondary/20 p-6 rounded-2xl text-center space-y-4">
                 <p className="text-sm font-medium leading-relaxed text-foreground">
-                  This resident is already part of a community partnership and is not available for individual adoption.
+                  This resident is already part of a community partnership. Direct donations support the entire flock's shared care and overhead.
                 </p>
               </div>
               <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
@@ -117,9 +117,9 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
               <div className="mx-auto w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center border-2 border-primary/30">
                 <Heart className="h-10 w-10 text-primary fill-primary" />
               </div>
-              <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Ready to join {displayName}&apos;s journey?</DialogTitle>
+              <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Support {displayName}&apos;s Journey</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed">
-                Support our mission with a donation to unlock their daily egg stats, private care logs, and detailed heritage records.
+                Your direct donation helps unlock internal care logs and dynamic lineage records in your member portal.
               </DialogDescription>
             </div>
 
@@ -137,7 +137,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
                     className="bg-background border-border h-12 rounded-xl focus:ring-primary/50"
                   />
                   <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest leading-relaxed">
-                    Donate $25+ to suggest an official name change!
+                    Donations allow us to allocate funds exactly where needed in the sanctuary ledger.
                   </p>
                 </div>
               </div>
@@ -153,8 +153,8 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
                   )}
                 </Button>
                 <div className="flex flex-col items-center gap-2 text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.2em]">
-                  <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-secondary" /> SECURE SUPPORT VIA PAYPAL</span>
-                  <span>100% of proceeds fund food & medical care</span>
+                  <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-secondary" /> SECURE DIRECT SUPPORT</span>
+                  <span>Direct giving provides maximum flexibility for flock care</span>
                 </div>
               </div>
             </div>

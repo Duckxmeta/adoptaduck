@@ -1,10 +1,22 @@
+
 "use client";
 
+import { useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 import { 
   Heart, 
   ShieldCheck, 
@@ -12,17 +24,26 @@ import {
   Wallet, 
   Camera, 
   Sprout, 
-  ShoppingCart, 
   ArrowRight,
   Sparkles,
   CheckCircle2,
-  Lock
+  Lock,
+  Zap,
+  Coffee
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function MembershipPage() {
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
-  const amazonUrl = "https://www.amazon.com/hz/wishlist/ls/1A6X5M2C8O4T?ref_=wl_share";
+  
+  const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
+  const [amount, setAmount] = useState<string>('25');
+  const [designation, setDesignation] = useState<string>('most-needed');
+
+  const handleDonate = () => {
+    window.open(donateUrl, '_blank');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
@@ -33,7 +54,7 @@ export default function MembershipPage() {
         <section className="relative py-32 bg-secondary/5 border-b border-border overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-6 relative z-10">
             <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
-              Sanctuary Support
+              Guardianship Program
             </Badge>
             <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter uppercase leading-none max-w-4xl mx-auto">
               BECOME A <span className="text-primary">GUARDIAN</span> OF THE FLOCK
@@ -46,67 +67,158 @@ export default function MembershipPage() {
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/5 blur-[120px] rounded-full" />
         </section>
 
-        {/* How It Works */}
+        {/* Unified Donation Form */}
         <section className="py-24 container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8 bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl">
-              <div className="flex items-center gap-3 text-secondary">
-                 <CheckCircle2 className="h-6 w-6" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Support Model</span>
-              </div>
-              <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">
-                HOW <span className="text-secondary">MEMBERSHIP</span> WORKS
-              </h2>
-              <div className="space-y-6 text-muted-foreground text-lg leading-relaxed font-medium">
-                <p>
-                  Membership is granted to anyone who supports the sanctuary mission. We believe in transparency over paywalls—your support is an investment in bird welfare.
-                </p>
-                <div className="space-y-4 pt-4 border-t border-border/50">
-                   <div className="flex gap-4">
-                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                        <span className="text-[10px] font-black text-primary">1</span>
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            <div className="lg:col-span-7 space-y-8">
+              <div className="bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-border shadow-xl space-y-8">
+                <div className="flex items-center gap-3 text-primary">
+                   <Zap className="h-6 w-6" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.4em]">Direct Support Form</span>
+                </div>
+                
+                <div className="space-y-10">
+                  {/* Frequency Toggle */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Donation Frequency</Label>
+                    <RadioGroup 
+                      value={frequency} 
+                      onValueChange={(v) => setFrequency(v as any)}
+                      className="grid grid-cols-3 gap-3"
+                    >
+                      {['one-time', 'monthly', 'yearly'].map((f) => (
+                        <div key={f} className="relative">
+                          <RadioGroupItem value={f} id={`freq-${f}`} className="sr-only" />
+                          <Label 
+                            htmlFor={`freq-${f}`}
+                            className={cn(
+                              "flex items-center justify-center h-12 rounded-xl border-2 transition-all cursor-pointer font-black text-[10px] uppercase tracking-widest",
+                              frequency === f ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                            )}
+                          >
+                            {f.replace('-', ' ')}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Amount Selection */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Amount</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {['10', '25', '50'].map((amt) => (
+                        <Button 
+                          key={amt}
+                          variant="outline"
+                          onClick={() => setAmount(amt)}
+                          className={cn(
+                            "h-14 rounded-xl border-2 font-headline font-black text-lg",
+                            amount === amt ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/20"
+                          )}
+                        >
+                          ${amt}
+                        </Button>
+                      ))}
+                      <div className="relative">
+                        <Input 
+                          placeholder="Custom" 
+                          type="number"
+                          value={amount === '10' || amount === '25' || amount === '50' ? '' : amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
+                        />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
                       </div>
-                      <p className="text-sm">Donate via our official channels (Amazon Storefront or Direct Donation) to help cover costs.</p>
-                   </div>
-                   <div className="flex gap-4">
-                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                        <span className="text-[10px] font-black text-primary">2</span>
-                      </div>
-                      <p className="text-sm">Create an account using the same email address used for your support.</p>
-                   </div>
-                   <div className="flex gap-4">
-                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-1">
-                        <span className="text-[10px] font-black text-primary">3</span>
-                      </div>
-                      <p className="text-sm">Once confirmed, your account is upgraded to Member Status, unlocking the full sanctuary dashboard.</p>
-                   </div>
+                    </div>
+                  </div>
+
+                  {/* Designation */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Where should we allocate this?</Label>
+                    <Select value={designation} onValueChange={setDesignation}>
+                      <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest">
+                        <SelectValue placeholder="Select Designation" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="most-needed">Where it's needed most</SelectItem>
+                        <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
+                        <SelectItem value="medical">Medical Emergencies & Vet Care</SelectItem>
+                        <SelectItem value="upgrades">Sanctuary Infrastructure</SelectItem>
+                        <SelectItem value="adopt">Adopt a Specific Resident</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="pt-4">
+                    <Button 
+                      onClick={handleDonate}
+                      className="w-full bg-primary text-primary-foreground font-black h-20 text-xl rounded-2xl shadow-2xl hover:scale-[1.02] transition-transform"
+                    >
+                      DONATE ${amount || '0'} NOW <ArrowRight className="ml-3 h-6 w-6" />
+                    </Button>
+                    <p className="text-center text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground mt-4">
+                      Direct donations allow us to allocate funds exactly where they are needed most.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="grid grid-cols-1 gap-6">
-              <Card className="bg-primary/5 border-primary/20 p-8 rounded-[2.5rem] space-y-4 shadow-2xl">
-                <h3 className="text-xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-primary" /> Amazon Storefront
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed italic">
-                  "Send items directly to the ducks. From specialized feed to new pool infrastructure, you can see exactly what the flock needs right now."
-                </p>
-                <Button asChild className="w-full bg-primary text-primary-foreground font-black h-12 rounded-xl">
-                   <a href={amazonUrl} target="_blank" rel="noopener noreferrer">VIEW WISHLIST</a>
-                </Button>
+
+            <div className="lg:col-span-5 space-y-6">
+              {/* Adopt a Duck Tier Highlight */}
+              <Card className="bg-primary/5 border-2 border-primary/20 p-8 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden group">
+                <div className="relative z-10 space-y-6">
+                  <Badge className="bg-primary text-black font-black uppercase text-[9px] tracking-widest">Featured Guardian Tier</Badge>
+                  <div className="space-y-1">
+                    <h3 className="text-3xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
+                      <Heart className="h-6 w-6 text-primary fill-primary" /> ADOPT A DUCK
+                    </h3>
+                    <p className="text-xs text-muted-foreground font-black uppercase tracking-widest">Complete Life Support</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-background/50 rounded-2xl border border-primary/20">
+                      <p className="text-2xl font-headline font-black text-primary">$25<span className="text-[10px] text-muted-foreground">/mo</span></p>
+                      <div className="flex items-center gap-1.5 mt-1 text-[9px] font-black text-muted-foreground uppercase tracking-tighter">
+                        <Coffee className="h-3 w-3" /> $0.83 PER DAY
+                      </div>
+                    </div>
+                    <div className="p-4 bg-background/50 rounded-2xl border border-primary/20">
+                      <p className="text-2xl font-headline font-black text-primary">$250<span className="text-[10px] text-muted-foreground">/yr</span></p>
+                      <div className="flex items-center gap-1.5 mt-1 text-[9px] font-black text-muted-foreground uppercase tracking-tighter">
+                        <Coffee className="h-3 w-3" /> $0.68 PER DAY
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm font-medium leading-relaxed italic text-muted-foreground">
+                    "Provide a forever home for one resident for less than the price of a cup of coffee. This tier fully covers one bird's share of food, medical, and housing."
+                  </p>
+                  
+                  <Button variant="outline" className="w-full border-primary text-primary font-black h-12 rounded-xl hover:bg-primary/10" onClick={() => { setAmount('25'); setFrequency('monthly'); setDesignation('adopt'); }}>
+                    SELECT ADOPTION TIER
+                  </Button>
+                </div>
+                <div className="absolute -bottom-6 -right-6 text-primary/10 rotate-12 group-hover:scale-110 transition-transform">
+                  <Heart className="h-32 w-32 fill-current" />
+                </div>
               </Card>
 
-              <Card className="bg-secondary/5 border-secondary/20 p-8 rounded-[2.5rem] space-y-4 shadow-2xl">
-                <h3 className="text-xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-secondary" /> Direct Donation
-                </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed italic">
-                  "Funds go directly into the sanctuary ledger to cover medical emergencies, vet bills, and daily overhead shared by all residents."
-                </p>
-                <Button asChild variant="outline" className="w-full border-secondary text-secondary font-black h-12 rounded-xl hover:bg-secondary/10">
-                   <a href={donateUrl} target="_blank" rel="noopener noreferrer">DONATE VIA PAYPAL</a>
-                </Button>
+              {/* Status Note */}
+              <Card className="bg-card border border-border p-8 rounded-[2.5rem] shadow-xl">
+                 <div className="flex items-start gap-4">
+                    <div className="h-10 w-10 bg-[#14F195]/10 rounded-xl flex items-center justify-center shrink-0">
+                       <ShieldCheck className="h-5 w-5 text-[#14F195]" />
+                    </div>
+                    <div className="space-y-2">
+                       <h4 className="text-[10px] font-black uppercase tracking-widest">Automatic Guardian Unlock</h4>
+                       <p className="text-xs text-muted-foreground leading-relaxed">
+                         Any donation—one-time or recurring—grants official **Guardian Status**. Use your donation email to log in and unlock your Member Dashboard instantly.
+                       </p>
+                    </div>
+                 </div>
               </Card>
             </div>
           </div>
@@ -165,8 +277,8 @@ export default function MembershipPage() {
         <section className="py-24 container mx-auto px-4">
            <div className="max-w-4xl mx-auto space-y-12">
               <div className="text-center space-y-4">
-                <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tighter">YOUR <span className="text-primary">IMPACT</span></h2>
-                <p className="text-muted-foreground font-medium italic">"Where your contribution goes."</p>
+                <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tighter">THE <span className="text-primary">IMPACT</span> OF DIRECT GIVING</h2>
+                <p className="text-muted-foreground font-medium italic">"100% of proceeds fund food & medical care."</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -200,8 +312,8 @@ export default function MembershipPage() {
                    Join us in providing a safe, forever home for abandoned domestic pets. Your guardianship starts here.
                  </p>
                  <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                    <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                       <a href={donateUrl} target="_blank" rel="noopener noreferrer">SUPPORT THE MISSION</a>
+                    <Button onClick={handleDonate} size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                       SUPPORT THE MISSION
                     </Button>
                     <Button variant="outline" size="lg" className="border-border text-foreground font-black h-16 px-12 text-lg rounded-2xl hover:bg-muted/10" asChild>
                        <Link href="/login"><Lock className="mr-2 h-5 w-5" /> MEMBER LOGIN</Link>
