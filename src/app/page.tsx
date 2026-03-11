@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Button } from '@/components/ui/button';
 import { 
   Sparkles, 
@@ -14,7 +13,6 @@ import {
   ShieldCheck, 
   Users, 
   ArrowRight,
-  ShieldAlert,
   Loader2,
   AlertCircle
 } from 'lucide-react';
@@ -28,6 +26,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { initiateGoogleSignIn, handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
 export default function Home() {
   const firestore = useFirestore();
@@ -76,7 +76,12 @@ export default function Home() {
               description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
             });
             
-            router.push('/dashboard');
+            // Smart Redirect
+            if (ADMIN_EMAILS.includes(result.user.email || '')) {
+              router.push('/admin');
+            } else {
+              router.push('/dashboard');
+            }
           } catch (dbError: any) {
             console.error("Profile Setup Error:", dbError);
             setAuthError({ 
@@ -198,7 +203,7 @@ export default function Home() {
                 <Link href="/flock">MEET THE RESIDENTS</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <a href={donateUrl} target="_blank" rel="noopener noreferrer">ADOPT A DUCK</a>
+                <a href={donateUrl} target="_blank" rel="noopener noreferrer">SUPPORT THE MISSION</a>
               </Button>
             </div>
           </div>
@@ -298,11 +303,11 @@ export default function Home() {
                 </div>
 
                 <Button 
-                  onClick={handleGoogleSignIn}
+                  asChild
                   size="lg" 
                   className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                 >
-                  <Users className="mr-3 h-5 w-5" /> JOIN THE SANCTUARY
+                  <Link href="/login"><Users className="mr-3 h-5 w-5" /> JOIN THE SANCTUARY</Link>
                 </Button>
               </div>
             </div>

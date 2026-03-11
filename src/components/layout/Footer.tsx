@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,7 @@ export function Footer() {
           <div className="space-y-4">
             <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Community</h5>
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
-              <li><Link href="/admin/login" className="hover:text-primary transition-colors">Viewer Portal</Link></li>
+              <li><Link href="/login" className="hover:text-primary transition-colors">Member Login</Link></li>
               <li><Link href="/dashboard" className="hover:text-primary transition-colors">Membership</Link></li>
             </ul>
           </div>
