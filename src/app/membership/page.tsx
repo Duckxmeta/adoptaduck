@@ -57,7 +57,7 @@ export default function MembershipPage() {
   
   const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
   const [amount, setAmount] = useState<string>('25');
-  const [designation, setDesignation] = useState<string>('most-needed');
+  const [designation, setDesignation] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handlePaymentSuccess = async (details: any) => {
@@ -231,13 +231,24 @@ export default function MembershipPage() {
                   </div>
 
                   <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                    Help us make a splash! One-time donations unlock full Member Dashboard access and provide immediate resources for the flock.
+                    Make a splash! One-time gifts unlock full Member Dashboard access and provide immediate resources for the flock.
                   </p>
 
                   <div className="space-y-10">
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Support Level</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Button 
+                          variant="outline"
+                          onClick={() => { setFrequency('one-time'); setAmount('5'); }}
+                          className={cn(
+                            "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1",
+                            frequency === 'one-time' && amount === '5' ? "border-secondary bg-secondary/10 text-secondary" : "border-border hover:border-secondary/20"
+                          )}
+                        >
+                          <span className="font-headline font-black text-xl">$5</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">The Treat Fund</span>
+                        </Button>
                         <Button 
                           variant="outline"
                           onClick={() => { setFrequency('one-time'); setAmount('10'); }}
@@ -251,76 +262,80 @@ export default function MembershipPage() {
                         </Button>
                         <Button 
                           variant="outline"
-                          onClick={() => { setFrequency('one-time'); setAmount('50'); }}
+                          onClick={() => { setFrequency('one-time'); setAmount('20'); }}
                           className={cn(
                             "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1",
-                            frequency === 'one-time' && amount === '50' ? "border-secondary bg-secondary/10 text-secondary" : "border-border hover:border-secondary/20"
+                            frequency === 'one-time' && amount === '20' ? "border-secondary bg-secondary/10 text-secondary" : "border-border hover:border-secondary/20"
                           )}
                         >
-                          <span className="font-headline font-black text-xl">$50</span>
-                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">The Wellness Check</span>
+                          <span className="font-headline font-black text-xl">$20</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">The Bedding Refresh</span>
                         </Button>
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Custom Support & Designation</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Required Designation & Custom Amount</Label>
                       <div className="flex flex-col md:flex-row gap-4">
+                        <Select value={designation} onValueChange={setDesignation}>
+                          <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest flex-1">
+                            <SelectValue placeholder="Where should funds go?" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border text-foreground">
+                            <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
+                            <SelectItem value="medical">Medical & Wellness</SelectItem>
+                            <SelectItem value="infrastructure">Infrastructure & Maintenance</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <div className="relative flex-1">
                           <Input 
-                            placeholder="Amount" 
+                            placeholder="Custom Amount" 
                             type="number"
-                            value={amount === '10' || amount === '50' || frequency !== 'one-time' ? '' : amount}
+                            value={['5', '10', '20'].includes(amount) || frequency !== 'one-time' ? '' : amount}
                             onChange={(e) => { setFrequency('one-time'); setAmount(e.target.value); }}
                             className="h-14 rounded-xl border-2 border-border font-headline font-black text-lg pl-8"
                           />
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-black">$</span>
                         </div>
-                        <Select value={designation} onValueChange={setDesignation}>
-                          <SelectTrigger className="h-14 rounded-xl border-2 border-border bg-background/50 font-black uppercase text-[10px] tracking-widest flex-1">
-                            <SelectValue placeholder="Designation" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card border-border text-foreground">
-                            <SelectItem value="most-needed">Where it's needed most</SelectItem>
-                            <SelectItem value="feed">Flock Feed & Nutrition</SelectItem>
-                            <SelectItem value="medical">Medical & Vet Care</SelectItem>
-                            <SelectItem value="upgrades">Sanctuary Upgrades</SelectItem>
-                            <SelectItem value="adopt">Adopt a Specific Resident</SelectItem>
-                          </SelectContent>
-                        </Select>
                       </div>
                     </div>
 
                     {frequency === 'one-time' && (
                       <div className="pt-4 flex flex-col items-center gap-4">
                         <div className="w-full max-w-sm mx-auto">
-                          <PayPalButtons 
-                            key={`one-time-${amount}`}
-                            style={{ 
-                              layout: "vertical",
-                              shape: "rect",
-                              label: "donate",
-                              color: "gold"
-                            }}
-                            createOrder={(data, actions) => {
-                              return actions.order.create({
-                                intent: "CAPTURE",
-                                purchase_units: [{
-                                  amount: {
-                                    currency_code: "USD",
-                                    value: amount || "10"
-                                  },
-                                  description: `Sanctuary Donation: ${designation}`
-                                }]
-                              });
-                            }}
-                            onApprove={async (data, actions) => {
-                              setIsProcessing(true);
-                              const details = await actions.order?.capture();
-                              handlePaymentSuccess(details);
-                            }}
-                            className="w-full flex justify-center"
-                          />
+                          {!designation ? (
+                            <div className="p-4 bg-muted/20 border border-dashed border-border rounded-xl text-center">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Please select a designation to enable donation</p>
+                            </div>
+                          ) : (
+                            <PayPalButtons 
+                              key={`one-time-${amount}-${designation}`}
+                              style={{ 
+                                layout: "vertical",
+                                shape: "rect",
+                                label: "donate",
+                                color: "gold"
+                              }}
+                              createOrder={(data, actions) => {
+                                return actions.order.create({
+                                  intent: "CAPTURE",
+                                  purchase_units: [{
+                                    amount: {
+                                      currency_code: "USD",
+                                      value: amount || "5"
+                                    },
+                                    description: `Sanctuary Support: ${designation}`
+                                  }]
+                                });
+                              }}
+                              onApprove={async (data, actions) => {
+                                setIsProcessing(true);
+                                const details = await actions.order?.capture();
+                                handlePaymentSuccess(details);
+                              }}
+                              className="w-full flex justify-center"
+                            />
+                          )}
                         </div>
                       </div>
                     )}
@@ -390,7 +405,7 @@ export default function MembershipPage() {
 
                 {/* Note on Exclusive access */}
                 <div className="p-6 bg-muted/20 rounded-2xl border border-border italic text-[10px] text-muted-foreground leading-relaxed">
-                  *Please note: Naming Rights and Direct Duck Updates are reserved for our recurring Monthly and Yearly Guardians. One-time gifts grant full access to the Standard Member Dashboard features.
+                  *Please note: Naming Rights and Direct Duck Updates are reserved for our recurring Monthly and Yearly Guardians. One-time gifts grant full access to the Standard Member Dashboard features including the Ledger and Heritage Trees.
                 </div>
 
                 {/* Status Note */}
