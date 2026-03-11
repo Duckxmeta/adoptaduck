@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from 'react';
@@ -25,7 +24,8 @@ import {
   User,
   GitBranch,
   Wallet,
-  ArrowRight
+  ArrowRight,
+  Trophy
 } from 'lucide-react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
@@ -34,6 +34,8 @@ import { Resident, HealthLogEntry, Expense } from '@/lib/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+
+const FOREVER_NAMES = ['Joey', 'Huey', 'Jordie', 'Cutie Pie'];
 
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
@@ -98,6 +100,7 @@ export default function ResidentProfile() {
     notFound();
   }
 
+  const isForever = bird && FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === bird.name.toLowerCase().replace(/\s+/g, ''));
   const isHen = bird?.sex === 'female';
   const isFounding = !bird?.motherId && !bird?.fatherId;
 
@@ -110,7 +113,10 @@ export default function ResidentProfile() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             
             <div className="space-y-6">
-              <div className="relative aspect-square rounded-3xl overflow-hidden border-2 border-border shadow-2xl group">
+              <div className={cn(
+                "relative aspect-square rounded-3xl overflow-hidden border-2 shadow-2xl group",
+                isForever ? "border-primary/50 glow-primary" : "border-border"
+              )}>
                 <Image
                   src={bird?.primaryImageUrl || 'https://picsum.photos/seed/bird/800/800'}
                   alt={bird?.name || 'Resident'}
@@ -121,7 +127,12 @@ export default function ResidentProfile() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute bottom-6 left-6 flex flex-wrap gap-2">
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">{bird?.breed}</Badge>
-                   {isFounding && (
+                   {isForever && (
+                     <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5">
+                       <Trophy className="h-3 w-3" /> Forever Resident
+                     </Badge>
+                   )}
+                   {isFounding && !isForever && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs">Founding Resident</Badge>
                    )}
                 </div>
