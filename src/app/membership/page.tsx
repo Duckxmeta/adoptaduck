@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +19,9 @@ import {
 } from "@/components/ui/select";
 import { 
   Heart, 
-  ShieldCheck, 
   Wallet, 
   ArrowRight,
   Sparkles,
-  Lock,
   Loader2,
   Waves,
   Trophy,
@@ -33,13 +31,12 @@ import {
   Activity,
   User
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Progress } from '@/components/ui/progress';
-import { format } from 'date-fns';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
@@ -52,8 +49,11 @@ const GOALS = {
   infrastructure: 1000
 };
 
-export default function MembershipPage() {
+function MembershipContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const birdParam = searchParams.get('bird');
+  
   const { user } = useUser();
   const firestore = useFirestore();
   
@@ -93,7 +93,6 @@ export default function MembershipPage() {
     if (!firestore) return;
 
     try {
-      // Logic for storing transaction securely
       if (isOneTime) {
         const payer = paypalDetails.payer || {};
         await addDoc(collection(firestore, 'donations'), {
@@ -115,7 +114,8 @@ export default function MembershipPage() {
         }, { merge: true });
       }
       
-      router.push('/welcome-guardian');
+      const successName = donorDisplayName.trim() || user?.displayName || 'A Kind Supporter';
+      router.push(`/welcome-guardian?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
     } catch (e) {
       console.error("Post-payment error:", e);
       router.push('/welcome-guardian'); 
@@ -205,6 +205,18 @@ export default function MembershipPage() {
               <div className="lg:col-span-7 space-y-12">
                 {/* Guardian Section */}
                 <div className="bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-primary/20 shadow-2xl space-y-8 relative overflow-hidden">
+                  {birdParam && (
+                    <div className="bg-primary/10 border-2 border-primary/30 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Heart className="h-5 w-5 text-primary fill-primary" />
+                        </div>
+                        <p className="text-xs font-black uppercase tracking-widest">Adopting <span className="text-primary">{birdParam}</span></p>
+                      </div>
+                      <Badge className="bg-primary text-black text-[8px] font-black">PENDING</Badge>
+                    </div>
+                  )}
+
                   <div className="absolute top-0 right-0 p-6 opacity-10">
                     <Trophy className="h-32 w-32 text-primary" />
                   </div>
@@ -535,5 +547,17 @@ export default function MembershipPage() {
         <Footer />
       </div>
     </PayPalScriptProvider>
+  );
+}
+
+export default function MembershipPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    }>
+      <MembershipContent />
+    </Suspense>
   );
 }

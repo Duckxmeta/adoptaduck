@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Sparkles, ArrowRight, Heart, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export function DOTMSpotlight() {
   const firestore = useFirestore();
   const pathname = usePathname();
+  const router = useRouter();
 
   const settingsRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -39,6 +40,8 @@ export function DOTMSpotlight() {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
+    } else {
+      router.push(`/membership?bird=${encodeURIComponent(bird.name)}`);
     }
   };
 
@@ -90,27 +93,14 @@ export function DOTMSpotlight() {
           </div>
 
           <div className="pt-4">
-            {pathname === '/membership' ? (
-              <Button 
-                onClick={handleSupportClick}
-                className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3 group/btn"
-              >
-                <Heart className="h-5 w-5 fill-current" />
-                SUPPORT {bird.name.toUpperCase()}
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            ) : (
-              <Button 
-                asChild
-                className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3 group/btn"
-              >
-                <Link href="/membership">
-                  <Heart className="h-5 w-5 fill-current" />
-                  VISIT {bird.name.toUpperCase()}
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-            )}
+            <Button 
+              onClick={handleSupportClick}
+              className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3 group/btn"
+            >
+              <Heart className="h-5 w-5 fill-current" />
+              SUPPORT {bird.name.toUpperCase()}
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         </div>
       </div>

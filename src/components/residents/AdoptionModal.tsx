@@ -19,6 +19,7 @@ import { useFirestore, useUser } from "@/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const COMMUNITY_NAMES = ['Joey', 'Jordie', 'Cutie Pie', 'Huey', 'SolGods'];
 
@@ -28,6 +29,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+  const router = useRouter();
   const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
 
   const nameNorm = resident.name?.trim().toLowerCase().replace(/\s+/g, '');
@@ -53,9 +55,9 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
         });
       }
       
-      // Open PayPal after a short delay
+      // Redirect to membership page with bird name to enable specialized success page
       setTimeout(() => {
-        window.open(donateUrl, '_blank');
+        router.push(`/membership?bird=${encodeURIComponent(displayName)}`);
         setIsSubmitting(false);
       }, 1500);
     } catch (error) {
@@ -149,12 +151,12 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
                   className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                 >
                   {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                    <>CONTINUE TO DONATION <ArrowRight className="ml-2 h-5 w-5" /></>
+                    <>JOIN THE MISSION <ArrowRight className="ml-2 h-5 w-5" /></>
                   )}
                 </Button>
                 <div className="flex flex-col items-center gap-2 text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.2em]">
                   <span className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-secondary" /> SECURE DIRECT SUPPORT</span>
-                  <span>Direct giving provides maximum flexibility for flock care</span>
+                  <span>Select a subscription or one-time gift on the next page</span>
                 </div>
               </div>
             </div>
