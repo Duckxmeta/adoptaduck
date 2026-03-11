@@ -17,10 +17,11 @@ import {
   getDoc,
   setDoc, 
   arrayUnion,
-  or
+  or,
+  collectionGroup
 } from 'firebase/firestore';
 import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,9 @@ import {
   Calendar,
   LayoutDashboard,
   Ticket,
-  Check
+  Check,
+  Wallet,
+  ChevronRight
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -71,7 +74,7 @@ export default function MemberDashboard() {
   // Redirect if not logged in
   useEffect(() => {
     if (!isUserLoading && !user) {
-      router.push('/admin/login');
+      router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
@@ -91,6 +94,14 @@ export default function MemberDashboard() {
 
   const { data: expenses } = useCollection<Expense>(expensesQuery);
 
+  // Global birds query for total count (needed for overhead calculation)
+  const allBirdsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'birds'));
+  }, [firestore]);
+
+  const { data: allBirds } = useCollection<Resident>(allBirdsQuery);
+
   // Query for birds adopted by the user or linked via community codes
   const flockQuery = useMemoFirebase(() => {
     if (!firestore || !user?.email) return null;
@@ -98,7 +109,6 @@ export default function MemberDashboard() {
     const unlockedIds = userProfile?.my_flock || [];
     
     if (unlockedIds.length > 0) {
-      // Use 'or' query to fetch both adopted and community ducks
       return query(
         collection(firestore, 'birds'), 
         or(
@@ -129,8 +139,6 @@ export default function MemberDashboard() {
 
   const handleReferralCode = async () => {
     const code = referralCode.trim().toUpperCase();
-    
-    // 1. Validation
     if (!code || !firestore || !user) return;
     
     if (!REFERRAL_MAP[code]) {
@@ -144,7 +152,6 @@ export default function MemberDashboard() {
 
     const targetName = REFERRAL_MAP[code];
 
-    // 2. Duplicate Use Check
     if (userProfile?.community_codes?.includes(code)) {
       toast({
         title: "Already Adopted",
@@ -156,23 +163,17 @@ export default function MemberDashboard() {
     setIsVerifying(true);
     try {
       const birdsRef = collection(firestore, 'birds');
-      
-      // Robust lookup logic
       let birdDoc = null;
 
-      // Stage A: Exact Case-Sensitive Name Match
       const q = query(birdsRef, where('name', '==', targetName));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         birdDoc = querySnapshot.docs[0];
       }
 
-      // Stage B: Fallback - Check by Document IDs (potential slugs)
       if (!birdDoc) {
         const potentialSlugs = [
           targetName.toLowerCase().replace(/\s+/g, '-'),
-          targetName.toLowerCase().replace(/\s+/g, '_'),
-          targetName.toLowerCase().replace(/\s+/g, ''),
           'cutie-pie',
           'solgods',
           'huey'
@@ -188,46 +189,14 @@ export default function MemberDashboard() {
         }
       }
 
-      // Stage C: Fallback - Scan all residents for trimmed, case-insensitive, space-normalized match
       if (!birdDoc) {
-        const allBirdsSnap = await getDocs(birdsRef);
-        birdDoc = allBirdsSnap.docs.find(d => {
-          const name = d.data().name;
-          if (!name) return false;
-          const normalizedDbName = name.trim().toLowerCase().replace(/\s+/g, '');
-          const normalizedTargetName = targetName.trim().toLowerCase().replace(/\s+/g, '');
-          // Special fallback for SolGods/Huey
-          if (normalizedTargetName === 'solgods' && normalizedDbName === 'huey') return true;
-          return normalizedDbName === normalizedTargetName;
-        }) || null;
-      }
-
-      if (!birdDoc) {
-        if (targetName === 'Cutie Pie') {
-          toast({
-            variant: "destructive",
-            title: "Update in Progress",
-            description: "Resident record for Cutie Pie is being updated, please try again in a moment."
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Resident Not Found",
-            description: `We couldn't find ${targetName} in the sanctuary records.`
-          });
-        }
+        toast({
+          variant: "destructive",
+          title: "Resident Not Found",
+          description: `We couldn't find ${targetName} in the sanctuary records.`
+        });
       } else {
         const birdId = birdDoc.id;
-
-        if (userProfile?.my_flock?.includes(birdId)) {
-          toast({
-            title: "Already Adopted",
-            description: `You are already a community adopter for ${targetName}!`,
-          });
-          setIsVerifying(false);
-          return;
-        }
-        
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
           uid: user.uid,
@@ -240,18 +209,15 @@ export default function MemberDashboard() {
         setUnlockedName(targetName);
         toast({
           title: "Welcome to the flock!",
-          description: code === 'GODS-G0' 
-            ? "Success! You've joined Huey’s flock, proudly sponsored by SolGods."
-            : `You are now a community adopter of ${targetName}.`,
+          description: `You are now a community adopter of ${targetName}.`,
         });
         setReferralCode('');
       }
     } catch (e: any) {
-      console.error("Referral Code Error:", e);
       toast({
         variant: "destructive",
         title: "Link Failed",
-        description: "Could not link the community resident. Please try again."
+        description: "Could not link the community resident."
       });
     } finally {
       setIsVerifying(false);
@@ -281,7 +247,6 @@ export default function MemberDashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
-        {/* Welcome Header */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
@@ -293,7 +258,6 @@ export default function MemberDashboard() {
               </h1>
            </div>
 
-           {/* Community Code Entry */}
            <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-80 shadow-lg">
               <div className="space-y-4">
                  <div className="flex items-center gap-2 text-secondary">
@@ -326,15 +290,12 @@ export default function MemberDashboard() {
              <PartyPopper className="h-8 w-8 text-[#14F195] mx-auto mb-2" />
              <h3 className="text-xl font-headline font-black uppercase text-[#14F195]">Code Success!</h3>
              <p className="text-sm font-medium">
-               {unlockedName === 'Huey' 
-                ? "Success! You've joined Huey’s flock, proudly sponsored by SolGods."
-                : `Welcome to the flock! You are now a community adopter of ${unlockedName}.`}
+               Welcome to the flock! You are now a community adopter of {unlockedName}.
              </p>
              <Button variant="ghost" size="sm" onClick={() => setUnlockedName(null)} className="mt-2 text-[10px] font-black uppercase tracking-widest opacity-60">Dismiss</Button>
           </div>
         )}
 
-        {/* Financial Transparency & Routine Health */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <Card className="bg-card border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
               <div className="relative z-10 space-y-8">
@@ -367,13 +328,11 @@ export default function MemberDashboard() {
                   })}
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/5 blur-3xl rounded-full" />
            </Card>
 
            <SanctuaryCostCard expenses={expenses} />
         </section>
 
-        {/* Your Adopted Residents Section */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -384,7 +343,13 @@ export default function MemberDashboard() {
            {myFlock && myFlock.length > 0 ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                {myFlock.map((bird) => (
-                 <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses} totalBirds={birds?.length || 1} />
+                 <ResidentDashboardCard 
+                    key={bird.id} 
+                    bird={bird} 
+                    dailyStatusProgress={globalHealth} 
+                    expenses={expenses} 
+                    totalBirds={allBirds?.length || 1} 
+                 />
                ))}
              </div>
            ) : (
@@ -405,7 +370,6 @@ export default function MemberDashboard() {
            )}
         </section>
 
-        {/* News Feed */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
@@ -422,3 +386,114 @@ export default function MemberDashboard() {
     </div>
   );
 }
+
+function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[] | null, totalBirds: number }) {
+  const careCosts = useMemo(() => {
+    if (!expenses || !totalBirds) return 0;
+    const now = new Date();
+    const m = now.getMonth();
+    const y = now.getFullYear();
+
+    const monthlyExpenses = expenses.filter(e => {
+      const d = new Date(e.date);
+      return d.getMonth() === m && d.getFullYear() === y;
+    });
+
+    const specific = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + e.cost, 0);
+    const shared = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + e.cost, 0);
+    const overhead = shared / totalBirds;
+
+    return specific + overhead;
+  }, [expenses, totalBirds, bird.id]);
+
+  return (
+    <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl hover:scale-[1.02] transition-transform">
+      <div className="relative aspect-video">
+        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <div className="absolute bottom-4 left-4">
+           <h3 className="text-2xl font-headline font-black text-white uppercase tracking-tighter">{bird.name}</h3>
+           <p className="text-[10px] text-primary font-black uppercase tracking-widest">{bird.breed}</p>
+        </div>
+      </div>
+      <CardContent className="p-6 space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+             <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Monthly Care</span>
+             <p className="text-xl font-headline font-black text-primary">${careCosts.toFixed(2)}</p>
+          </div>
+          <div className="space-y-1 text-right">
+             <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Total Eggs</span>
+             <p className="text-xl font-headline font-black">{bird.eggCounter || 0}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest">
+            <span>Daily Welfare</span>
+            <span className="text-primary">{Math.round(dailyStatusProgress)}%</span>
+          </div>
+          <Progress value={dailyStatusProgress} className="h-1.5" />
+        </div>
+
+        <Button asChild variant="outline" className="w-full border-border hover:bg-muted/10 font-black text-[10px] tracking-widest uppercase rounded-xl h-10">
+          <Link href={`/residents/${bird.id}`}>View Details <ChevronRight className="ml-2 h-3 w-3" /></Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlockedIds: string[] }) {
+  const firestore = useFirestore();
+  
+  // Fetch logs for all birds recently (simpler for MVP feed)
+  const logsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collectionGroup(firestore, 'healthLogs'), orderBy('logDate', 'desc'), limit(10));
+  }, [firestore]);
+
+  const { data: logs, isLoading } = useCollection<HealthLogEntry>(logsQuery);
+  const birdsQuery = useMemoFirebase(() => {
+     if (!firestore) return null;
+     return query(collection(firestore, 'birds'));
+  }, [firestore]);
+  const { data: birds } = useCollection<Resident>(birdsQuery);
+
+  if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-4">
+      {logs?.map((log) => {
+        const bird = birds?.find(b => b.id === log.birdId);
+        if (!bird) return null;
+        
+        return (
+          <Card key={log.id} className="bg-muted/5 border-border rounded-2xl p-6 hover:bg-muted/10 transition-colors">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-border">
+                <Image src={bird.primaryImageUrl} alt={bird.name} width={48} height={48} className="object-cover h-full" />
+              </div>
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center justify-between">
+                   <h4 className="font-headline font-black text-xs uppercase tracking-tight">{bird.name} <span className="text-muted-foreground font-medium">Wellness Update</span></h4>
+                   <span className="text-[9px] font-bold text-muted-foreground">{format(new Date(log.logDate), 'MMM dd, HH:mm')}</span>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">{log.notes}</p>
+                <div className="flex items-center gap-2 pt-2">
+                   <Badge variant="outline" className="text-[8px] uppercase tracking-widest border-secondary/30 text-secondary">
+                     <Stethoscope className="h-2.5 w-2.5 mr-1" /> Health Check
+                   </Badge>
+                </div>
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+      {logs?.length === 0 && (
+        <p className="text-center text-muted-foreground py-12 text-sm italic">No recent sanctuary updates available.</p>
+      )}
+    </div>
+  );
+}
+
