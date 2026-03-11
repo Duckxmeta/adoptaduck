@@ -20,6 +20,8 @@ export type Resident = {
   hatch_date?: string;
   isFoundingResident?: boolean;
   generation?: number;
+  liveStatus?: string;
+  statusLastUpdated?: string;
 };
 
 export type Expense = {

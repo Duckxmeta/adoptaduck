@@ -37,24 +37,22 @@ import {
   Sparkles,
   ShieldCheck,
   Stethoscope,
-  PartyPopper,
   Utensils,
   Droplets,
-  Calendar,
   LayoutDashboard,
   Ticket,
   Check,
-  Wallet,
   ChevronRight,
   TrendingUp,
   Activity,
   ScrollText,
-  Users
+  Users,
+  Zap
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 
@@ -79,7 +77,6 @@ export default function MemberDashboard() {
 
   const [referralCode, setReferralCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [unlockedName, setUnlockedName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -192,7 +189,6 @@ export default function MemberDashboard() {
           community_codes: arrayUnion(code),
           updatedAt: new Date().toISOString()
         }, { merge: true });
-        setUnlockedName(targetName);
         toast({ title: "Welcome to the flock!", description: `You are now a community adopter of ${targetName}.` });
         setReferralCode('');
       }
@@ -216,6 +212,7 @@ export default function MemberDashboard() {
   }
 
   const globalHealth = calculateProgress();
+  const liveStatusBirds = allBirds?.filter(b => b.liveStatus).sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body">
@@ -254,6 +251,45 @@ export default function MemberDashboard() {
               </div>
            </Card>
         </section>
+
+        {/* Live Status Ticker */}
+        {liveStatusBirds.length > 0 && (
+          <section className="animate-in fade-in slide-in-from-top-4 duration-1000">
+            <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <Zap className="h-24 w-24 text-primary" />
+              </div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(255,215,0,0.4)]">
+                  <Zap className="h-5 w-5 text-primary-foreground fill-current" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live from the Sanctuary</h2>
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-tight">Real-time status broadcast</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {liveStatusBirds.slice(0, 4).map((bird) => (
+                  <div key={bird.id} className="flex items-center gap-3 p-3 bg-background/50 rounded-2xl border border-primary/10 hover:border-primary/30 transition-colors">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-border shrink-0">
+                      <Image src={bird.primaryImageUrl} alt={bird.name} width={40} height={40} className="object-cover h-full" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase text-primary tracking-tight truncate">{bird.name}</p>
+                      <p className="text-xs font-bold truncate">{bird.liveStatus}</p>
+                      {bird.statusLastUpdated && (
+                        <p className="text-[8px] font-bold text-muted-foreground uppercase">
+                          {formatDistanceToNow(new Date(bird.statusLastUpdated))} ago
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </section>
+        )}
 
         {/* Global Impact Dashboard */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">

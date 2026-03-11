@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Plus, 
   Minus,
@@ -22,7 +23,9 @@ import {
   Trash2,
   Wallet,
   ArrowRight,
-  Bird
+  Bird,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -39,6 +42,14 @@ import { Navbar } from '@/components/layout/Navbar';
 import { format } from 'date-fns';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+
+const PRESET_VIBES = [
+  { label: 'Vigilant', emoji: '🛡️' },
+  { label: 'Vocal', emoji: '📢' },
+  { label: 'Zoomies', emoji: '💨' },
+  { label: 'Napping', emoji: '💤' },
+  { label: 'Snacking', emoji: '🥗' },
+];
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -58,6 +69,8 @@ export default function AdminDashboard() {
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  const [customVibes, setCustomVibes] = useState<Record<string, string>>({});
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
@@ -87,6 +100,16 @@ export default function AdminDashboard() {
       }
     }
   }, [user, isUserLoading, router, isAdmin]);
+
+  const handleUpdateStatus = (birdId: string, status: string) => {
+    if (!firestore) return;
+    const birdRef = doc(firestore, 'birds', birdId);
+    updateDocumentNonBlocking(birdRef, {
+      liveStatus: status,
+      statusLastUpdated: new Date().toISOString()
+    });
+    toast({ title: "Status Updated", description: `Vibe set to: ${status}` });
+  };
 
   const handleAddEgg = (resident: Resident) => {
     if (!firestore || resident.sex !== 'female') return;
@@ -205,6 +228,8 @@ export default function AdminDashboard() {
     );
   }
 
+  const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
       <Navbar />
@@ -219,6 +244,73 @@ export default function AdminDashboard() {
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">FLOCK LINEAGE & OPERATIONS</p>
            </div>
         </div>
+
+        {/* Live Status Control Section */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+              <Zap className="h-4 w-4" /> LIVE VIBE CHECK
+            </h2>
+            <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest border-primary/30 text-primary">REAL-TIME BROADCAST</Badge>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {foundingFour.map((bird) => (
+              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl p-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-border relative">
+                      <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                    </div>
+                    <div>
+                      <h3 className="font-headline font-black uppercase tracking-tight">{bird.name}</h3>
+                      <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest">Current: {bird.liveStatus || 'Chill'}</p>
+                    </div>
+                  </div>
+                  {bird.statusLastUpdated && (
+                    <span className="text-[7px] font-black text-muted-foreground uppercase tracking-widest">
+                      Updated {format(new Date(bird.statusLastUpdated), 'HH:mm')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-5 gap-2">
+                  {PRESET_VIBES.map((vibe) => (
+                    <Button 
+                      key={vibe.label} 
+                      variant="outline" 
+                      className="h-12 rounded-xl border-border flex flex-col items-center justify-center p-0 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all group"
+                      onClick={() => handleUpdateStatus(bird.id, `${vibe.emoji} ${vibe.label}`)}
+                    >
+                      <span className="text-lg group-hover:scale-125 transition-transform">{vibe.emoji}</span>
+                      <span className="text-[6px] font-black uppercase tracking-tighter">{vibe.label}</span>
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex gap-2">
+                  <Input 
+                    placeholder="Custom Vibe..." 
+                    className="h-10 rounded-xl bg-background border-border text-[10px] font-bold"
+                    value={customVibes[bird.id] || ''}
+                    onChange={(e) => setCustomVibes({...customVibes, [bird.id]: e.target.value})}
+                  />
+                  <Button 
+                    className="h-10 rounded-xl bg-secondary text-secondary-foreground font-black text-[10px]"
+                    onClick={() => {
+                      if (customVibes[bird.id]) {
+                        handleUpdateStatus(bird.id, customVibes[bird.id]);
+                        setCustomVibes({...customVibes, [bird.id]: ''});
+                      }
+                    }}
+                  >
+                    SEND
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
 
         {/* Financial Ledger Section */}
         <section className="space-y-6">
