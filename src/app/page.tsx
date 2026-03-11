@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -37,7 +36,6 @@ export default function Home() {
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [authError, setAuthError] = useState<{code: string, message: string} | null>(null);
-  const donateUrl = "https://www.paypal.com/donate/?hosted_button_id=RG9T939ERXZB8";
   
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -199,11 +197,11 @@ export default function Home() {
               A real-time window into our rescue mission. Track our residents, monitor their health, and see the daily impact of your support.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
+              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
                 <Link href="/flock">MEET THE RESIDENTS</Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <a href={donateUrl} target="_blank" rel="noopener noreferrer">SUPPORT THE MISSION</a>
+              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
+                <Link href="/membership">SUPPORT THE MISSION</Link>
               </Button>
             </div>
           </div>
