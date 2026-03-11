@@ -44,7 +44,7 @@ export function Footer() {
             <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Community</h5>
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/login" className="hover:text-primary transition-colors">Member Login</Link></li>
-              <li><Link href="/dashboard" className="hover:text-primary transition-colors">Membership</Link></li>
+              <li><Link href="/membership" className="hover:text-primary transition-colors">Membership</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
