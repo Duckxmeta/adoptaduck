@@ -22,6 +22,7 @@ export type Resident = {
   generation?: number;
   liveStatus?: string;
   statusLastUpdated?: string;
+  isFeatured?: boolean;
 };
 
 export type Expense = {

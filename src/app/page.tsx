@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -13,12 +14,13 @@ import {
   Users, 
   ArrowRight,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trophy
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,15 +44,21 @@ export default function Home() {
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
+  const featuredBirdQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'birds'), where('isFeatured', '==', true), limit(1));
+  }, [firestore]);
+
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: featuredBirds, isLoading: featuredLoading } = useCollection<Resident>(featuredBirdQuery);
+
+  const featuredDuck = featuredBirds && featuredBirds.length > 0 ? featuredBirds[0] : null;
 
   useEffect(() => {
     if (!auth || !firestore) return;
 
-    // Configure persistence for mobile stability
     configureAuthPersistence(auth);
 
-    // Check for redirect result on mount
     const checkRedirect = async () => {
       try {
         setIsVerifying(true);
@@ -74,7 +82,6 @@ export default function Home() {
               description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
             });
             
-            // Smart Redirect
             if (ADMIN_EMAILS.includes(result.user.email || '')) {
               router.push('/admin');
             } else {
@@ -155,10 +162,69 @@ export default function Home() {
           </div>
         )}
 
+        {/* Featured Resident Spotlight Section */}
+        <section className="bg-[#14F195]/5 border-b border-[#14F195]/20 py-12 relative overflow-hidden">
+          <div className="container mx-auto px-4">
+            {featuredDuck ? (
+              <Card className="bg-card border-2 border-[#14F195]/30 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-1000">
+                <div className="grid grid-cols-1 md:grid-cols-12 items-center">
+                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[400px] overflow-hidden">
+                    <Image 
+                      src={featuredDuck.primaryImageUrl} 
+                      alt={featuredDuck.name} 
+                      fill 
+                      className="object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-card hidden md:block" />
+                  </div>
+                  <div className="md:col-span-7 p-8 md:p-12 space-y-6">
+                    <div className="space-y-2">
+                      <Badge className="bg-[#14F195] text-black font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 flex items-center w-fit gap-2">
+                        <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
+                      </Badge>
+                      <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
+                        Meet <span className="text-[#14F195]">{featuredDuck.name}</span>
+                      </h2>
+                    </div>
+                    <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
+                      "{featuredDuck.personalityTraits.split('.')[0]}."
+                    </p>
+                    <div className="pt-4 flex flex-col sm:flex-row gap-4">
+                      <Button asChild size="lg" className="bg-[#14F195] text-black font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3">
+                        <Link href={`/residents/${featuredDuck.id}`}>
+                          LEARN MORE <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline" size="lg" className="border-[#14F195] text-[#14F195] font-black h-14 px-10 rounded-2xl hover:bg-[#14F195]/10">
+                        <Link href="/flock">MEET THE RESIDENTS</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <div className="text-center py-12 space-y-6">
+                <div className="flex items-center justify-center gap-2 text-[#14F195] font-black uppercase tracking-[0.4em] text-[10px]">
+                  <ShieldCheck className="h-4 w-4" /> VIRTUAL SANCTUARY MISSION
+                </div>
+                <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">
+                  Welcome to <span className="text-[#14F195]">Decent Ducks</span>
+                </h2>
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">
+                  A real-time window into our rescue mission. Join the flock to follow our residents' daily progress.
+                </p>
+                <Button asChild size="lg" className="bg-[#14F195] text-black font-black h-14 px-12 rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                  <Link href="/flock">BROWSE RESIDENTS</Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
         <section className="bg-primary/5 border-b border-primary/20 py-20 relative overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-4">
             <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
-              <ShieldCheck className="h-4 w-4" /> VIRTUAL SANCTUARY MISSION
+              <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
             </div>
             <h2 className="text-7xl md:text-9xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
               {birds?.length || 0}
@@ -166,15 +232,6 @@ export default function Home() {
             <p className="text-xl md:text-2xl font-headline font-bold uppercase tracking-widest text-foreground">
               Ducks in Our Care
             </p>
-            
-            {!user && (
-              <button 
-                onClick={handleGoogleSignIn}
-                className="block mx-auto text-[10px] font-black uppercase tracking-widest text-primary/60 hover:text-primary transition-colors mt-8 border-b border-primary/20 pb-1"
-              >
-                Join the community to see daily sanctuary progress and member-only stats.
-              </button>
-            )}
           </div>
         </section>
 

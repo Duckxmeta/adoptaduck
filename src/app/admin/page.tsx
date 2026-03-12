@@ -31,11 +31,12 @@ import {
   Download,
   Award,
   ShieldCheck,
-  Egg
+  Egg,
+  Send
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, limit } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, getDocs, where, writeBatch } from 'firebase/firestore';
 import { Resident, DailyStatus, DuckOfTheMonthSettings } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -74,6 +75,7 @@ export default function AdminDashboard() {
 
   const [customVibes, setCustomVibes] = useState<Record<string, string>>({});
   const [missionInput, setMissionInput] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
   
   // Local state for the egg counter fallback
   const [localEggCount, setLocalEggCount] = useState<number>(0);
@@ -143,9 +145,42 @@ export default function AdminDashboard() {
         monthlyMission: mission,
         updatedAt: new Date().toISOString()
       }, { merge: true });
-      toast({ title: "Spotlight Updated" });
+      toast({ title: "Spotlight Data Updated" });
     } catch (e) {
       toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
+  const handlePublishDOTM = async () => {
+    if (!firestore || !dotmSettings?.birdId) return;
+    setIsPublishing(true);
+    try {
+      const batch = writeBatch(firestore);
+      
+      // 1. Find and un-feature all currently featured ducks
+      const featuredQuery = query(collection(firestore, 'birds'), where('isFeatured', '==', true));
+      const featuredDocs = await getDocs(featuredQuery);
+      featuredDocs.forEach(d => {
+        batch.update(d.ref, { isFeatured: false });
+      });
+
+      // 2. Set the newly selected duck as featured
+      const birdRef = doc(firestore, 'birds', dotmSettings.birdId);
+      batch.update(birdRef, { 
+        isFeatured: true,
+        updatedAt: new Date().toISOString() 
+      });
+
+      await batch.commit();
+      toast({ 
+        title: "Spotlight Published!", 
+        description: "The featured duck is now live on the homepage." 
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Publish Failed" });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -161,11 +196,10 @@ export default function AdminDashboard() {
       }, { merge: true });
     } catch (error: any) {
       console.error("Egg update failed:", error);
-      // Fallback: local state stays updated so admin can see their work
       toast({ 
         variant: "destructive", 
         title: "Sync Delayed", 
-        description: "Your change is saved locally but database sync failed. Check your connection." 
+        description: "Your change is saved locally but database sync failed." 
       });
     }
   };
@@ -257,7 +291,7 @@ export default function AdminDashboard() {
            </div>
         </div>
 
-        {/* Global Egg Counter - Top Priority Admin Action */}
+        {/* Global Egg Counter */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -301,7 +335,7 @@ export default function AdminDashboard() {
             <div className="space-y-2 max-w-md">
               <h3 className="text-xl font-headline font-black uppercase tracking-tight">Blank Certificate Template</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Export a branded, high-resolution "2026 Season" certificate with blank fields. Perfect for physical signatures or manual gifts.
+                Export a branded, high-resolution "2026 Season" certificate with blank fields.
               </p>
             </div>
             <Button onClick={handleExportBlank} className="bg-primary text-primary-foreground font-black rounded-xl h-12 px-8 shadow-lg shrink-0">
@@ -320,7 +354,7 @@ export default function AdminDashboard() {
           
           <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Featured Resident</Label>
                   <Select 
@@ -346,14 +380,21 @@ export default function AdminDashboard() {
                     onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
                     className="h-12 bg-background border-border rounded-xl text-sm"
                   />
-                  <p className="text-[9px] text-muted-foreground italic">Tip: Tapping away from the field saves changes automatically.</p>
                 </div>
+                <Button 
+                  className="w-full bg-primary text-primary-foreground font-black h-12 rounded-xl shadow-lg flex items-center gap-2"
+                  disabled={!dotmSettings?.birdId || isPublishing}
+                  onClick={handlePublishDOTM}
+                >
+                  {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  PUBLISH TO HOMEPAGE
+                </Button>
               </div>
               
               <div className="bg-primary/5 border border-dashed border-primary/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 h-full">
                 <Sparkles className="h-8 w-8 text-primary opacity-50" />
                 <p className="text-xs font-medium text-muted-foreground leading-relaxed">
-                  The Duck of the Month spotlight appears at the top of the membership and user dashboard pages to drive targeted support.
+                  Publishing updates the homepage "Featured Resident" section instantly.
                 </p>
               </div>
             </div>
