@@ -190,27 +190,21 @@ export default function Home() {
               </Button>
             </div>
           </div>
-        </section>
 
-        {/* 2. Total Ducks Counter (Compact Floating Ticker) */}
-        <section className="bg-background pt-0 pb-12 -mt-10 relative z-30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-fit mx-auto bg-card/80 backdrop-blur-md border border-primary/30 rounded-full px-8 py-3 shadow-2xl flex items-center justify-center gap-4 hover:border-primary/60 transition-colors">
-              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex items-center gap-2 text-[10px] md:text-xs font-headline font-black uppercase tracking-[0.2em]">
-                <span className="text-muted-foreground hidden sm:inline">Currently Protecting:</span>
-                <span className="text-primary text-2xl md:text-3xl tracking-tighter leading-none font-black">{birds?.length || 0}</span>
-                <span className="text-foreground">Residents</span>
-              </div>
-              <div className="h-4 w-px bg-primary/20 hidden md:block" />
-              <Badge variant="outline" className="hidden md:inline-flex text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary/60 px-2 py-0.5">
-                Season 2026 Registry
-              </Badge>
+          {/* Compact Resident Counter Badge Overlay */}
+          <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-20 animate-in fade-in slide-in-from-right-4 duration-1000 delay-700">
+            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              <p className="text-[10px] font-headline font-black uppercase tracking-[0.2em] text-white">
+                <span className="opacity-70">Protecting:</span> 
+                <span className="text-primary text-sm tracking-tighter ml-1 font-black">{birds?.length || 0}</span> 
+                <span className="opacity-70 ml-1">Residents</span>
+              </p>
             </div>
           </div>
         </section>
 
-        {/* 3. Featured Resident Spotlight Section (Duck of the Month) */}
+        {/* 2. Featured Resident Spotlight Section (Duck of the Month) */}
         {featuredDuck && (
           <section className="bg-[#14F195]/5 border-y border-[#14F195]/20 py-24 relative overflow-hidden">
             <div className="container mx-auto px-4">
@@ -254,7 +248,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* 4. Educational Section (Domestic vs. Wildlife) */}
+        {/* 3. Educational Section (Domestic vs. Wildlife) */}
         <section className="py-32 bg-card/30 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
