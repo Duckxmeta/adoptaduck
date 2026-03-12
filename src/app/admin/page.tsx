@@ -30,7 +30,8 @@ import {
   Trophy,
   Download,
   Award,
-  ShieldCheck
+  ShieldCheck,
+  Egg
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -73,6 +74,9 @@ export default function AdminDashboard() {
 
   const [customVibes, setCustomVibes] = useState<Record<string, string>>({});
   const [missionInput, setMissionInput] = useState("");
+  
+  // Local state for the egg counter fallback
+  const [localEggCount, setLocalEggCount] = useState<number>(0);
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
@@ -91,15 +95,27 @@ export default function AdminDashboard() {
     return doc(firestore, 'settings', 'duck_of_the_month');
   }, [firestore, isAdmin]);
 
+  const eggStatsRef = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return doc(firestore, 'sanctuary_stats', 'eggs');
+  }, [firestore, isAdmin]);
+
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: dotmSettings } = useDoc<DuckOfTheMonthSettings>(dotmRef);
+  const { data: eggStats } = useDoc<{ count: number }>(eggStatsRef);
 
   useEffect(() => {
     if (dotmSettings?.monthlyMission) {
       setMissionInput(dotmSettings.monthlyMission);
     }
   }, [dotmSettings?.monthlyMission]);
+
+  useEffect(() => {
+    if (eggStats) {
+      setLocalEggCount(eggStats.count || 0);
+    }
+  }, [eggStats]);
 
   useEffect(() => {
     if (!isUserLoading) {
@@ -130,6 +146,27 @@ export default function AdminDashboard() {
       toast({ title: "Spotlight Updated" });
     } catch (e) {
       toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
+  const handleUpdateGlobalEggs = async (change: number) => {
+    if (!firestore) return;
+    const newCount = Math.max(0, localEggCount + change);
+    setLocalEggCount(newCount); // Instant UI feedback
+
+    try {
+      await setDoc(doc(firestore, 'sanctuary_stats', 'eggs'), {
+        count: increment(change),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (error: any) {
+      console.error("Egg update failed:", error);
+      // Fallback: local state stays updated so admin can see their work
+      toast({ 
+        variant: "destructive", 
+        title: "Sync Delayed", 
+        description: "Your change is saved locally but database sync failed. Check your connection." 
+      });
     }
   };
 
@@ -220,6 +257,39 @@ export default function AdminDashboard() {
            </div>
         </div>
 
+        {/* Global Egg Counter - Top Priority Admin Action */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+              <Egg className="h-4 w-4" /> GLOBAL EGG HARVEST
+            </h2>
+          </div>
+          <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl p-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="text-center md:text-left">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Total Daily Harvest</p>
+                <h3 className="text-6xl font-headline font-black text-primary tracking-tighter">{localEggCount}</h3>
+              </div>
+              <div className="flex gap-4 w-full md:w-auto">
+                <Button 
+                  onClick={() => handleUpdateGlobalEggs(-1)}
+                  disabled={localEggCount <= 0}
+                  variant="outline" 
+                  className="flex-1 md:w-24 h-24 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
+                >
+                  <Minus className="h-8 w-8" />
+                </Button>
+                <Button 
+                  onClick={() => handleUpdateGlobalEggs(1)}
+                  className="flex-1 md:w-24 h-24 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+                >
+                  <Plus className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+
         {/* Supporter Assets Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
@@ -304,8 +374,12 @@ export default function AdminDashboard() {
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-xl p-6 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-border relative">
-                      <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-border relative bg-background">
+                      {bird.primaryImageUrl ? (
+                        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs">🦆</div>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-headline font-black uppercase tracking-tight">{bird.name}</h3>

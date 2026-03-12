@@ -9,7 +9,7 @@ service cloud.firestore {
      * Core Philosophy:
      * - Public Read: Birds, Ledger (transparency), Donations (impact tracking), Daily Status, Settings.
      * - Member Read: Detailed Health Logs.
-     * - Admin Write: Birds, Ledger, Daily Status, Settings.
+     * - Admin Write: Birds, Ledger, Daily Status, Settings, Sanctuary Stats.
      * - Public Create: Donations (recorded after PayPal success), Name Suggestions.
      */
 
@@ -54,6 +54,11 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /sanctuary_stats/{statId} {
       allow read: if true;
       allow write: if isAdmin();
     }
