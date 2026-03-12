@@ -192,25 +192,20 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 2. Total Ducks Counter (Live Stats Section) */}
-        <section className="bg-background border-b border-primary/10 pt-0 pb-16 relative overflow-hidden">
-          <div className="container mx-auto px-4 text-center">
-            <div className="max-w-xl mx-auto py-12 px-8 bg-card/50 rounded-[2.5rem] border border-primary/20 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" />
-              <div className="flex flex-col items-center justify-center space-y-2">
-                <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px]">
-                  <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
-                </div>
-                <h2 className="text-7xl md:text-9xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none py-2">
-                  {birds?.length || 0}
-                </h2>
-                <p className="text-xl md:text-2xl font-headline font-black uppercase tracking-[0.2em] text-foreground">
-                  DUCKS IN CARE
-                </p>
-                <div className="pt-4">
-                  <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/30 text-primary/80">Season 2026 Registry</Badge>
-                </div>
+        {/* 2. Total Ducks Counter (Compact Floating Ticker) */}
+        <section className="bg-background pt-0 pb-12 -mt-10 relative z-30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-fit mx-auto bg-card/80 backdrop-blur-md border border-primary/30 rounded-full px-8 py-3 shadow-2xl flex items-center justify-center gap-4 hover:border-primary/60 transition-colors">
+              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+              <div className="flex items-center gap-2 text-[10px] md:text-xs font-headline font-black uppercase tracking-[0.2em]">
+                <span className="text-muted-foreground hidden sm:inline">Currently Protecting:</span>
+                <span className="text-primary text-2xl md:text-3xl tracking-tighter leading-none font-black">{birds?.length || 0}</span>
+                <span className="text-foreground">Residents</span>
               </div>
+              <div className="h-4 w-px bg-primary/20 hidden md:block" />
+              <Badge variant="outline" className="hidden md:inline-flex text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary/60 px-2 py-0.5">
+                Season 2026 Registry
+              </Badge>
             </div>
           </div>
         </section>
