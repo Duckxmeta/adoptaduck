@@ -162,7 +162,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* 1. Hero Section (Virtual Sanctuary) */}
+        {/* 1. Hero Section (Peaceful Sanctuary) */}
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
@@ -176,17 +176,17 @@ export default function Home() {
               Virtual Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
-              VIRTUAL <span className="text-primary">SANCTUARY</span>
+              A QUIET HOME FOR <span className="text-primary">EVERY WING</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-              A real-time window into our rescue mission. Track our residents, monitor their health, and see the daily impact of your support.
+              Providing a peaceful, stress-free environment for our flock through dedicated daily care and a high-quality sanctuary life.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <Link href="/flock">MEET THE RESIDENTS</Link>
+                <Link href="/flock">VISIT THE FLOCK</Link>
               </Button>
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
-                <Link href="/membership">SUPPORT THE MISSION</Link>
+                <Link href="/membership">SUPPORT THE SANCTUARY</Link>
               </Button>
             </div>
           </div>
@@ -196,9 +196,8 @@ export default function Home() {
             <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl">
               <ShieldCheck className="h-3.5 w-3.5 text-primary" />
               <p className="text-[10px] font-headline font-black uppercase tracking-[0.2em] text-white">
-                <span className="opacity-70">Protecting:</span> 
+                <span className="opacity-70">Sanctuary Residents:</span> 
                 <span className="text-primary text-sm tracking-tighter ml-1 font-black">{birds?.length || 0}</span> 
-                <span className="opacity-70 ml-1">Residents</span>
               </p>
             </div>
           </div>
@@ -238,7 +237,7 @@ export default function Home() {
                         </Link>
                       </Button>
                       <Button asChild variant="outline" size="lg" className="border-[#14F195] text-[#14F195] font-black h-14 px-10 rounded-2xl hover:bg-[#14F195]/10">
-                        <Link href="/flock">MEET THE RESIDENTS</Link>
+                        <Link href="/flock">VISIT THE FLOCK</Link>
                       </Button>
                     </div>
                   </div>
