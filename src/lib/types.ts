@@ -5,7 +5,6 @@ export type Resident = {
   breed: string;
   sex: 'male' | 'female' | 'unknown';
   heritageTree?: string;
-  eggCounter: number;
   personalityTraits: string;
   backstory: string;
   primaryImageUrl: string;
@@ -23,6 +22,12 @@ export type Resident = {
   liveStatus?: string;
   statusLastUpdated?: string;
   isFeatured?: boolean;
+};
+
+export type EggHistoryEntry = {
+  id: string; // Date as YYYY-MM-DD
+  count: number;
+  updatedAt: string;
 };
 
 export type Expense = {
@@ -52,8 +57,8 @@ export type Donation = {
   designation: string;
   timestamp: string;
   donorDisplayName: string;
-  donorPrivateName?: string; // Captures legal name from PayPal
-  donorPrivateEmail?: string; // Captures email from PayPal
+  donorPrivateName?: string; 
+  donorPrivateEmail?: string; 
   uid: string | null;
 };
 

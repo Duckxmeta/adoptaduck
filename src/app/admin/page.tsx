@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,36 +15,35 @@ import {
   Minus,
   Settings, 
   Loader2, 
-  Stethoscope,
   ChevronRight,
   ClipboardList,
   RotateCcw,
   LayoutDashboard,
-  TreePine,
   Trash2,
-  Wallet,
-  ArrowRight,
   Bird,
   Zap,
   Sparkles,
   Trophy,
   Download,
-  Award,
   ShieldCheck,
   Egg,
-  Send
+  Send,
+  History,
+  CalendarDays,
+  TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, getDocs, where, writeBatch } from 'firebase/firestore';
-import { Resident, DailyStatus, DuckOfTheMonthSettings } from '@/lib/types';
+import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, getDocs, where, writeBatch, limit } from 'firebase/firestore';
+import { Resident, DailyStatus, DuckOfTheMonthSettings, EggHistoryEntry } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
-import { format } from 'date-fns';
+import { format, subDays, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
@@ -73,18 +72,27 @@ export default function AdminDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
 
-  const [customVibes, setCustomVibes] = useState<Record<string, string>>({});
   const [missionInput, setMissionInput] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   
-  const [localEggCount, setLocalEggCount] = useState<number>(0);
-
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
 
+  // Data Queries
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
   }, [firestore]);
+
+  const historyQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'egg_history'), orderBy('id', 'desc'), limit(30));
+  }, [firestore]);
+
+  const todayEggRef = useMemoFirebase(() => {
+    if (!firestore || !isAdmin) return null;
+    return doc(firestore, 'egg_history', todayDate);
+  }, [firestore, isAdmin, todayDate]);
 
   const dailyStatusRef = useMemoFirebase(() => {
     if (!firestore || !isAdmin) return null;
@@ -96,15 +104,11 @@ export default function AdminDashboard() {
     return doc(firestore, 'settings', 'duck_of_the_month');
   }, [firestore, isAdmin]);
 
-  const eggStatsRef = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
-    return doc(firestore, 'sanctuary_stats', 'eggs');
-  }, [firestore, isAdmin]);
-
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: eggHistory } = useCollection<EggHistoryEntry>(historyQuery);
+  const { data: todayEggData } = useDoc<EggHistoryEntry>(todayEggRef);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: dotmSettings } = useDoc<DuckOfTheMonthSettings>(dotmRef);
-  const { data: eggStats } = useDoc<{ count: number }>(eggStatsRef);
 
   useEffect(() => {
     if (dotmSettings?.monthlyMission) {
@@ -113,16 +117,8 @@ export default function AdminDashboard() {
   }, [dotmSettings?.monthlyMission]);
 
   useEffect(() => {
-    if (eggStats) {
-      setLocalEggCount(eggStats.count || 0);
-    }
-  }, [eggStats]);
-
-  useEffect(() => {
-    if (!isUserLoading) {
-      if (!isAdmin) {
-        router.push('/admin/login');
-      }
+    if (!isUserLoading && !isAdmin) {
+      router.push('/admin/login');
     }
   }, [user, isUserLoading, router, isAdmin]);
 
@@ -174,32 +170,19 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateGlobalEggs = async (change: number) => {
-    if (!firestore) return;
-    const newCount = Math.max(0, localEggCount + change);
-    setLocalEggCount(newCount);
+  const handleUpdateTodayEggs = async (change: number) => {
+    if (!firestore || !todayEggRef) return;
+    const currentCount = todayEggData?.count || 0;
+    if (currentCount + change < 0) return;
+
     try {
-      await setDoc(doc(firestore, 'sanctuary_stats', 'eggs'), {
+      await setDoc(todayEggRef, {
         count: increment(change),
         updatedAt: new Date().toISOString()
       }, { merge: true });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Sync Delayed" });
+      toast({ variant: "destructive", title: "Update Error", description: error.message });
     }
-  };
-
-  const handleAddEgg = (resident: Resident) => {
-    if (!firestore || resident.sex !== 'female') return;
-    const birdRef = doc(firestore, 'birds', resident.id);
-    updateDocumentNonBlocking(birdRef, { eggCounter: increment(1), updatedAt: new Date().toISOString() });
-    toast({ title: "Egg Counted" });
-  };
-
-  const handleRemoveEgg = (resident: Resident) => {
-    if (!firestore || resident.sex !== 'female' || (resident.eggCounter || 0) <= 0) return;
-    const birdRef = doc(firestore, 'birds', resident.id);
-    updateDocumentNonBlocking(birdRef, { eggCounter: increment(-1), updatedAt: new Date().toISOString() });
-    toast({ title: "Egg Removed" });
   };
 
   const handleSaveResident = (data: Partial<Resident>) => {
@@ -212,7 +195,6 @@ export default function AdminDashboard() {
       setDocumentNonBlocking(doc(firestore, 'birds', newId), {
         ...data,
         id: newId,
-        eggCounter: 0,
         createdAt: new Date().toISOString(),
       }, { merge: true });
       toast({ title: "Resident Added" });
@@ -268,22 +250,22 @@ export default function AdminDashboard() {
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="text-center md:text-left space-y-1">
                 <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary flex items-center gap-2 justify-center md:justify-start">
-                  <Egg className="h-3 w-3" /> GLOBAL EGG HARVEST
+                  <Egg className="h-3 w-3" /> TODAY&apos;S HARVEST
                 </h2>
-                <h3 className="text-6xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
-                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Daily Total</p>
+                <h3 className="text-6xl font-headline font-black text-primary tracking-tighter leading-none">{todayEggData?.count || 0}</h3>
+                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
               </div>
               <div className="flex gap-4 w-full md:w-auto">
                 <Button 
-                  onClick={() => handleUpdateGlobalEggs(-1)}
-                  disabled={localEggCount <= 0}
+                  onClick={() => handleUpdateTodayEggs(-1)}
+                  disabled={(todayEggData?.count || 0) <= 0}
                   variant="outline" 
                   className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
                 >
                   <Minus className="h-7 w-7" />
                 </Button>
                 <Button 
-                  onClick={() => handleUpdateGlobalEggs(1)}
+                  onClick={() => handleUpdateTodayEggs(1)}
                   className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
                 >
                   <Plus className="h-7 w-7" />
@@ -306,7 +288,36 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* 2. SECONDARY TOOLS: DOTM & RESIDENT LIST */}
+        {/* 2. PRODUCTION HISTORY */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <History className="h-4 w-4 text-primary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">PRODUCTION HISTORY</h2>
+          </div>
+          <Card className="bg-card border-border rounded-3xl p-6 overflow-hidden shadow-xl">
+            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+              {eggHistory && eggHistory.length > 0 ? (
+                eggHistory.map((entry) => (
+                  <div key={entry.id} className="flex flex-col items-center gap-2 min-w-[80px] p-3 bg-background/50 rounded-2xl border border-border relative group">
+                    <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                      {format(parseISO(entry.id), 'MMM dd')}
+                    </div>
+                    <div className="text-xl font-headline font-black text-primary">{entry.count}</div>
+                    {entry.count > 0 && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#14F195] shadow-[0_0_8px_#14F195]" title="Productive Day" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="w-full text-center py-8">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">No history recorded yet.</p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </section>
+
+        {/* 3. SECONDARY TOOLS: DOTM & RESIDENT LIST */}
         <section className="space-y-6">
           <div className="flex items-center gap-3">
             <Trophy className="h-4 w-4 text-primary" />
@@ -329,7 +340,7 @@ export default function AdminDashboard() {
                         <SelectValue placeholder="Select bird..." />
                       </SelectTrigger>
                       <SelectContent className="bg-card border-border">
-                        {foundingFour.map(bird => (
+                        {birds?.map(bird => (
                           <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -362,7 +373,6 @@ export default function AdminDashboard() {
               {birdsLoading ? (
                 [1,2].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />)
               ) : birds?.map((bird) => {
-                const isHen = bird.sex === 'female';
                 return (
                   <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative">
                     <div className="relative w-24 aspect-square overflow-hidden shrink-0 border-r border-border">
@@ -378,11 +388,9 @@ export default function AdminDashboard() {
                         <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-black truncate">{bird.breed}</p>
                       </div>
                       <div className="flex gap-2">
-                        {isHen && (
-                          <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-primary hover:bg-primary/10" onClick={() => handleAddEgg(bird)}>
-                            <Plus className="h-3 w-3 mr-1" /> EGG
-                          </Button>
-                        )}
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
+                          <ClipboardList className="h-3 w-3 mr-1" /> LOG
+                        </Button>
                         <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
                           <Settings className="h-3 w-3 mr-1" /> EDIT
                         </Button>
@@ -402,7 +410,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        {/* 3. OPERATIONS: LIVE VIBES & DAILY ROUTINE */}
+        {/* 4. OPERATIONS: LIVE VIBES & DAILY ROUTINE */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Live Vibe Control */}
           <div className="space-y-4">
@@ -466,7 +474,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        {/* 4. ASSETS & LEDGER (BOTTOM) */}
+        {/* 5. ASSETS & LEDGER (BOTTOM) */}
         <section className="space-y-6 pt-8 border-t border-border">
           <div className="flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -508,6 +516,20 @@ export default function AdminDashboard() {
           toast({ title: "Resident Removed" });
         }}
       />
+      
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--primary);
+          border-radius: 10px;
+          opacity: 0.2;
+        }
+      `}</style>
     </div>
   );
 }

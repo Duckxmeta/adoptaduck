@@ -9,12 +9,21 @@
         "name": { "type": "string" },
         "breed": { "type": "string" },
         "sex": { "type": "string", "enum": ["male", "female", "unknown"] },
-        "eggCounter": { "type": "number" },
         "personalityTraits": { "type": "string" },
         "backstory": { "type": "string" },
         "primaryImageUrl": { "type": "string" },
         "isFoundingResident": { "type": "boolean" },
         "generation": { "type": "number" }
+      }
+    },
+    "EggHistory": {
+      "title": "EggHistory",
+      "type": "object",
+      "description": "Daily egg production totals.",
+      "properties": {
+        "id": { "type": "string", "description": "Date formatted as YYYY-MM-DD" },
+        "count": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
     "Donation": {
@@ -38,6 +47,10 @@
     "/birds/{birdId}": {
       "schema": "#/backend/entities/ResidentBird",
       "description": "Sanctuary residents collection."
+    },
+    "/egg_history/{date}": {
+      "schema": "#/backend/entities/EggHistory",
+      "description": "Daily aggregate of egg collection."
     },
     "/donations/{donationId}": {
       "schema": "#/backend/entities/Donation",
