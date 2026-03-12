@@ -39,14 +39,14 @@ export function Navbar() {
       <div className="relative w-12 h-12 bg-transparent overflow-hidden transition-all group-hover:scale-110">
         <Image 
           src={logoUrl} 
-          alt="Virtual Sanctuary Logo" 
+          alt="Decent Ducks Logo" 
           fill 
           className="object-contain mix-blend-screen"
           priority
         />
       </div>
       <span className="font-headline font-black text-2xl tracking-tighter hidden sm:inline-block uppercase">
-        VIRTUAL <span className="text-primary">SANCTUARY</span>
+        DECENT <span className="text-primary">DUCKS</span>
       </span>
     </Link>
   );

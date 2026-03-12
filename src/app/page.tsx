@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -176,10 +175,10 @@ export default function Home() {
               Virtual Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
-              A QUIET HOME FOR <span className="text-primary">EVERY WING</span>
+              VIRTUAL <span className="text-primary">SANCTUARY</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-              Providing a peaceful, stress-free environment for our flock through dedicated daily care and a high-quality sanctuary life.
+              Providing a quiet, high-quality home for our flock. We prioritize stress-free environments and dedicated daily care.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>

@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -15,15 +14,15 @@ export function Footer() {
           <div className="relative w-24 h-24 overflow-hidden mb-2">
             <Image 
               src={logoUrl} 
-              alt="Virtual Sanctuary Logo" 
+              alt="Decent Ducks Logo" 
               fill 
               className="object-contain mix-blend-screen"
             />
           </div>
           <div className="space-y-4 max-w-md">
-            <h4 className="font-headline font-black text-2xl tracking-tighter uppercase">VIRTUAL <span className="text-primary">SANCTUARY</span></h4>
+            <h4 className="font-headline font-black text-2xl tracking-tighter uppercase">DECENT <span className="text-primary">DUCKS</span></h4>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Providing a forever home for ducks in need. Join our community and virtually adopt your favorite resident today.
+              Providing a quiet, high-quality home for our flock. Join our community and virtually adopt your favorite resident today.
             </p>
           </div>
           <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl hover:scale-105 transition-transform shadow-lg">
@@ -65,7 +64,7 @@ export function Footer() {
         </div>
 
         <div className="pt-8 flex flex-col items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-[0.4em] font-black">
-          <p>© {new Date().getFullYear()} VIRTUAL SANCTUARY. BUILT FOR THE BIRDS.</p>
+          <p>© {new Date().getFullYear()} DECENT DUCKS SANCTUARY. BUILT FOR THE BIRDS.</p>
         </div>
       </div>
     </footer>
