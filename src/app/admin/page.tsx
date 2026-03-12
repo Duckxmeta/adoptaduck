@@ -30,7 +30,10 @@ import {
   Send,
   History,
   CalendarDays,
-  TrendingUp
+  TrendingUp,
+  Award,
+  Save,
+  CheckCircle2
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -74,9 +77,13 @@ export default function AdminDashboard() {
 
   const [missionInput, setMissionInput] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingEggs, setIsSavingEggs] = useState(false);
   
   const todayDate = format(new Date(), 'yyyy-MM-dd');
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+
+  // Local state for the egg counter to allow adjustments before syncing
+  const [localEggCount, setLocalEggCount] = useState(0);
 
   // Data Queries
   const birdsQuery = useMemoFirebase(() => {
@@ -115,6 +122,12 @@ export default function AdminDashboard() {
       setMissionInput(dotmSettings.monthlyMission);
     }
   }, [dotmSettings?.monthlyMission]);
+
+  useEffect(() => {
+    if (todayEggData) {
+      setLocalEggCount(todayEggData.count);
+    }
+  }, [todayEggData]);
 
   useEffect(() => {
     if (!isUserLoading && !isAdmin) {
@@ -170,18 +183,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleUpdateTodayEggs = async (change: number) => {
+  const handleSyncEggs = async () => {
     if (!firestore || !todayEggRef) return;
-    const currentCount = todayEggData?.count || 0;
-    if (currentCount + change < 0) return;
-
+    setIsSavingEggs(true);
     try {
       await setDoc(todayEggRef, {
-        count: increment(change),
+        count: localEggCount,
         updatedAt: new Date().toISOString()
       }, { merge: true });
+      toast({ 
+        title: "Eggs Synced!", 
+        description: `${localEggCount} eggs recorded for ${format(new Date(), 'MMM dd')}` 
+      });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Update Error", description: error.message });
+      toast({ variant: "destructive", title: "Sync Error", description: error.message });
+    } finally {
+      setIsSavingEggs(false);
     }
   };
 
@@ -247,28 +264,38 @@ export default function AdminDashboard() {
         {/* 1. PRIMARY TOOLS: EGG COUNTER & ADD RESIDENT */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2 bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
               <div className="text-center md:text-left space-y-1">
                 <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary flex items-center gap-2 justify-center md:justify-start">
                   <Egg className="h-3 w-3" /> TODAY&apos;S HARVEST
                 </h2>
-                <h3 className="text-6xl font-headline font-black text-primary tracking-tighter leading-none">{todayEggData?.count || 0}</h3>
+                <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
               </div>
-              <div className="flex gap-4 w-full md:w-auto">
+              
+              <div className="flex flex-col gap-4 w-full md:w-auto">
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))}
+                    variant="outline" 
+                    className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
+                  >
+                    <Minus className="h-7 w-7" />
+                  </Button>
+                  <Button 
+                    onClick={() => setLocalEggCount(localEggCount + 1)}
+                    className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+                  >
+                    <Plus className="h-7 w-7" />
+                  </Button>
+                </div>
                 <Button 
-                  onClick={() => handleUpdateTodayEggs(-1)}
-                  disabled={(todayEggData?.count || 0) <= 0}
-                  variant="outline" 
-                  className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
+                  onClick={handleSyncEggs}
+                  disabled={isSavingEggs || localEggCount === todayEggData?.count}
+                  className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2"
                 >
-                  <Minus className="h-7 w-7" />
-                </Button>
-                <Button 
-                  onClick={() => handleUpdateTodayEggs(1)}
-                  className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
-                >
-                  <Plus className="h-7 w-7" />
+                  {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  SAVE FOR TODAY
                 </Button>
               </div>
             </div>
@@ -292,7 +319,7 @@ export default function AdminDashboard() {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <History className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">PRODUCTION HISTORY</h2>
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">30-DAY HISTORY</h2>
           </div>
           <Card className="bg-card border-border rounded-3xl p-6 overflow-hidden shadow-xl">
             <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
