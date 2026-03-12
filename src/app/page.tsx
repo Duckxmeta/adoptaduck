@@ -162,13 +162,58 @@ export default function Home() {
           </div>
         )}
 
-        {/* Featured Resident Spotlight Section */}
-        <section className="bg-[#14F195]/5 border-b border-[#14F195]/20 py-12 relative overflow-hidden">
-          <div className="container mx-auto px-4">
-            {featuredDuck ? (
+        {/* Global Stats Section */}
+        <section className="bg-primary/5 border-b border-primary/20 py-12 relative overflow-hidden">
+          <div className="container mx-auto px-4 text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-1">
+              <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
+            </div>
+            <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
+              {birds?.length || 0}
+            </h2>
+            <p className="text-lg md:text-xl font-headline font-bold uppercase tracking-widest text-foreground">
+              Ducks in Our Care
+            </p>
+          </div>
+        </section>
+
+        {/* Hero Section (Virtual Sanctuary) */}
+        <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-black/60 z-10" />
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
+            style={{ backgroundImage: `url('${heroImageUrl}')` }}
+          />
+          
+          <div className="container mx-auto px-4 relative z-20 text-center">
+            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
+              <Sparkles className="h-3.5 w-3.5" />
+              Virtual Sanctuary
+            </div>
+            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
+              VIRTUAL <span className="text-primary">SANCTUARY</span>
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
+              A real-time window into our rescue mission. Track our residents, monitor their health, and see the daily impact of your support.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
+                <Link href="/flock">MEET THE RESIDENTS</Link>
+              </Button>
+              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
+                <Link href="/membership">SUPPORT THE MISSION</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Resident Spotlight Section (Positioned between Hero and Educational) */}
+        {featuredDuck && (
+          <section className="bg-[#14F195]/5 border-y border-[#14F195]/20 py-24 relative overflow-hidden">
+            <div className="container mx-auto px-4">
               <Card className="bg-card border-2 border-[#14F195]/30 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-1000">
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center">
-                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[400px] overflow-hidden">
+                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[450px] overflow-hidden">
                     <Image 
                       src={featuredDuck.primaryImageUrl} 
                       alt={featuredDuck.name} 
@@ -202,68 +247,11 @@ export default function Home() {
                   </div>
                 </div>
               </Card>
-            ) : (
-              <div className="text-center py-12 space-y-6">
-                <div className="flex items-center justify-center gap-2 text-[#14F195] font-black uppercase tracking-[0.4em] text-[10px]">
-                  <ShieldCheck className="h-4 w-4" /> VIRTUAL SANCTUARY MISSION
-                </div>
-                <h2 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-none">
-                  Welcome to <span className="text-[#14F195]">Decent Ducks</span>
-                </h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">
-                  A real-time window into our rescue mission. Join the flock to follow our residents' daily progress.
-                </p>
-                <Button asChild size="lg" className="bg-[#14F195] text-black font-black h-14 px-12 rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                  <Link href="/flock">BROWSE RESIDENTS</Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="bg-primary/5 border-b border-primary/20 py-20 relative overflow-hidden">
-          <div className="container mx-auto px-4 text-center space-y-4">
-            <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-2">
-              <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
             </div>
-            <h2 className="text-7xl md:text-9xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
-              {birds?.length || 0}
-            </h2>
-            <p className="text-xl md:text-2xl font-headline font-bold uppercase tracking-widest text-foreground">
-              Ducks in Our Care
-            </p>
-          </div>
-        </section>
+          </section>
+        )}
 
-        <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-black/60 z-10" />
-          <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
-            style={{ backgroundImage: `url('${heroImageUrl}')` }}
-          />
-          
-          <div className="container mx-auto px-4 relative z-20 text-center">
-            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
-              <Sparkles className="h-3.5 w-3.5" />
-              Virtual Sanctuary
-            </div>
-            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
-              VIRTUAL <span className="text-primary">SANCTUARY</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-              A real-time window into our rescue mission. Track our residents, monitor their health, and see the daily impact of your support.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <Link href="/flock">MEET THE RESIDENTS</Link>
-              </Button>
-              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
-                <Link href="/membership">SUPPORT THE MISSION</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
+        {/* Educational Section (Domestic vs. Wildlife) */}
         <section className="py-32 bg-card/30 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
