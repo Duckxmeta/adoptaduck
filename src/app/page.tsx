@@ -162,22 +162,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Global Stats Section */}
-        <section className="bg-primary/5 border-b border-primary/20 py-12 relative overflow-hidden">
-          <div className="container mx-auto px-4 text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px] mb-1">
-              <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
-            </div>
-            <h2 className="text-6xl md:text-8xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none">
-              {birds?.length || 0}
-            </h2>
-            <p className="text-lg md:text-xl font-headline font-bold uppercase tracking-widest text-foreground">
-              Ducks in Our Care
-            </p>
-          </div>
-        </section>
-
-        {/* Hero Section (Virtual Sanctuary) */}
+        {/* 1. Hero Section (Virtual Sanctuary) */}
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
@@ -207,7 +192,30 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Resident Spotlight Section (Positioned between Hero and Educational) */}
+        {/* 2. Total Ducks Counter (Live Stats Section) */}
+        <section className="bg-background border-b border-primary/10 pt-0 pb-16 relative overflow-hidden">
+          <div className="container mx-auto px-4 text-center">
+            <div className="max-w-xl mx-auto py-12 px-8 bg-card/50 rounded-[2.5rem] border border-primary/20 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" />
+              <div className="flex flex-col items-center justify-center space-y-2">
+                <div className="flex items-center justify-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[10px]">
+                  <ShieldCheck className="h-4 w-4" /> TOTAL RESIDENTS
+                </div>
+                <h2 className="text-7xl md:text-9xl font-headline font-black text-primary tracking-tighter glow-primary animate-subtle-pulse leading-none py-2">
+                  {birds?.length || 0}
+                </h2>
+                <p className="text-xl md:text-2xl font-headline font-black uppercase tracking-[0.2em] text-foreground">
+                  DUCKS IN CARE
+                </p>
+                <div className="pt-4">
+                  <Badge variant="outline" className="text-[8px] font-black uppercase border-primary/30 text-primary/80">Season 2026 Registry</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Featured Resident Spotlight Section (Duck of the Month) */}
         {featuredDuck && (
           <section className="bg-[#14F195]/5 border-y border-[#14F195]/20 py-24 relative overflow-hidden">
             <div className="container mx-auto px-4">
@@ -251,7 +259,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* Educational Section (Domestic vs. Wildlife) */}
+        {/* 4. Educational Section (Domestic vs. Wildlife) */}
         <section className="py-32 bg-card/30 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16 space-y-4">
