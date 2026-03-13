@@ -243,9 +243,9 @@ export default function Home() {
                     </p>
                     <div className="pt-4 flex flex-col sm:flex-row gap-4">
                       <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
-                        <a href={`/residents/${featuredDuck.id}`}>
+                        <Link href="/flock">
                           LEARN MORE <ArrowRight className="h-4 w-4" />
-                        </a>
+                        </Link>
                       </Button>
                       <Button asChild variant="outline" size="lg" className="border-primary text-primary font-black h-14 px-10 rounded-2xl hover:bg-primary/10">
                         <Link href="/flock">VISIT THE FLOCK</Link>

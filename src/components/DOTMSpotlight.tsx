@@ -113,9 +113,9 @@ export function DOTMSpotlight() {
               SUPPORT {bird.name.toUpperCase()}
             </Button>
             <Button asChild variant="outline" className="border-primary text-primary font-black h-14 px-8 rounded-2xl hover:bg-primary/10 flex-1 flex items-center justify-center gap-2">
-              <a href={`/residents/${bird.id}`}>
+              <Link href="/flock">
                 LEARN MORE <ArrowRight className="h-4 w-4" />
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
