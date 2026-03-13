@@ -33,7 +33,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   Users,
-  BookOpen
+  BookOpen,
+  Zap
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -159,7 +160,7 @@ function MembershipContent() {
             <DOTMSpotlight />
           </section>
 
-          {/* NEW: Tiered Perks Comparison Section */}
+          {/* Tiered Perks Comparison Section */}
           <section className="py-24 container mx-auto px-4">
             <div className="max-w-6xl mx-auto space-y-16">
               <div className="text-center space-y-4">
