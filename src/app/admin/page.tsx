@@ -10,6 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { 
   Plus, 
   Minus,
@@ -33,7 +40,8 @@ import {
   TrendingUp,
   Award,
   Save,
-  CheckCircle2
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -45,18 +53,19 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isAfter, subMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
 const PRESET_VIBES = [
+  { label: 'Chill', emoji: '🌿' },
+  { label: 'Energetic', emoji: '⚡' },
+  { label: 'Hungry', emoji: '🥨' },
+  { label: 'Sleepy', emoji: '💤' },
   { label: 'Vigilant', emoji: '🛡️' },
   { label: 'Vocal', emoji: '📢' },
-  { label: 'Zoomies', emoji: '💨' },
-  { label: 'Napping', emoji: '💤' },
-  { label: 'Snacking', emoji: '🥗' },
 ];
 
 const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
@@ -75,6 +84,9 @@ export default function AdminDashboard() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
+
+  // Vibe Selection State
+  const [vibeBird, setVibeBird] = useState<Resident | null>(null);
 
   const [missionInput, setMissionInput] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -142,6 +154,7 @@ export default function AdminDashboard() {
       statusLastUpdated: new Date().toISOString()
     });
     toast({ title: "Status Updated", description: `Vibe set to: ${status}` });
+    setVibeBird(null); // Auto-close modal
   };
 
   const handleUpdateDOTM = async (birdId: string, mission: string) => {
@@ -338,33 +351,53 @@ export default function AdminDashboard() {
           </Card>
         </section>
 
-        {/* 3. VIBE CHECK */}
+        {/* 3. VIBE CHECK (Refactored for High-Performance Mobile) */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Zap className="h-4 w-4 text-primary" />
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE CHECK</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {foundingFour.map((bird) => (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl p-4 space-y-4 shadow-xl">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
-                  <p className="text-[8px] font-black text-primary uppercase tracking-widest">{bird.liveStatus || 'Chill'}</p>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {PRESET_VIBES.map((vibe) => (
-                    <Button 
-                      key={vibe.label} variant="outline" 
-                      className="h-10 rounded-xl border-border flex flex-col items-center justify-center p-0 hover:bg-primary hover:text-primary-foreground hover:border-primary group"
-                      onClick={() => handleUpdateStatus(bird.id, `${vibe.emoji} ${vibe.label}`)}
-                    >
-                      <span className="text-lg group-hover:scale-110 transition-transform">{vibe.emoji}</span>
-                      <span className="text-[6px] font-black uppercase tracking-tighter">{vibe.label}</span>
-                    </Button>
-                  ))}
-                </div>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {foundingFour.map((bird) => {
+              const isRecentlyUpdated = bird.statusLastUpdated && 
+                isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
+
+              return (
+                <Card 
+                  key={bird.id} 
+                  onClick={() => setVibeBird(bird)}
+                  className={cn(
+                    "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
+                    isRecentlyUpdated && "border-secondary/40 bg-secondary/5"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
+                      {bird.primaryImageUrl ? (
+                        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Not checked today'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 border-border",
+                      isRecentlyUpdated ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
+                    )}>
+                      {bird.liveStatus || 'CHILL'}
+                    </Badge>
+                    {isRecentlyUpdated && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
@@ -527,6 +560,49 @@ export default function AdminDashboard() {
           </Card>
         </section>
       </main>
+
+      {/* VIBE SELECTION MODAL */}
+      <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
+        <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden">
+          <DialogHeader className="p-8 bg-primary/5 border-b border-border">
+            <div className="flex items-center gap-4">
+              <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-primary shadow-lg">
+                {vibeBird?.primaryImageUrl && <Image src={vibeBird.primaryImageUrl} alt={vibeBird.name} fill className="object-cover" />}
+              </div>
+              <div>
+                <DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">
+                  SET <span className="text-primary">VIBE</span>
+                </DialogTitle>
+                <DialogDescription className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                  Updating {vibeBird?.name}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="p-6 grid grid-cols-2 gap-3">
+            {PRESET_VIBES.map((vibe) => (
+              <Button
+                key={vibe.label}
+                variant="outline"
+                className="h-[80px] rounded-[1.5rem] border-border flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 group"
+                onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}
+              >
+                <span className="text-3xl group-hover:scale-110 transition-transform">{vibe.emoji}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{vibe.label}</span>
+              </Button>
+            ))}
+          </div>
+          <div className="px-6 pb-8">
+            <Button 
+              variant="ghost" 
+              onClick={() => setVibeBird(null)} 
+              className="w-full text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
       <HealthLogDialog 
