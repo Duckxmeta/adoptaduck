@@ -150,13 +150,15 @@ export default function AdminDashboard() {
   const handleUpdateStatus = (birdId: string, status: string) => {
     if (!firestore) return;
     const birdRef = doc(firestore, 'birds', birdId);
+    
+    // If status is empty (Reset), we clear the vibe and reset the update timestamp
     updateDocumentNonBlocking(birdRef, {
-      liveStatus: status,
-      statusLastUpdated: new Date().toISOString()
+      liveStatus: status || "",
+      statusLastUpdated: status ? new Date().toISOString() : null
     });
 
     // If broody, auto-add a care log entry
-    if (status.includes('BROODY')) {
+    if (status && status.includes('BROODY')) {
       addDoc(collection(firestore, 'birds', birdId, 'healthLogs'), {
         birdId,
         logDate: new Date().toISOString(),
@@ -377,6 +379,7 @@ export default function AdminDashboard() {
                 isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
               
               const isBroody = bird.liveStatus?.includes('BROODY');
+              const hasVibe = !!bird.liveStatus;
 
               return (
                 <Card 
@@ -384,7 +387,7 @@ export default function AdminDashboard() {
                   onClick={() => setVibeBird(bird)}
                   className={cn(
                     "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
-                    isRecentlyUpdated && "border-secondary/40 bg-secondary/5",
+                    (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
                     isBroody && "border-primary/30"
                   )}
                 >
@@ -409,11 +412,11 @@ export default function AdminDashboard() {
                   <div className="text-right flex flex-col items-end gap-1">
                     <Badge variant="outline" className={cn(
                       "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 border-border",
-                      isRecentlyUpdated ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
+                      (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
                     )}>
-                      {bird.liveStatus || 'CHILL'}
+                      {bird.liveStatus || 'DAILY ROUTINE'}
                     </Badge>
-                    {isRecentlyUpdated && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                    {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
                   </div>
                 </Card>
               );
@@ -632,7 +635,7 @@ export default function AdminDashboard() {
                 className="w-full h-12 rounded-xl border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center justify-center gap-2"
                 onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}
              >
-                <RotateCcw className="h-3.5 w-3.5" /> Clear Vibe
+                <RotateCcw className="h-3.5 w-3.5" /> Reset to Daily Routine
              </Button>
           </div>
 
