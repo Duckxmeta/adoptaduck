@@ -50,6 +50,7 @@ import {
   Activity
 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, getDocs, where, writeBatch, limit } from 'firebase/firestore';
 import { Resident, DailyStatus, DuckOfTheMonthSettings, EggHistoryEntry } from '@/lib/types';
@@ -101,7 +102,7 @@ export default function AdminDashboard() {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   
   const todayDate = format(new Date(), 'yyyy-MM-dd');
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+  const isAdmin = user && (ADMIN_EMAILS.includes(user.email || '') || user.uid === 'cgQheQMuxqZd4N825PppPl72GtE2');
 
   const [localEggCount, setLocalEggCount] = useState(0);
 
@@ -150,7 +151,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isUserLoading && !isAdmin) {
-      router.push('/admin/login');
+      router.push('/login');
     }
   }, [user, isUserLoading, router, isAdmin]);
 
@@ -640,7 +641,7 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest mt-2">
-                      <a href={`/residents/${bird.id}`}>VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></a>
+                      <Link href={`/residents/${bird.id}`}>VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></Link>
                     </Button>
                   )}
                 </div>
