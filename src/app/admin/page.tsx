@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +46,8 @@ import {
   Eye,
   EyeOff,
   User,
-  ArrowLeft
+  ArrowLeft,
+  Activity
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -114,19 +116,19 @@ export default function AdminDashboard() {
   }, [firestore]);
 
   const todayEggRef = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
+    if (!firestore) return null;
     return doc(firestore, 'egg_history', todayDate);
-  }, [firestore, isAdmin, todayDate]);
+  }, [firestore, todayDate]);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
+    if (!firestore) return null;
     return doc(firestore, 'daily_status', 'today');
-  }, [firestore, isAdmin]);
+  }, [firestore]);
 
   const dotmRef = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
+    if (!firestore) return null;
     return doc(firestore, 'settings', 'duck_of_the_month');
-  }, [firestore, isAdmin]);
+  }, [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: eggHistory } = useCollection<EggHistoryEntry>(historyQuery);
@@ -153,7 +155,7 @@ export default function AdminDashboard() {
   }, [user, isUserLoading, router, isAdmin]);
 
   const handleUpdateStatus = (birdId: string, status: string) => {
-    if (!firestore) return;
+    if (!firestore || isPreviewMode) return;
     const birdRef = doc(firestore, 'birds', birdId);
     
     updateDocumentNonBlocking(birdRef, {
@@ -177,7 +179,7 @@ export default function AdminDashboard() {
   };
 
   const handleUpdateDOTM = async (birdId: string, mission: string) => {
-    if (!firestore) return;
+    if (!firestore || isPreviewMode) return;
     try {
       await setDoc(doc(firestore, 'settings', 'duck_of_the_month'), {
         birdId,
@@ -191,7 +193,7 @@ export default function AdminDashboard() {
   };
 
   const handlePublishDOTM = async () => {
-    if (!firestore || !dotmSettings?.birdId) return;
+    if (!firestore || !dotmSettings?.birdId || isPreviewMode) return;
     setIsPublishing(true);
     try {
       const batch = writeBatch(firestore);
@@ -215,7 +217,7 @@ export default function AdminDashboard() {
   };
 
   const handleSyncEggs = async () => {
-    if (!firestore || !todayEggRef) return;
+    if (!firestore || !todayEggRef || isPreviewMode) return;
     setIsSavingEggs(true);
     try {
       await setDoc(todayEggRef, {
@@ -234,7 +236,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveResident = (data: Partial<Resident>) => {
-    if (!firestore) return;
+    if (!firestore || isPreviewMode) return;
     if (editingResident) {
       updateDocumentNonBlocking(doc(firestore, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() });
       toast({ title: "Resident Updated" });
@@ -251,18 +253,25 @@ export default function AdminDashboard() {
   };
 
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
-    if (!dailyStatusRef) return;
+    if (!dailyStatusRef || isPreviewMode) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
     setDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
   const resetDailyTasks = () => {
-    if (!dailyStatusRef) return;
+    if (!dailyStatusRef || isPreviewMode) return;
     setDocumentNonBlocking(dailyStatusRef, {
       morningFeeding: false, freshWater: false, eggCounter: false, healthCheck: false, nightlyPenUp: false,
       lastReset: new Date().toISOString()
     }, { merge: true });
     toast({ title: "Checklist Reset" });
+  };
+
+  const calculateProgress = () => {
+    if (!dailyStatus) return 0;
+    const tasks = ['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'];
+    const completed = tasks.filter(t => !!(dailyStatus as any)[t]).length;
+    return (completed / tasks.length) * 100;
   };
 
   if (isUserLoading || !isAdmin) {
@@ -274,6 +283,7 @@ export default function AdminDashboard() {
   }
 
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
+  const progress = calculateProgress();
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
@@ -299,9 +309,11 @@ export default function AdminDashboard() {
            <div className="space-y-1">
               <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
                 <LayoutDashboard className="h-7 w-7 text-primary" /> 
-                MANAGER <span className="text-primary">PORTAL</span>
+                {isPreviewMode ? "SANCTUARY" : "MANAGER"} <span className="text-primary">{isPreviewMode ? "PULSE" : "PORTAL"}</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">SANCTUARY OPERATIONS</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">
+                {isPreviewMode ? "LIVE SANCTUARY FEED" : "SANCTUARY OPERATIONS"}
+              </p>
            </div>
 
            <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
@@ -314,9 +326,11 @@ export default function AdminDashboard() {
                 </div>
                 <div className="space-y-0.5">
                   <Label htmlFor="preview-mode" className="text-[10px] font-black uppercase tracking-widest block cursor-pointer">
-                    {isPreviewMode ? "Member Preview Active" : "Audit Member View"}
+                    {isPreviewMode ? "Member View" : "Manager Tools"}
                   </Label>
-                  <p className="text-[8px] font-bold text-muted-foreground uppercase">Hides admin tools</p>
+                  <p className="text-[8px] font-bold text-muted-foreground uppercase">
+                    {isPreviewMode ? "Auditing User Experience" : "Managing Operations"}
+                  </p>
                 </div>
               </div>
               <Switch 
@@ -325,239 +339,271 @@ export default function AdminDashboard() {
                 onCheckedChange={(val) => {
                   setIsPreviewMode(val);
                   toast({
-                    title: val ? "Member Preview Active" : "Admin Controls Restored",
-                    description: val ? "Management tools are temporarily hidden." : "Full sanctuary access enabled.",
+                    title: val ? "Member Preview Active" : "Manager Tools Restored",
+                    description: val ? "Management actions are temporarily disabled." : "Full control enabled.",
                   });
                 }}
               />
            </Card>
         </div>
 
-        {!isPreviewMode ? (
-          <>
-            {/* 1. EGG COUNTER */}
-            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-3">
-                <Egg className="h-4 w-4 text-primary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2>
+        {/* 1. EGG COUNTER */}
+        <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Egg className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2>
+            </div>
+            {isPreviewMode && (
+              <div className="flex items-center gap-2 text-[#14F195]">
+                <Activity className="h-3 w-3 animate-pulse" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Live Harvest Feed</span>
               </div>
-              <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                  <div className="text-center md:text-left space-y-1">
-                    <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">
-                      TODAY'S TOTAL
-                    </h2>
-                    <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
-                  </div>
-                  
-                  <div className="flex flex-col gap-4 w-full md:w-auto">
-                    <div className="flex gap-4">
-                      <Button 
-                        onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))}
-                        variant="outline" 
-                        className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
-                      >
-                        <Minus className="h-7 w-7" />
-                      </Button>
-                      <Button 
-                        onClick={() => setLocalEggCount(localEggCount + 1)}
-                        className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
-                      >
-                        <Plus className="h-7 w-7" />
-                      </Button>
-                    </div>
+            )}
+          </div>
+          <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="text-center md:text-left space-y-1">
+                <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">
+                  TODAY'S TOTAL
+                </h2>
+                <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
+                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+              </div>
+              
+              {!isPreviewMode && (
+                <div className="flex flex-col gap-4 w-full md:w-auto">
+                  <div className="flex gap-4">
                     <Button 
-                      onClick={handleSyncEggs}
-                      disabled={isSavingEggs || localEggCount === todayEggData?.count}
-                      className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2"
+                      onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))}
+                      variant="outline" 
+                      className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
                     >
-                      {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                      SAVE FOR TODAY
+                      <Minus className="h-7 w-7" />
+                    </Button>
+                    <Button 
+                      onClick={() => setLocalEggCount(localEggCount + 1)}
+                      className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+                    >
+                      <Plus className="h-7 w-7" />
                     </Button>
                   </div>
-                </div>
-              </Card>
-            </section>
-
-            {/* 2. DAILY CHECK LIST */}
-            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-75">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="h-4 w-4 text-primary" />
-                  <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
-                </div>
-                <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
-                  <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Day
-                </Button>
-              </div>
-              <Card className="bg-card border-border rounded-2xl p-6 shadow-xl">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[
-                    { label: "Feeding", icon: "🌾", key: "morningFeeding" },
-                    { label: "Water", icon: "💧", key: "freshWater" },
-                    { label: "Eggs", icon: "🥚", key: "eggCounter" },
-                    { label: "Health", icon: "🩺", key: "healthCheck" },
-                    { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
-                  ].map((task) => (
-                    <div key={task.key} className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-2xl border border-border">
-                      <span className="text-xl">{task.icon}</span>
-                      <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                      <Switch 
-                        checked={dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false}
-                        onCheckedChange={() => toggleDailyTask(task.key as any)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </section>
-
-            {/* 3. VIBE CHECK */}
-            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
-              <div className="flex items-center gap-3">
-                <Zap className="h-4 w-4 text-primary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE CHECK</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {foundingFour.map((bird) => {
-                  const isRecentlyUpdated = bird.statusLastUpdated && 
-                    isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
-                  
-                  const isBroody = bird.liveStatus?.includes('BROODY');
-                  const hasVibe = !!bird.liveStatus;
-
-                  return (
-                    <Card 
-                      key={bird.id} 
-                      onClick={() => setVibeBird(bird)}
-                      className={cn(
-                        "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
-                        (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
-                        isBroody && "border-primary/30"
-                      )}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
-                          {bird.primaryImageUrl ? (
-                            <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
-                            {isBroody && <span className="text-lg" title="Broody Hen">🪺</span>}
-                          </div>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                            {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Not checked today'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right flex flex-col items-end gap-1 shrink-0">
-                        <Badge variant="outline" className={cn(
-                          "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
-                          (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
-                        )}>
-                          {bird.liveStatus || 'DAILY ROUTINE'}
-                        </Badge>
-                        <div className="h-3 flex items-center justify-end w-full">
-                          {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* 4. SHOWCASE DIRECTORY */}
-            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
-              <div className="flex items-center gap-3">
-                <Trophy className="h-4 w-4 text-primary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">HOMEPAGE SPOTLIGHT</h2>
-              </div>
-              <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Resident</Label>
-                    <Select 
-                      value={dotmSettings?.birdId || ""} 
-                      onValueChange={(val) => handleUpdateDOTM(val, dotmSettings?.monthlyMission || "")}
-                    >
-                      <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                        <SelectValue placeholder="Select bird..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {birds?.map(bird => (
-                          <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Mission</Label>
-                    <Input 
-                      placeholder="e.g. Treat Fund goal..."
-                      value={missionInput}
-                      onChange={(e) => setMissionInput(e.target.value)}
-                      onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
-                      className="h-11 bg-background border-border rounded-xl text-xs"
-                    />
-                  </div>
                   <Button 
-                    className="bg-primary text-primary-foreground font-black h-11 rounded-xl shadow-lg flex items-center justify-center gap-2"
-                    disabled={!dotmSettings?.birdId || isPublishing}
-                    onClick={handlePublishDOTM}
+                    onClick={handleSyncEggs}
+                    disabled={isSavingEggs || localEggCount === todayEggData?.count}
+                    className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2"
                   >
-                    {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    PUBLISH SPOTLIGHT
+                    {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    SAVE FOR TODAY
                   </Button>
                 </div>
-              </Card>
-            </section>
+              )}
+            </div>
+          </Card>
+        </section>
 
-            {/* 5. ADD NEW DUCK */}
-            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-200">
-              <div className="flex items-center gap-3">
-                <Bird className="h-4 w-4 text-primary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">FLOCK MANAGEMENT</h2>
+        {/* 2. DAILY CHECK LIST */}
+        <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-75">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
+            </div>
+            {!isPreviewMode ? (
+              <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Day
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 text-primary">
+                <ShieldCheck className="h-3 w-3" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Verified Care Status</span>
               </div>
-              <Card className="bg-primary/5 border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Plus className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-headline font-black uppercase tracking-tight text-sm">New Resident</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Register Rescue or Lineage</p>
-                  </div>
+            )}
+          </div>
+          <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
+            {isPreviewMode && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Daily Sanctuary Health</span>
+                  <span className="text-2xl font-headline font-black text-primary leading-none">{Math.round(progress)}%</span>
                 </div>
-                <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="w-full md:w-auto bg-primary text-primary-foreground font-black rounded-xl h-12 px-12 shadow-lg">
-                  ADD BIRD
-                </Button>
-              </Card>
-            </section>
-          </>
-        ) : (
-          /* PREVIEW MODE HEADER */
-          <section className="bg-primary/5 border border-primary/20 rounded-3xl p-8 text-center space-y-4 animate-in zoom-in-95 duration-500">
-            <div className="flex justify-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                <Eye className="h-8 w-8 text-primary" />
+                <Progress value={progress} className="h-3 bg-muted" />
               </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                { label: "Feeding", icon: "🌾", key: "morningFeeding" },
+                { label: "Water", icon: "💧", key: "freshWater" },
+                { label: "Eggs", icon: "🥚", key: "eggCounter" },
+                { label: "Health", icon: "🩺", key: "healthCheck" },
+                { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
+              ].map((task) => {
+                const isCompleted = dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false;
+                return (
+                  <div key={task.key} className={cn(
+                    "flex flex-col items-center gap-3 p-4 rounded-2xl border transition-colors",
+                    isCompleted ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-background/50 border-border text-muted-foreground"
+                  )}>
+                    <span className="text-xl">{task.icon}</span>
+                    <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
+                    {!isPreviewMode ? (
+                      <Switch 
+                        checked={isCompleted}
+                        onCheckedChange={() => toggleDailyTask(task.key as any)}
+                      />
+                    ) : (
+                      <div className="h-6 flex items-center justify-center">
+                        {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5 opacity-20" />}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Member Experience Preview</h2>
-              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-                All administrative tools are hidden. You are now viewing the sanctuary records as they appear to logged-in members.
-              </p>
+          </Card>
+        </section>
+
+        {/* 3. VIBE CHECK */}
+        <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Zap className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2>
             </div>
+            {isPreviewMode && (
+              <div className="flex items-center gap-2 text-secondary">
+                <Activity className="h-3 w-3 animate-pulse" />
+                <span className="text-[8px] font-black uppercase tracking-widest">Real-time Broadcast</span>
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {foundingFour.map((bird) => {
+              const isRecentlyUpdated = bird.statusLastUpdated && 
+                isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
+              
+              const isBroody = bird.liveStatus?.includes('BROODY');
+              const hasVibe = !!bird.liveStatus;
+
+              return (
+                <Card 
+                  key={bird.id} 
+                  onClick={() => !isPreviewMode && setVibeBird(bird)}
+                  className={cn(
+                    "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl transition-all group",
+                    !isPreviewMode && "cursor-pointer hover:border-primary/50 active:scale-95",
+                    (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
+                    isBroody && "border-primary/30"
+                  )}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
+                      {bird.primaryImageUrl ? (
+                        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
+                        {isBroody && <span className="text-lg" title="Broody Hen">🪺</span>}
+                      </div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                        {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
+                      (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
+                    )}>
+                      {bird.liveStatus || 'DAILY ROUTINE'}
+                    </Badge>
+                    <div className="h-3 flex items-center justify-end w-full">
+                      {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 4. SHOWCASE DIRECTORY (Admin Only) */}
+        {!isPreviewMode && (
+          <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">HOMEPAGE SPOTLIGHT</h2>
+            </div>
+            <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Resident</Label>
+                  <Select 
+                    value={dotmSettings?.birdId || ""} 
+                    onValueChange={(val) => handleUpdateDOTM(val, dotmSettings?.monthlyMission || "")}
+                  >
+                    <SelectTrigger className="bg-background border-border h-11 rounded-xl">
+                      <SelectValue placeholder="Select bird..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {birds?.map(bird => (
+                        <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Mission</Label>
+                  <Input 
+                    placeholder="e.g. Treat Fund goal..."
+                    value={missionInput}
+                    onChange={(e) => setMissionInput(e.target.value)}
+                    onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
+                    className="h-11 bg-background border-border rounded-xl text-xs"
+                  />
+                </div>
+                <Button 
+                  className="bg-primary text-primary-foreground font-black h-11 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                  disabled={!dotmSettings?.birdId || isPublishing}
+                  onClick={handlePublishDOTM}
+                >
+                  {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  PUBLISH SPOTLIGHT
+                </Button>
+              </div>
+            </Card>
           </section>
         )}
 
-        {/* 6. OVERALL FLOCK (Visible in both modes) */}
+        {/* 5. ADD NEW DUCK (Admin Only) */}
+        {!isPreviewMode && (
+          <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-200">
+            <div className="flex items-center gap-3">
+              <Bird className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">FLOCK MANAGEMENT</h2>
+            </div>
+            <Card className="bg-primary/5 border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl group">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-headline font-black uppercase tracking-tight text-sm">New Resident</h3>
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Register Rescue or Lineage</p>
+                </div>
+              </div>
+              <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="w-full md:w-auto bg-primary text-primary-foreground font-black rounded-xl h-12 px-12 shadow-lg">
+                ADD BIRD
+              </Button>
+            </Card>
+          </section>
+        )}
+
+        {/* 6. OVERALL FLOCK */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Bird className="h-4 w-4 text-primary" />
@@ -612,8 +658,8 @@ export default function AdminDashboard() {
           </div>
         </section>
 
+        {/* 7. 30-DAY EGG HISTORY (Admin Only) */}
         {!isPreviewMode && (
-          /* 7. 30-DAY EGG HISTORY (Admin Only) */
           <section className="space-y-4 animate-in fade-in duration-500">
             <div className="flex items-center gap-3">
               <History className="h-4 w-4 text-primary" />
@@ -646,28 +692,30 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        {/* 8. SUPPORTER ASSETS (Visible in both modes) */}
-        <section className="pt-8 border-t border-border">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SUPPORTER ASSETS</h2>
-          </div>
-          <Card className="bg-card border-border rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
-            <div className="space-y-2 max-w-md">
-              <h3 className="text-xl font-headline font-black uppercase tracking-tight">Blank Certificate Template</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Export high-resolution "2026 Season" certificates with blank fields for physical events or manual personalization.
-              </p>
+        {/* 8. SUPPORTER ASSETS (Admin Only) */}
+        {!isPreviewMode && (
+          <section className="pt-8 border-t border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SUPPORTER ASSETS</h2>
             </div>
-            <Button onClick={() => window.print()} className="bg-primary text-primary-foreground font-black rounded-xl h-12 px-8 shadow-lg shrink-0">
-              <Download className="h-4 w-4 mr-2" /> EXPORT BLANK TEMPLATE
-            </Button>
-          </Card>
-        </section>
+            <Card className="bg-card border-border rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
+              <div className="space-y-2 max-w-md">
+                <h3 className="text-xl font-headline font-black uppercase tracking-tight">Blank Certificate Template</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Export high-resolution "2026 Season" certificates with blank fields for physical events or manual personalization.
+                </p>
+              </div>
+              <Button onClick={() => window.print()} className="bg-primary text-primary-foreground font-black rounded-xl h-12 px-8 shadow-lg shrink-0">
+                <Download className="h-4 w-4 mr-2" /> EXPORT BLANK TEMPLATE
+              </Button>
+            </Card>
+          </section>
+        )}
       </main>
 
       {/* VIBE SELECTION MODAL */}
-      <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
+      <Dialog open={!!vibeBird && !isPreviewMode} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border">
             <div className="flex items-center gap-4">
