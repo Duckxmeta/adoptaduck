@@ -41,7 +41,11 @@ import {
   Award,
   Save,
   CheckCircle2,
-  Clock
+  Clock,
+  Eye,
+  EyeOff,
+  User,
+  ArrowLeft
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -77,6 +81,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   
@@ -151,13 +156,11 @@ export default function AdminDashboard() {
     if (!firestore) return;
     const birdRef = doc(firestore, 'birds', birdId);
     
-    // If status is empty (Reset), we clear the vibe and reset the update timestamp
     updateDocumentNonBlocking(birdRef, {
       liveStatus: status || "",
       statusLastUpdated: status ? new Date().toISOString() : null
     });
 
-    // If broody, auto-add a care log entry
     if (status && status.includes('BROODY')) {
       addDoc(collection(firestore, 'birds', birdId, 'healthLogs'), {
         birdId,
@@ -170,7 +173,7 @@ export default function AdminDashboard() {
       title: status ? "Status Updated" : "Status Cleared", 
       description: status ? `Vibe set to: ${status}` : "Resident status has been reset."
     });
-    setVibeBird(null); // Auto-close modal
+    setVibeBird(null);
   };
 
   const handleUpdateDOTM = async (birdId: string, mission: string) => {
@@ -277,225 +280,289 @@ export default function AdminDashboard() {
       <Navbar />
       <BlankCertificateTemplate logoUrl={logoUrl} />
 
+      {/* Floating Exit Preview Button */}
+      {isPreviewMode && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] animate-in slide-in-from-bottom-4">
+          <Button 
+            onClick={() => setIsPreviewMode(false)}
+            className="bg-primary text-primary-foreground font-black px-8 h-14 rounded-2xl shadow-2xl shadow-primary/20 flex items-center gap-3 border-2 border-primary-foreground/20 hover:scale-105 transition-transform"
+          >
+            <EyeOff className="h-5 w-5" />
+            EXIT MEMBER PREVIEW
+          </Button>
+        </div>
+      )}
+
       <main className="container mx-auto p-4 space-y-12 mt-4 no-print">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        {/* DASHBOARD HEADER & PREVIEW TOGGLE */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
            <div className="space-y-1">
               <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
                 <LayoutDashboard className="h-7 w-7 text-primary" /> 
                 MANAGER <span className="text-primary">PORTAL</span>
               </h1>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">DAILY OPERATIONS</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">SANCTUARY OPERATIONS</p>
            </div>
+
+           <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "p-2 rounded-xl transition-colors",
+                  isPreviewMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  {isPreviewMode ? <Eye className="h-5 w-5" /> : <Settings className="h-5 w-5" />}
+                </div>
+                <div className="space-y-0.5">
+                  <Label htmlFor="preview-mode" className="text-[10px] font-black uppercase tracking-widest block cursor-pointer">
+                    {isPreviewMode ? "Member Preview Active" : "Audit Member View"}
+                  </Label>
+                  <p className="text-[8px] font-bold text-muted-foreground uppercase">Hides admin tools</p>
+                </div>
+              </div>
+              <Switch 
+                id="preview-mode"
+                checked={isPreviewMode}
+                onCheckedChange={(val) => {
+                  setIsPreviewMode(val);
+                  toast({
+                    title: val ? "Member Preview Active" : "Admin Controls Restored",
+                    description: val ? "Management tools are temporarily hidden." : "Full sanctuary access enabled.",
+                  });
+                }}
+              />
+           </Card>
         </div>
 
-        {/* 1. EGG COUNTER */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Egg className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2>
-          </div>
-          <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="text-center md:text-left space-y-1">
-                <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">
-                  TODAY'S TOTAL
-                </h2>
-                <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
-                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+        {!isPreviewMode ? (
+          <>
+            {/* 1. EGG COUNTER */}
+            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-3">
+                <Egg className="h-4 w-4 text-primary" />
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2>
               </div>
-              
-              <div className="flex flex-col gap-4 w-full md:w-auto">
-                <div className="flex gap-4">
-                  <Button 
-                    onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))}
-                    variant="outline" 
-                    className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
-                  >
-                    <Minus className="h-7 w-7" />
-                  </Button>
-                  <Button 
-                    onClick={() => setLocalEggCount(localEggCount + 1)}
-                    className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
-                  >
-                    <Plus className="h-7 w-7" />
-                  </Button>
+              <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div className="text-center md:text-left space-y-1">
+                    <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">
+                      TODAY'S TOTAL
+                    </h2>
+                    <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-4 w-full md:w-auto">
+                    <div className="flex gap-4">
+                      <Button 
+                        onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))}
+                        variant="outline" 
+                        className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-all"
+                      >
+                        <Minus className="h-7 w-7" />
+                      </Button>
+                      <Button 
+                        onClick={() => setLocalEggCount(localEggCount + 1)}
+                        className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+                      >
+                        <Plus className="h-7 w-7" />
+                      </Button>
+                    </div>
+                    <Button 
+                      onClick={handleSyncEggs}
+                      disabled={isSavingEggs || localEggCount === todayEggData?.count}
+                      className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2"
+                    >
+                      {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      SAVE FOR TODAY
+                    </Button>
+                  </div>
                 </div>
-                <Button 
-                  onClick={handleSyncEggs}
-                  disabled={isSavingEggs || localEggCount === todayEggData?.count}
-                  className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2"
-                >
-                  {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  SAVE FOR TODAY
+              </Card>
+            </section>
+
+            {/* 2. DAILY CHECK LIST */}
+            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-75">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardList className="h-4 w-4 text-primary" />
+                  <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
+                </div>
+                <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+                  <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Day
                 </Button>
               </div>
-            </div>
-          </Card>
-        </section>
-
-        {/* 2. DAILY CHECK LIST */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
-            </div>
-            <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
-              <RotateCcw className="h-3 w-3 mr-1" /> Reset Day
-            </Button>
-          </div>
-          <Card className="bg-card border-border rounded-2xl p-6 shadow-xl">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {[
-                { label: "Feeding", icon: "🌾", key: "morningFeeding" },
-                { label: "Water", icon: "💧", key: "freshWater" },
-                { label: "Eggs", icon: "🥚", key: "eggCounter" },
-                { label: "Health", icon: "🩺", key: "healthCheck" },
-                { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
-              ].map((task) => (
-                <div key={task.key} className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-2xl border border-border">
-                  <span className="text-xl">{task.icon}</span>
-                  <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                  <Switch 
-                    checked={dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false}
-                    onCheckedChange={() => toggleDailyTask(task.key as any)}
-                  />
+              <Card className="bg-card border-border rounded-2xl p-6 shadow-xl">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { label: "Feeding", icon: "🌾", key: "morningFeeding" },
+                    { label: "Water", icon: "💧", key: "freshWater" },
+                    { label: "Eggs", icon: "🥚", key: "eggCounter" },
+                    { label: "Health", icon: "🩺", key: "healthCheck" },
+                    { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
+                  ].map((task) => (
+                    <div key={task.key} className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-2xl border border-border">
+                      <span className="text-xl">{task.icon}</span>
+                      <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
+                      <Switch 
+                        checked={dailyStatus ? !!dailyStatus[task.key as keyof DailyStatus] : false}
+                        onCheckedChange={() => toggleDailyTask(task.key as any)}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </Card>
-        </section>
+              </Card>
+            </section>
 
-        {/* 3. VIBE CHECK (Refactored for High-Performance Mobile) */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Zap className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE CHECK</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {foundingFour.map((bird) => {
-              const isRecentlyUpdated = bird.statusLastUpdated && 
-                isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
-              
-              const isBroody = bird.liveStatus?.includes('BROODY');
-              const hasVibe = !!bird.liveStatus;
+            {/* 3. VIBE CHECK */}
+            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
+              <div className="flex items-center gap-3">
+                <Zap className="h-4 w-4 text-primary" />
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE CHECK</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {foundingFour.map((bird) => {
+                  const isRecentlyUpdated = bird.statusLastUpdated && 
+                    isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
+                  
+                  const isBroody = bird.liveStatus?.includes('BROODY');
+                  const hasVibe = !!bird.liveStatus;
 
-              return (
-                <Card 
-                  key={bird.id} 
-                  onClick={() => setVibeBird(bird)}
-                  className={cn(
-                    "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
-                    (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
-                    isBroody && "border-primary/30"
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
-                      {bird.primaryImageUrl ? (
-                        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>
+                  return (
+                    <Card 
+                      key={bird.id} 
+                      onClick={() => setVibeBird(bird)}
+                      className={cn(
+                        "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
+                        (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
+                        isBroody && "border-primary/30"
                       )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
-                        {isBroody && <span className="text-lg" title="Broody Hen">🪺</span>}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
+                          {bird.primaryImageUrl ? (
+                            <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
+                            {isBroody && <span className="text-lg" title="Broody Hen">🪺</span>}
+                          </div>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Not checked today'}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                        {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Not checked today'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-1 shrink-0">
-                    <Badge variant="outline" className={cn(
-                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
-                      (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
-                    )}>
-                      {bird.liveStatus || 'DAILY ROUTINE'}
-                    </Badge>
-                    <div className="h-3 flex items-center justify-end w-full">
-                      {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
+                      <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                        <Badge variant="outline" className={cn(
+                          "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
+                          (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
+                        )}>
+                          {bird.liveStatus || 'DAILY ROUTINE'}
+                        </Badge>
+                        <div className="h-3 flex items-center justify-end w-full">
+                          {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
 
-        {/* 4. SHOWCASE DIRECTORY */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Trophy className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">HOMEPAGE SPOTLIGHT</h2>
-          </div>
-          <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Resident</Label>
-                <Select 
-                  value={dotmSettings?.birdId || ""} 
-                  onValueChange={(val) => handleUpdateDOTM(val, dotmSettings?.monthlyMission || "")}
-                >
-                  <SelectTrigger className="bg-background border-border h-11 rounded-xl">
-                    <SelectValue placeholder="Select bird..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {birds?.map(bird => (
-                      <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* 4. SHOWCASE DIRECTORY */}
+            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-4 w-4 text-primary" />
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">HOMEPAGE SPOTLIGHT</h2>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Mission</Label>
-                <Input 
-                  placeholder="e.g. Treat Fund goal..."
-                  value={missionInput}
-                  onChange={(e) => setMissionInput(e.target.value)}
-                  onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
-                  className="h-11 bg-background border-border rounded-xl text-xs"
-                />
+              <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-xl p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Resident</Label>
+                    <Select 
+                      value={dotmSettings?.birdId || ""} 
+                      onValueChange={(val) => handleUpdateDOTM(val, dotmSettings?.monthlyMission || "")}
+                    >
+                      <SelectTrigger className="bg-background border-border h-11 rounded-xl">
+                        <SelectValue placeholder="Select bird..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {birds?.map(bird => (
+                          <SelectItem key={bird.id} value={bird.id}>{bird.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Monthly Mission</Label>
+                    <Input 
+                      placeholder="e.g. Treat Fund goal..."
+                      value={missionInput}
+                      onChange={(e) => setMissionInput(e.target.value)}
+                      onBlur={(e) => handleUpdateDOTM(dotmSettings?.birdId || "", e.target.value)}
+                      className="h-11 bg-background border-border rounded-xl text-xs"
+                    />
+                  </div>
+                  <Button 
+                    className="bg-primary text-primary-foreground font-black h-11 rounded-xl shadow-lg flex items-center justify-center gap-2"
+                    disabled={!dotmSettings?.birdId || isPublishing}
+                    onClick={handlePublishDOTM}
+                  >
+                    {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    PUBLISH SPOTLIGHT
+                  </Button>
+                </div>
+              </Card>
+            </section>
+
+            {/* 5. ADD NEW DUCK */}
+            <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-200">
+              <div className="flex items-center gap-3">
+                <Bird className="h-4 w-4 text-primary" />
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">FLOCK MANAGEMENT</h2>
               </div>
-              <Button 
-                className="bg-primary text-primary-foreground font-black h-11 rounded-xl shadow-lg flex items-center justify-center gap-2"
-                disabled={!dotmSettings?.birdId || isPublishing}
-                onClick={handlePublishDOTM}
-              >
-                {isPublishing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                PUBLISH SPOTLIGHT
-              </Button>
+              <Card className="bg-primary/5 border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl group">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Plus className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-headline font-black uppercase tracking-tight text-sm">New Resident</h3>
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Register Rescue or Lineage</p>
+                  </div>
+                </div>
+                <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="w-full md:w-auto bg-primary text-primary-foreground font-black rounded-xl h-12 px-12 shadow-lg">
+                  ADD BIRD
+                </Button>
+              </Card>
+            </section>
+          </>
+        ) : (
+          /* PREVIEW MODE HEADER */
+          <section className="bg-primary/5 border border-primary/20 rounded-3xl p-8 text-center space-y-4 animate-in zoom-in-95 duration-500">
+            <div className="flex justify-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Eye className="h-8 w-8 text-primary" />
+              </div>
             </div>
-          </Card>
-        </section>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Member Experience Preview</h2>
+              <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+                All administrative tools are hidden. You are now viewing the sanctuary records as they appear to logged-in members.
+              </p>
+            </div>
+          </section>
+        )}
 
-        {/* 5. ADD NEW DUCK */}
+        {/* 6. OVERALL FLOCK (Visible in both modes) */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Bird className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">FLOCK MANAGEMENT</h2>
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2>
           </div>
-          <Card className="bg-primary/5 border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl group">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Plus className="h-6 w-6 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-headline font-black uppercase tracking-tight text-sm">New Resident</h3>
-                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Register Rescue or Lineage</p>
-              </div>
-            </div>
-            <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="w-full md:w-auto bg-primary text-primary-foreground font-black rounded-xl h-12 px-12 shadow-lg">
-              ADD BIRD
-            </Button>
-          </Card>
-        </section>
-
-        {/* 6. OVERALL FLOCK */}
-        <section className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {birdsLoading ? (
               [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />)
@@ -516,60 +583,70 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-black truncate">{bird.breed}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
-                      <ClipboardList className="h-3 w-3 mr-1" /> LOG
+                  {!isPreviewMode ? (
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
+                        <ClipboardList className="h-3 w-3 mr-1" /> LOG
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
+                        <Settings className="h-3 w-3 mr-1" /> EDIT
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest mt-2">
+                      <a href={`/residents/${bird.id}`}>VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></a>
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
-                      <Settings className="h-3 w-3 mr-1" /> EDIT
-                    </Button>
-                  </div>
+                  )}
                 </div>
-                <Button 
-                  variant="ghost" size="icon" 
-                  className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
-                  onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                {!isPreviewMode && (
+                  <Button 
+                    variant="ghost" size="icon" 
+                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                    onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
               </Card>
             ))}
           </div>
         </section>
 
-        {/* 7. 30-DAY EGG HISTORY */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <History className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">30-DAY HISTORY</h2>
-          </div>
-          <Card className="bg-card border-border rounded-3xl p-6 overflow-hidden shadow-xl">
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-4 pb-4">
-                {eggHistory && eggHistory.length > 0 ? (
-                  eggHistory.map((entry) => (
-                    <div key={entry.id} className="flex flex-col items-center gap-2 min-w-[80px] p-3 bg-background/50 rounded-2xl border border-border relative group">
-                      <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
-                        {format(parseISO(entry.id), 'MMM dd')}
+        {!isPreviewMode && (
+          /* 7. 30-DAY EGG HISTORY (Admin Only) */
+          <section className="space-y-4 animate-in fade-in duration-500">
+            <div className="flex items-center gap-3">
+              <History className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">30-DAY HISTORY</h2>
+            </div>
+            <Card className="bg-card border-border rounded-3xl p-6 overflow-hidden shadow-xl">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex gap-4 pb-4">
+                  {eggHistory && eggHistory.length > 0 ? (
+                    eggHistory.map((entry) => (
+                      <div key={entry.id} className="flex flex-col items-center gap-2 min-w-[80px] p-3 bg-background/50 rounded-2xl border border-border relative group">
+                        <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                          {format(parseISO(entry.id), 'MMM dd')}
+                        </div>
+                        <div className="text-xl font-headline font-black text-primary">{entry.count}</div>
+                        {entry.count > 0 && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#14F195] shadow-[0_0_8px_#14F195]" title="Productive Day" />
+                        )}
                       </div>
-                      <div className="text-xl font-headline font-black text-primary">{entry.count}</div>
-                      {entry.count > 0 && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#14F195] shadow-[0_0_8px_#14F195]" title="Productive Day" />
-                      )}
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-8">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">No history recorded yet.</p>
                     </div>
-                  ))
-                ) : (
-                  <div className="w-full text-center py-8">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground italic">No history recorded yet.</p>
-                  </div>
-                )}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </Card>
-        </section>
+                  )}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </Card>
+          </section>
+        )}
 
-        {/* 8. BLANK TEMPLATE */}
+        {/* 8. SUPPORTER ASSETS (Visible in both modes) */}
         <section className="pt-8 border-t border-border">
           <div className="flex items-center gap-3 mb-4">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -608,7 +685,6 @@ export default function AdminDashboard() {
             </div>
           </DialogHeader>
           <div className="p-6 grid grid-cols-2 gap-3">
-            {/* Conditional Reordering: Females get Broody first */}
             {PRESET_VIBES
               .sort((a, b) => {
                 if (vibeBird?.sex === 'female' && a.label === 'Broody') return -1;
