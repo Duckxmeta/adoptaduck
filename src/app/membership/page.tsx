@@ -235,6 +235,7 @@ function MembershipContent() {
                       <div className="text-right">
                         <p className="text-4xl font-headline font-black text-primary">$8.33</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Per Month</p>
+                        <p className="text-[9px] font-bold italic text-primary/80 mt-0.5">(Only $0.27 a day!)</p>
                       </div>
                     </div>
                     <div className="h-px bg-primary/20 w-full" />
@@ -379,6 +380,7 @@ function MembershipContent() {
                           >
                             <span className="font-black text-xs uppercase tracking-widest">Monthly Plan</span>
                             <span className="text-3xl font-headline font-black mt-1">$8.33</span>
+                            <span className="text-[10px] font-bold italic opacity-80 mt-1 text-center">(Only $0.27 a day!)</span>
                           </Label>
                         </div>
                         <div className="relative">
@@ -392,6 +394,7 @@ function MembershipContent() {
                           >
                             <span className="font-black text-xs uppercase tracking-widest">Yearly Plan</span>
                             <span className="text-3xl font-headline font-black mt-1">$75.00</span>
+                            <span className="text-[10px] font-bold italic opacity-80 mt-1 text-center">(~$0.20 a day!)</span>
                           </Label>
                           {frequency === 'yearly' && (
                             <div className="absolute -bottom-6 left-0 right-0 text-center animate-in fade-in slide-in-from-top-1">
