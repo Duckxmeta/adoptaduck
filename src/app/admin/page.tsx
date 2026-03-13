@@ -164,7 +164,10 @@ export default function AdminDashboard() {
       });
     }
 
-    toast({ title: "Status Updated", description: `Vibe set to: ${status}` });
+    toast({ 
+      title: status ? "Status Updated" : "Status Cleared", 
+      description: status ? `Vibe set to: ${status}` : "Resident status has been reset."
+    });
     setVibeBird(null); // Auto-close modal
   };
 
@@ -622,6 +625,17 @@ export default function AdminDashboard() {
               </Button>
             ))}
           </div>
+          
+          <div className="px-6 pb-2">
+             <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted hover:text-foreground transition-all flex items-center justify-center gap-2"
+                onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}
+             >
+                <RotateCcw className="h-3.5 w-3.5" /> Clear Vibe
+             </Button>
+          </div>
+
           <div className="px-6 pb-8">
             <Button 
               variant="ghost" 
