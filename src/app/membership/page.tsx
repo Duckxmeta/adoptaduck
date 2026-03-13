@@ -29,7 +29,11 @@ import {
   TreePine,
   TrendingUp,
   Activity,
-  User
+  User,
+  ShieldCheck,
+  CheckCircle2,
+  Users,
+  BookOpen
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -38,6 +42,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { doc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { Progress } from '@/components/ui/progress';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
+import Link from 'next/link';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
 const PLAN_MONTHLY = "P-06W06412XR994193YNGYLYTI";
@@ -152,6 +157,123 @@ function MembershipContent() {
           {/* Duck of the Month Spotlight */}
           <section className="py-12 container mx-auto px-4">
             <DOTMSpotlight />
+          </section>
+
+          {/* NEW: Tiered Perks Comparison Section */}
+          <section className="py-24 container mx-auto px-4">
+            <div className="max-w-6xl mx-auto space-y-16">
+              <div className="text-center space-y-4">
+                <Badge className="bg-secondary/20 text-secondary border-none px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
+                  Program Comparison
+                </Badge>
+                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Choose Your <span className="text-primary">Impact</span></h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto font-medium">
+                  Whether you're following the journey or providing direct care, every member of the flock matters.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                {/* Tier 1: Flock Member */}
+                <Card className="bg-card border-border border-2 rounded-[3rem] p-8 md:p-12 flex flex-col space-y-8 shadow-xl relative overflow-hidden group hover:border-secondary/30 transition-all duration-500">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h3 className="text-3xl font-headline font-black uppercase tracking-tight">Flock Member</h3>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Community Access</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-4xl font-headline font-black">$0</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Free Forever</p>
+                      </div>
+                    </div>
+                    <div className="h-px bg-border w-full" />
+                  </div>
+
+                  <div className="flex-1 space-y-6">
+                    <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+                      Stay connected with the sanctuary pulse and follow every rescue story as it happens.
+                    </p>
+                    <ul className="space-y-4">
+                      {[
+                        { text: "Virtual Sanctuary Portal", icon: <Users className="h-4 w-4" /> },
+                        { text: "Live Daily Care Logs", icon: <Activity className="h-4 w-4" /> },
+                        { text: "Real-Time Egg Counter", icon: <Trophy className="h-4 w-4" /> },
+                        { text: "Live Vibe Board Access", icon: <Zap className="h-4 w-4" /> },
+                        { text: "Community Shoutouts", icon: <Heart className="h-4 w-4" /> }
+                      ].map((perk, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-bold text-foreground/80">
+                          <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary shrink-0">
+                            {perk.icon}
+                          </div>
+                          {perk.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Button asChild variant="outline" className="w-full h-16 rounded-2xl border-border font-black uppercase tracking-widest text-xs hover:bg-secondary/10 group-hover:border-secondary/50 transition-all">
+                    <Link href="/signup">JOIN THE FLOCK (FREE)</Link>
+                  </Button>
+                </Card>
+
+                {/* Tier 2: Sanctuary Member (Premium) */}
+                <Card className="bg-card border-primary border-4 rounded-[3.5rem] p-8 md:p-12 flex flex-col space-y-8 shadow-2xl relative overflow-hidden scale-105 z-10">
+                  <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+                    <Trophy className="h-40 w-40 text-primary" />
+                  </div>
+                  
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-3xl font-headline font-black uppercase tracking-tight">Sanctuary Member</h3>
+                          <Badge className="bg-primary text-black font-black text-[8px] uppercase tracking-widest">MOST IMPACTFUL</Badge>
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary">Adopt-a-Duck Experience</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-4xl font-headline font-black text-primary">$10</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Per Month</p>
+                      </div>
+                    </div>
+                    <div className="h-px bg-primary/20 w-full" />
+                  </div>
+
+                  <div className="flex-1 space-y-6 relative z-10">
+                    <p className="text-sm font-medium text-foreground leading-relaxed font-bold">
+                      Directly fund the food, health, and housing for our residents. Unlock the deepest sanctuary secrets.
+                    </p>
+                    <ul className="space-y-4">
+                      {[
+                        { text: "Official Virtual Adoption", icon: <Heart className="h-4 w-4 fill-current" /> },
+                        { text: "Naming Rights for New Arrivals", icon: <Sparkles className="h-4 w-4" /> },
+                        { text: "Unlock the 'Ducklopedia'", icon: <BookOpen className="h-4 w-4" /> },
+                        { text: "Interactive Lineage Trees", icon: <TreePine className="h-4 w-4" /> },
+                        { text: "Exclusive Member Recognition", icon: <ShieldCheck className="h-4 w-4" /> },
+                        { text: "Digital Adoption Certificate", icon: <CheckCircle2 className="h-4 w-4" /> }
+                      ].map((perk, i) => (
+                        <li key={i} className="flex items-center gap-3 text-sm font-black text-foreground">
+                          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary shrink-0">
+                            {perk.icon}
+                          </div>
+                          {perk.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <Button 
+                    onClick={() => {
+                      const element = document.getElementById('support-options');
+                      if (element) element.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full h-16 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
+                  >
+                    BECOME A GUARDIAN
+                  </Button>
+                </Card>
+              </div>
+            </div>
           </section>
 
           {/* Community Impact Tracking */}
