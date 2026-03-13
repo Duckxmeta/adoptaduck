@@ -6,7 +6,7 @@ import { DuckOfTheMonthSettings, Resident } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Sparkles, ArrowRight, Heart, Loader2 } from 'lucide-react';
+import { Trophy, Sparkles, ArrowRight, Heart, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -74,9 +74,16 @@ export function DOTMSpotlight() {
         {/* Right Side: Details */}
         <div className="md:col-span-7 p-8 md:p-12 space-y-6 relative z-10">
           <div className="space-y-2">
-            <Badge className="bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 shadow-lg flex items-center w-fit gap-2">
-              <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
-            </Badge>
+            <div className="flex flex-wrap gap-2 mb-2">
+              <Badge className="bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 shadow-lg flex items-center w-fit gap-2">
+                <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
+              </Badge>
+              {bird.liveStatus && (
+                <Badge variant="outline" className="border-secondary/50 text-secondary font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 bg-secondary/5">
+                  <Zap className="h-3 w-3 mr-1.5" /> {bird.liveStatus}
+                </Badge>
+              )}
+            </div>
             <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
               Meet <span className="text-primary">{bird.name}</span>
             </h2>
@@ -97,14 +104,18 @@ export function DOTMSpotlight() {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex flex-col sm:flex-row gap-4">
             <Button 
               onClick={handleSupportClick}
-              className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3 group/btn"
+              className="bg-primary text-primary-foreground font-black h-14 px-8 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3 group/btn flex-1"
             >
               <Heart className="h-5 w-5 fill-current" />
               SUPPORT {bird.name.toUpperCase()}
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <Button asChild variant="outline" className="border-primary text-primary font-black h-14 px-8 rounded-2xl hover:bg-primary/10 flex-1 flex items-center justify-center gap-2">
+              <Link href={`/residents/${bird.id}`}>
+                LEARN MORE <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </div>

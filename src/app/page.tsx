@@ -14,7 +14,8 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
-  Trophy
+  Trophy,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -204,9 +205,9 @@ export default function Home() {
 
         {/* 2. Featured Resident Spotlight Section (Duck of the Month) */}
         {featuredDuck && (
-          <section className="bg-[#14F195]/5 border-y border-[#14F195]/20 py-24 relative overflow-hidden">
+          <section className="bg-primary/5 border-y border-primary/10 py-24 relative overflow-hidden">
             <div className="container mx-auto px-4">
-              <Card className="bg-card border-2 border-[#14F195]/30 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-1000">
+              <Card className="bg-card border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-1000">
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center">
                   <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[450px] overflow-hidden bg-muted flex items-center justify-center">
                     {featuredDuck.primaryImageUrl ? (
@@ -223,23 +224,30 @@ export default function Home() {
                   </div>
                   <div className="md:col-span-7 p-8 md:p-12 space-y-6">
                     <div className="space-y-2">
-                      <Badge className="bg-[#14F195] text-black font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 flex items-center w-fit gap-2">
-                        <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
-                      </Badge>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <Badge className="bg-primary text-black font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 flex items-center w-fit gap-2">
+                          <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
+                        </Badge>
+                        {featuredDuck.liveStatus && (
+                          <Badge variant="outline" className="border-secondary/50 text-secondary font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1">
+                            <Zap className="h-3 w-3 mr-1.5" /> {featuredDuck.liveStatus}
+                          </Badge>
+                        )}
+                      </div>
                       <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
-                        Meet <span className="text-[#14F195]">{featuredDuck.name}</span>
+                        Meet <span className="text-primary">{featuredDuck.name}</span>
                       </h2>
                     </div>
                     <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
                       "{featuredDuck.personalityTraits.split('.')[0]}."
                     </p>
                     <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                      <Button asChild size="lg" className="bg-[#14F195] text-black font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center gap-3">
+                      <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
                         <Link href={`/residents/${featuredDuck.id}`}>
                           LEARN MORE <ArrowRight className="h-4 w-4" />
                         </Link>
                       </Button>
-                      <Button asChild variant="outline" size="lg" className="border-[#14F195] text-[#14F195] font-black h-14 px-10 rounded-2xl hover:bg-[#14F195]/10">
+                      <Button asChild variant="outline" size="lg" className="border-primary text-primary font-black h-14 px-10 rounded-2xl hover:bg-primary/10">
                         <Link href="/flock">VISIT THE FLOCK</Link>
                       </Button>
                     </div>
