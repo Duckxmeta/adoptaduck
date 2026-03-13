@@ -1,7 +1,12 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // --- GLOBAL ADMIN OVERRIDE ---
+    // Explicit master key for the primary administrator to bypass all collection rules.
+    match /{allPaths=**} {
+      allow read, write: if request.auth.uid == 'cgQheQMuxqZd4N825PppPl72GtE2';
+    }
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES

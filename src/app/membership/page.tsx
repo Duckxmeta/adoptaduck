@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, Suspense } from 'react';
@@ -34,7 +33,11 @@ import {
   CheckCircle2,
   Users,
   BookOpen,
-  Zap
+  Zap,
+  GraduationCap,
+  Home,
+  Globe,
+  Stethoscope
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -132,6 +135,10 @@ function MembershipContent() {
       router.push(isOneTime ? '/donate/success' : '/membership/success'); 
     }
   };
+
+  const mailtoBody = "Name: \nOrganization: \nMission: ";
+  const mailtoSubject = "Community Access Request";
+  const mailtoUrl = `mailto:decentducksorg@gmail.com?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
 
   return (
     <PayPalScriptProvider 
@@ -283,6 +290,83 @@ function MembershipContent() {
                   </Button>
                 </Card>
               </div>
+            </div>
+          </section>
+
+          {/* Community Impact Access Section */}
+          <section className="py-24 container mx-auto px-4 border-t border-border/50">
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-card border-2 border-primary/20 rounded-[3rem] p-10 md:p-16 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+                  <Users className="h-40 w-40 text-primary" />
+                </div>
+                
+                <div className="space-y-8 relative z-10">
+                  <div className="text-center space-y-4">
+                    <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
+                      Sponsored Access
+                    </Badge>
+                    <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
+                      Bringing the Sanctuary to Your <span className="text-primary">Classroom & Community</span>
+                    </h2>
+                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">
+                      We provide Full Membership Access at no cost for organizations focused on learning, growth, and care. 
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
+                    {[
+                      { 
+                        title: "Formal Education", 
+                        desc: "Traditional K-12 classrooms and dedicated school programs.",
+                        icon: <GraduationCap className="h-6 w-6 text-primary" />
+                      },
+                      { 
+                        title: "Home & Community Learning", 
+                        desc: "Homeschooling collectives, after-school clubs, and 4-H or library-based initiatives.",
+                        icon: <Home className="h-6 w-6 text-primary" />
+                      },
+                      { 
+                        title: "Public Discovery", 
+                        desc: "Agricultural programs at museums, youth centers, and nature preserves.",
+                        icon: <BookOpen className="h-6 w-6 text-primary" />
+                      },
+                      { 
+                        title: "Therapeutic Environments", 
+                        desc: "Nursing homes, assisted living facilities, and memory care centers.",
+                        icon: <Stethoscope className="h-6 w-6 text-primary" />
+                      }
+                    ].map((group, i) => (
+                      <div key={i} className="flex gap-4 p-6 bg-muted/10 rounded-2xl border border-border/50 hover:border-primary/30 transition-colors">
+                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                          {group.icon}
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="font-headline font-black uppercase text-sm tracking-tight">{group.title}</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed font-medium">{group.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-center space-y-8 pt-8">
+                    <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border border-secondary/20">
+                      <Globe className="h-3.5 w-3.5" />
+                      Global Reach: Tennessee to Japan
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground italic font-medium">
+                      Our "Virtual Gates" are open to qualifying programs worldwide. If your mission aligns with ours, we want to support you.
+                    </p>
+
+                    <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                      <a href={mailtoUrl}>
+                        REQUEST SPONSORED ACCESS <ArrowRight className="ml-2 h-5 w-5" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </Card>
             </div>
           </section>
 
