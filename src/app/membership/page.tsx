@@ -249,8 +249,8 @@ function MembershipContent() {
                       {[
                         { text: "Official Virtual Adoption", icon: <Heart className="h-4 w-4 fill-current" /> },
                         { text: "Naming Rights for New Arrivals", icon: <Sparkles className="h-4 w-4" /> },
-                        { text: "Unlock the 'Ducklopedia'", icon: <BookOpen className="h-4 w-4" /> },
-                        { text: "Interactive Lineage Trees", icon: <TreePine className="h-4 w-4" /> },
+                        { text: "Detailed Lineage Tree", icon: <TreePine className="h-4 w-4" /> },
+                        { text: "Extended Rescue Narratives", icon: <BookOpen className="h-4 w-4" /> },
                         { text: "Exclusive Member Recognition", icon: <ShieldCheck className="h-4 w-4" /> },
                         { text: "Digital Adoption Certificate", icon: <CheckCircle2 className="h-4 w-4" /> }
                       ].map((perk, i) => (
@@ -615,8 +615,8 @@ function MembershipContent() {
                         exclusive: true
                       },
                       { 
-                        title: "Heritage Trees", 
-                        desc: "Explore interactive pedigree charts for all G1 and G2 sanctuary residents.", 
+                        title: "Detailed Lineage Tree", 
+                        desc: "Explore interactive pedigree charts and historical data for all sanctuary residents.", 
                         icon: <TreePine className="h-6 w-6 text-secondary" />,
                         color: "secondary"
                       },

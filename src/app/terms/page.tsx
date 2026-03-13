@@ -42,9 +42,9 @@ export default function TermsPage() {
               <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <FileText className="h-6 w-6 text-secondary" />
               </div>
-              <h3 className="text-xl font-headline font-black uppercase tracking-tight">Digital Assets & Lore</h3>
+              <h3 className="text-xl font-headline font-black uppercase tracking-tight">Digital Assets & History</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Images of the birds (including Jasmine, Jordie, etc.) and the 'Ducklopedia' lore are the intellectual property of Decent Ducks Sanctuary. Sharing is encouraged for advocacy, but commercial sale is prohibited.
+                Images of the birds (including Jasmine, Jordie, etc.) and their rescue histories/lineage data are the intellectual property of Decent Ducks Sanctuary. Sharing is encouraged for advocacy, but commercial sale is prohibited.
               </p>
             </div>
           </div>
