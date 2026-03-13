@@ -46,8 +46,8 @@ import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import Link from 'next/link';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
-const PLAN_MONTHLY = "P-06W06412XR994193YNGYLYTI";
-const PLAN_YEARLY = "P-7K507415GG316890YNGYLZNQ";
+const PLAN_MONTHLY = "P-70H86074FR874700TNGZW23I";
+const PLAN_YEARLY = "P-620528699F672715MNGZW36Q";
 
 const GOALS = {
   feed: 300,
@@ -64,7 +64,7 @@ function MembershipContent() {
   const firestore = useFirestore();
   
   const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
-  const [amount, setAmount] = useState<string>('25');
+  const [amount, setAmount] = useState<string>('8.33');
   const [designation, setDesignation] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [donorDisplayName, setDonorDisplayName] = useState('');
@@ -115,16 +115,16 @@ function MembershipContent() {
       if (user) {
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
-          role: 'guardian',
+          role: 'member',
           updatedAt: serverTimestamp()
         }, { merge: true });
       }
       
       const successName = donorDisplayName.trim() || user?.displayName || 'A Kind Supporter';
-      router.push(`/welcome-guardian?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
+      router.push(`/membership/success?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
     } catch (e) {
       console.error("Post-payment error:", e);
-      router.push('/welcome-guardian'); 
+      router.push('/membership/success'); 
     }
   };
 
@@ -142,10 +142,10 @@ function MembershipContent() {
           <section className="relative pt-24 pb-12 bg-secondary/5 border-b border-border overflow-hidden">
             <div className="container mx-auto px-4 text-center space-y-6 relative z-10">
               <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
-                Guardianship Program
+                Sanctuary Program
               </Badge>
               <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter uppercase leading-none max-w-4xl mx-auto">
-                BECOME A <span className="text-primary">GUARDIAN</span> OF THE FLOCK
+                BECOME A <span className="text-primary">MEMBER</span> OF THE FLOCK
               </h1>
               <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
                 Your support directly funds the rescue, rehabilitation, and lifelong care of abandoned domestic ducks.
@@ -233,7 +233,7 @@ function MembershipContent() {
                         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Adopt-a-Duck Experience</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-4xl font-headline font-black text-primary">$10</p>
+                        <p className="text-4xl font-headline font-black text-primary">$8.33</p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Per Month</p>
                       </div>
                     </div>
@@ -270,7 +270,7 @@ function MembershipContent() {
                     }}
                     className="w-full h-16 rounded-2xl bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
                   >
-                    BECOME A GUARDIAN
+                    UPGRADE TO MEMBER
                   </Button>
                 </Card>
               </div>
@@ -326,7 +326,7 @@ function MembershipContent() {
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
               
               <div className="lg:col-span-7 space-y-12">
-                {/* Guardian Section */}
+                {/* Membership Selection Section */}
                 <div className="bg-card/40 backdrop-blur-sm p-10 rounded-[3rem] border border-primary/20 shadow-2xl space-y-8 relative overflow-hidden">
                   {birdParam && (
                     <div className="bg-primary/10 border-2 border-primary/30 p-4 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-4">
@@ -346,34 +346,25 @@ function MembershipContent() {
                   
                   <div className="flex items-center gap-3 text-primary relative z-10">
                      <Heart className="h-6 w-6 fill-primary" />
-                     <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Become a Guardian</h2>
+                     <h2 className="text-2xl font-headline font-black uppercase tracking-tight">Select Membership Plan</h2>
                   </div>
                   
                   <div className="space-y-4 relative z-10">
                     <p className="text-sm text-foreground/90 leading-relaxed font-bold">
-                      Full adoption provides 100% of the food, bedding, and medical care for a resident of your choice. It is the most direct way to sustain our mission.
+                      Sanctuary Membership provides 100% of the food, bedding, and medical care for a resident of your choice.
                     </p>
-                    
-                    <div className="grid grid-cols-1 gap-2">
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase text-primary bg-primary/10 w-fit px-3 py-1 rounded-full">
-                        <Sparkles className="h-3 w-3" /> UNLOCKS NAMING RIGHTS
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] font-black uppercase text-primary bg-primary/10 w-fit px-3 py-1 rounded-full">
-                        <BellRing className="h-3 w-3" /> DIRECT CARE LOG NOTIFICATIONS
-                      </div>
-                    </div>
                   </div>
 
                   <div className="space-y-8 relative z-10">
                     <div className="space-y-4">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Guardianship Level</Label>
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Select Commitment Level</Label>
                       <RadioGroup 
                         value={frequency} 
                         onValueChange={(v) => {
                           const val = v as any;
                           setFrequency(val);
-                          if (val === 'monthly') setAmount('25');
-                          if (val === 'yearly') setAmount('250');
+                          if (val === 'monthly') setAmount('8.33');
+                          if (val === 'yearly') setAmount('75.00');
                         }}
                         className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
@@ -386,8 +377,8 @@ function MembershipContent() {
                               frequency === 'monthly' ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
                             )}
                           >
-                            <span className="font-black text-xs uppercase tracking-widest">Monthly Guardian</span>
-                            <span className="text-3xl font-headline font-black mt-1">$25</span>
+                            <span className="font-black text-xs uppercase tracking-widest">Monthly Plan</span>
+                            <span className="text-3xl font-headline font-black mt-1">$8.33</span>
                           </Label>
                         </div>
                         <div className="relative">
@@ -399,12 +390,12 @@ function MembershipContent() {
                               frequency === 'yearly' ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
                             )}
                           >
-                            <span className="font-black text-xs uppercase tracking-widest">Yearly Guardian</span>
-                            <span className="text-3xl font-headline font-black mt-1">$250</span>
+                            <span className="font-black text-xs uppercase tracking-widest">Yearly Plan</span>
+                            <span className="text-3xl font-headline font-black mt-1">$75.00</span>
                           </Label>
                           {frequency === 'yearly' && (
                             <div className="absolute -bottom-6 left-0 right-0 text-center animate-in fade-in slide-in-from-top-1">
-                              <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-background px-3 py-1 rounded-full border border-primary/20">Best Value: $0.68 per day</span>
+                              <span className="text-[10px] font-black uppercase text-primary tracking-widest bg-background px-3 py-1 rounded-full border border-primary/20">Best Value: Save $25 / Year</span>
                             </div>
                           )}
                         </div>
@@ -424,14 +415,13 @@ function MembershipContent() {
                             onChange={(e) => setDonorDisplayName(e.target.value)}
                             className="h-12 rounded-xl border-2 border-border bg-background/50"
                           />
-                          <p className="text-[9px] text-muted-foreground font-medium italic">How should your gift appear on our public ledger?</p>
                         </div>
 
                         <div className="flex flex-col items-center gap-4">
                           {isProcessing ? (
                             <div className="flex flex-col items-center gap-4 py-8">
                               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                              <p className="font-black uppercase tracking-widest text-[10px]">Processing Guardianship...</p>
+                              <p className="font-black uppercase tracking-widest text-[10px]">Configuring Membership...</p>
                             </div>
                           ) : (
                             <div className="w-full max-w-sm mx-auto">
@@ -450,7 +440,7 @@ function MembershipContent() {
                                 }}
                                 onApprove={async (data, actions) => {
                                   setIsProcessing(true);
-                                  handlePaymentSuccess(data, frequency === 'monthly' ? 25 : 250, false);
+                                  handlePaymentSuccess(data, Number(amount), false);
                                 }}
                                 className="w-full flex justify-center"
                               />
@@ -470,7 +460,7 @@ function MembershipContent() {
                   </div>
 
                   <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                    Make a splash! One-time gifts unlock full Member Dashboard access and provide immediate resources for the flock.
+                    Make a splash! One-time gifts provide immediate resources for the flock and unlock standard member features.
                   </p>
 
                   <div className="space-y-10">
@@ -551,7 +541,6 @@ function MembershipContent() {
                           onChange={(e) => setDonorDisplayName(e.target.value)}
                           className="h-12 rounded-xl border-2 border-border bg-background/50"
                         />
-                        <p className="text-[9px] text-muted-foreground font-medium italic">How should your gift appear on our public ledger?</p>
                       </div>
                     </div>
 
@@ -603,14 +592,14 @@ function MembershipContent() {
                 <div className="space-y-6">
                   <div className="space-y-2 text-center lg:text-left">
                     <h3 className="text-3xl font-headline font-black uppercase tracking-tight">What You Unlock</h3>
-                    <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.2em]">Tiered Member Benefits</p>
+                    <p className="text-xs text-muted-foreground font-black uppercase tracking-[0.2em]">Member Benefits</p>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
                     {[
                       { 
                         title: "Name a Resident", 
-                        desc: "Recurring Guardians unlock the honor of naming the next bird to enter the sanctuary archives.", 
+                        desc: "Recurring Members unlock the honor of naming the next bird to enter the sanctuary archives.", 
                         icon: <Sparkles className="h-6 w-6 text-primary" />,
                         color: "primary",
                         exclusive: true
@@ -644,7 +633,7 @@ function MembershipContent() {
                             {benefit.icon}
                           </div>
                           {benefit.exclusive && (
-                            <Badge className="bg-primary text-black text-[8px] font-black uppercase tracking-widest">Guardian Exclusive</Badge>
+                            <Badge className="bg-primary text-black text-[8px] font-black uppercase tracking-widest">Member Exclusive</Badge>
                           )}
                         </div>
                         <div>
@@ -660,7 +649,7 @@ function MembershipContent() {
 
                 {/* Note on Exclusive access */}
                 <div className="p-6 bg-muted/20 rounded-2xl border border-border italic text-[10px] text-muted-foreground leading-relaxed">
-                  *Please note: Naming Rights and Direct Duck Updates are reserved for our recurring Monthly and Yearly Guardians. One-time gifts grant full access to the Standard Member Dashboard features including the Ledger and Heritage Trees.
+                  *Please note: Naming Rights and Direct Duck Updates are reserved for our recurring Monthly and Yearly Members. One-time gifts grant full access to the Standard Member Dashboard features including the Ledger and Heritage Trees.
                 </div>
               </div>
             </div>
