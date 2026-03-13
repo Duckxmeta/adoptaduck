@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -278,8 +277,12 @@ export default function MemberDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {liveStatusBirds.slice(0, 4).map((bird) => (
                   <div key={bird.id} className="flex items-center gap-3 p-3 bg-background/50 rounded-2xl border border-primary/10 hover:border-primary/30 transition-colors">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-border shrink-0">
-                      <Image src={bird.primaryImageUrl} alt={bird.name} width={40} height={40} className="object-cover h-full" />
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
+                      {bird.primaryImageUrl ? (
+                        <Image src={bird.primaryImageUrl} alt={bird.name} width={40} height={40} className="object-cover h-full" />
+                      ) : (
+                        <span className="text-lg">🦆</span>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <p className="text-[10px] font-black uppercase text-primary tracking-tight truncate">{bird.name}</p>
@@ -481,8 +484,12 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
 
   return (
     <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row h-full">
-      <div className="relative w-full md:w-48 aspect-video md:aspect-auto">
-        <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+      <div className="relative w-full md:w-48 aspect-video md:aspect-auto bg-muted flex items-center justify-center">
+        {bird.primaryImageUrl ? (
+          <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
+        ) : (
+          <span className="text-4xl">🦆</span>
+        )}
       </div>
       <CardContent className="p-6 flex-1 space-y-4">
         <div className="flex justify-between items-start">
@@ -528,8 +535,12 @@ function NewsFeed({ adopterEmail, unlockedIds }: { adopterEmail: string, unlocke
         return (
           <Card key={log.id} className="bg-muted/5 border-border rounded-2xl p-6">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-border">
-                <Image src={bird.primaryImageUrl} alt={bird.name} width={48} height={48} className="object-cover h-full" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-border bg-muted flex items-center justify-center">
+                {bird.primaryImageUrl ? (
+                  <Image src={bird.primaryImageUrl} alt={bird.name} width={48} height={48} className="object-cover h-full" />
+                ) : (
+                  <span className="text-xl">🦆</span>
+                )}
               </div>
               <div className="space-y-2 flex-1">
                 <div className="flex items-center justify-between">

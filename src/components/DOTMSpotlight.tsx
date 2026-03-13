@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
@@ -45,6 +44,8 @@ export function DOTMSpotlight() {
     }
   };
 
+  const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.trim() !== "";
+
   return (
     <Card className="relative overflow-hidden bg-card border-4 border-primary/50 shadow-2xl shadow-primary/10 rounded-[2.5rem] group animate-in fade-in slide-in-from-top-4 duration-1000">
       {/* Decorative Glow */}
@@ -55,13 +56,17 @@ export function DOTMSpotlight() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 items-center">
         {/* Left Side: Photo */}
-        <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-full min-h-[300px] overflow-hidden">
-          <Image 
-            src={bird.primaryImageUrl} 
-            alt={bird.name} 
-            fill 
-            className="object-cover transition-transform duration-10000 group-hover:scale-110" 
-          />
+        <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-full min-h-[300px] overflow-hidden bg-muted flex items-center justify-center">
+          {hasImage ? (
+            <Image 
+              src={bird.primaryImageUrl} 
+              alt={bird.name} 
+              fill 
+              className="object-cover transition-transform duration-10000 group-hover:scale-110" 
+            />
+          ) : (
+            <span className="text-9xl">🦆</span>
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-card hidden md:block" />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent md:hidden" />
         </div>

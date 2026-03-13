@@ -208,13 +208,17 @@ export default function Home() {
             <div className="container mx-auto px-4">
               <Card className="bg-card border-2 border-[#14F195]/30 rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-1000">
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center">
-                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[450px] overflow-hidden">
-                    <Image 
-                      src={featuredDuck.primaryImageUrl} 
-                      alt={featuredDuck.name} 
-                      fill 
-                      className="object-cover" 
-                    />
+                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[450px] overflow-hidden bg-muted flex items-center justify-center">
+                    {featuredDuck.primaryImageUrl ? (
+                      <Image 
+                        src={featuredDuck.primaryImageUrl} 
+                        alt={featuredDuck.name} 
+                        fill 
+                        className="object-cover" 
+                      />
+                    ) : (
+                      <span className="text-9xl">🦆</span>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-card hidden md:block" />
                   </div>
                   <div className="md:col-span-7 p-8 md:p-12 space-y-6">

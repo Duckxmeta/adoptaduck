@@ -33,19 +33,25 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
     ? `${sharedNarrative} ${endings[nameNorm!] || ''}`
     : resident.backstory;
 
+  const hasImage = !!resident.primaryImageUrl && resident.primaryImageUrl.trim() !== "";
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
       <DialogContent className="bg-card text-card-foreground border-border max-w-2xl p-0 overflow-hidden rounded-[2rem] shadow-2xl">
-        <div className="relative aspect-video w-full">
-          <Image 
-            src={resident.primaryImageUrl} 
-            alt={resident.name} 
-            fill 
-            className="object-cover"
-          />
+        <div className="relative aspect-video w-full bg-muted flex items-center justify-center">
+          {hasImage ? (
+            <Image 
+              src={resident.primaryImageUrl} 
+              alt={resident.name} 
+              fill 
+              className="object-cover"
+            />
+          ) : (
+            <span className="text-8xl">🦆</span>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
           <div className="absolute bottom-6 left-8">
             <DialogTitle className="text-4xl font-headline font-black text-white uppercase tracking-tighter leading-none">

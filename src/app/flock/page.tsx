@@ -61,6 +61,7 @@ export default function BrowseFlock() {
     const displayName = bird.name;
     const partnerKey = Object.keys(PARTNER_MAP).find(k => k.toLowerCase() === nameNorm);
     const partnerName = partnerKey ? PARTNER_MAP[partnerKey] : null;
+    const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.trim() !== "";
 
     return (
       <Card 
@@ -72,12 +73,16 @@ export default function BrowseFlock() {
         )}
       >
         <div className="relative aspect-[4/5] overflow-hidden">
-          <Image 
-            src={bird.primaryImageUrl} 
-            alt={`${displayName} - ${bird.breed}`} 
-            fill 
-            className="object-cover transition-transform duration-700 group-hover:scale-110" 
-          />
+          {hasImage ? (
+            <Image 
+              src={bird.primaryImageUrl} 
+              alt={`${displayName} - ${bird.breed}`} 
+              fill 
+              className="object-cover transition-transform duration-700 group-hover:scale-110" 
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">🦆</div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             <Badge className="w-fit bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
