@@ -63,6 +63,7 @@ const PRESET_VIBES = [
   { label: 'Chill', emoji: '🌿' },
   { label: 'Energetic', emoji: '⚡' },
   { label: 'Hungry', emoji: '🥨' },
+  { label: 'Broody', emoji: '🪺' },
   { label: 'Sleepy', emoji: '💤' },
   { label: 'Vigilant', emoji: '🛡️' },
   { label: 'Vocal', emoji: '📢' },
@@ -153,6 +154,16 @@ export default function AdminDashboard() {
       liveStatus: status,
       statusLastUpdated: new Date().toISOString()
     });
+
+    // If broody, auto-add a care log entry
+    if (status.includes('BROODY')) {
+      addDoc(collection(firestore, 'birds', birdId, 'healthLogs'), {
+        birdId,
+        logDate: new Date().toISOString(),
+        notes: "Automated Log: Resident marked as BROODY during daily vibe check."
+      });
+    }
+
     toast({ title: "Status Updated", description: `Vibe set to: ${status}` });
     setVibeBird(null); // Auto-close modal
   };
@@ -361,6 +372,8 @@ export default function AdminDashboard() {
             {foundingFour.map((bird) => {
               const isRecentlyUpdated = bird.statusLastUpdated && 
                 isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
+              
+              const isBroody = bird.liveStatus?.includes('BROODY');
 
               return (
                 <Card 
@@ -368,7 +381,8 @@ export default function AdminDashboard() {
                   onClick={() => setVibeBird(bird)}
                   className={cn(
                     "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group active:scale-95",
-                    isRecentlyUpdated && "border-secondary/40 bg-secondary/5"
+                    isRecentlyUpdated && "border-secondary/40 bg-secondary/5",
+                    isBroody && "border-primary/30"
                   )}
                 >
                   <div className="flex items-center gap-4">
@@ -380,7 +394,10 @@ export default function AdminDashboard() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
+                        {isBroody && <span className="text-lg" title="Broody Hen">🪺</span>}
+                      </div>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Not checked today'}
                       </p>
@@ -485,7 +502,10 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                   <div>
-                    <h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3>
+                      {bird.liveStatus?.includes('BROODY') && <span title="Broody Hen">🪺</span>}
+                    </div>
                     <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-black truncate">{bird.breed}</p>
                   </div>
                   <div className="flex gap-2">
@@ -580,11 +600,21 @@ export default function AdminDashboard() {
             </div>
           </DialogHeader>
           <div className="p-6 grid grid-cols-2 gap-3">
-            {PRESET_VIBES.map((vibe) => (
+            {/* Conditional Reordering: Females get Broody first */}
+            {PRESET_VIBES
+              .sort((a, b) => {
+                if (vibeBird?.sex === 'female' && a.label === 'Broody') return -1;
+                if (vibeBird?.sex === 'female' && b.label === 'Broody') return 1;
+                return 0;
+              })
+              .map((vibe) => (
               <Button
                 key={vibe.label}
                 variant="outline"
-                className="h-[80px] rounded-[1.5rem] border-border flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 group"
+                className={cn(
+                  "h-[80px] rounded-[1.5rem] border-border flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all active:scale-95 group",
+                  vibe.label === 'Broody' && vibeBird?.sex === 'female' && "border-primary/40 bg-primary/5"
+                )}
                 onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}
               >
                 <span className="text-3xl group-hover:scale-110 transition-transform">{vibe.emoji}</span>
