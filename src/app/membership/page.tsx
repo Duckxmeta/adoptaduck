@@ -121,19 +121,27 @@ function MembershipContent() {
       }
       
       const successName = donorDisplayName.trim() || user?.displayName || 'A Kind Supporter';
-      router.push(`/membership/success?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
+      
+      if (isOneTime) {
+        router.push(`/donate/success?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
+      } else {
+        router.push(`/membership/success?name=${encodeURIComponent(successName)}&bird=${encodeURIComponent(birdParam || 'The Flock')}`);
+      }
     } catch (e) {
       console.error("Post-payment error:", e);
-      router.push('/membership/success'); 
+      router.push(isOneTime ? '/donate/success' : '/membership/success'); 
     }
   };
 
   return (
-    <PayPalScriptProvider options={{ 
-      "clientId": PAYPAL_CLIENT_ID,
-      vault: true,
-      intent: frequency === 'one-time' ? "capture" : "subscription"
-    }}>
+    <PayPalScriptProvider 
+      key={frequency === 'one-time' ? 'one-time' : 'subscription'}
+      options={{ 
+        "clientId": PAYPAL_CLIENT_ID,
+        vault: frequency !== 'one-time',
+        intent: frequency === 'one-time' ? "capture" : "subscription"
+      }}
+    >
       <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
         <Navbar />
 

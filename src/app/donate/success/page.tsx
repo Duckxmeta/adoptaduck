@@ -1,7 +1,8 @@
+
 "use client";
 
-import { Suspense, useState, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useState, useRef, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -22,9 +23,18 @@ import { cn } from '@/lib/utils';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialName = searchParams.get('name') || '';
+  const birdName = searchParams.get('bird') || 'a resident';
   const [adopterName, setAdopterName] = useState(initialName);
   const certificateRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push('/dashboard');
+    }, 30000);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   const handleShare = (platform: 'twitter' | 'generic') => {
     const text = `I just virtually adopted a resident at Decent Ducks Sanctuary! Check out their mission:`;
@@ -123,7 +133,7 @@ function SuccessContent() {
                   </div>
 
                   <p className="text-lg md:text-xl font-medium leading-relaxed max-w-xl mx-auto">
-                    has virtually adopted a resident of <br />
+                    has virtually adopted <span className="text-primary font-black uppercase">{birdName}</span> of <br />
                     <span className="font-headline font-black text-primary text-2xl tracking-tighter uppercase">Decent Ducks Sanctuary</span>
                   </p>
                 </div>

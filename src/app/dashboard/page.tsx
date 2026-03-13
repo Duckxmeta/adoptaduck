@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -46,7 +47,8 @@ import {
   Activity,
   ScrollText,
   Users,
-  Zap
+  Zap,
+  Award
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -104,6 +106,18 @@ export default function MemberDashboard() {
   }, [firestore]);
 
   const { data: donations } = useCollection<Donation>(donationsQuery);
+
+  const myDonationsQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(collection(firestore, 'donations'), where('uid', '==', user.uid));
+  }, [firestore, user?.uid]);
+
+  const { data: myDonations } = useCollection<Donation>(myDonationsQuery);
+
+  const myTotalImpact = useMemo(() => {
+    if (!myDonations) return 0;
+    return myDonations.reduce((sum, d) => sum + d.amount, 0);
+  }, [myDonations]);
 
   const allBirdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -230,26 +244,38 @@ export default function MemberDashboard() {
               </h1>
            </div>
 
-           <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-80 shadow-lg">
-              <div className="space-y-4">
-                 <div className="flex items-center gap-2 text-secondary">
-                    <Ticket className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Community Code</span>
-                 </div>
-                 <div className="flex gap-2">
-                    <Input 
-                      placeholder="ENTER CODE" 
-                      value={referralCode}
-                      onChange={(e) => setReferralCode(e.target.value)}
-                      className="bg-background border-secondary/20 h-10 text-xs font-black tracking-widest uppercase"
-                      disabled={isVerifying}
-                    />
-                    <Button size="sm" onClick={handleReferralCode} disabled={isVerifying} className="bg-secondary text-secondary-foreground font-black px-4">
-                      {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    </Button>
-                 </div>
-              </div>
-           </Card>
+           <div className="flex flex-col md:flex-row gap-4">
+             <Card className="bg-primary/5 border-primary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4 group">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                   <Award className="h-6 w-6" />
+                </div>
+                <div>
+                   <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">My Support</p>
+                   <p className="text-2xl font-headline font-black text-primary">${myTotalImpact.toFixed(0)}</p>
+                </div>
+             </Card>
+
+             <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-80 shadow-lg">
+                <div className="space-y-4">
+                   <div className="flex items-center gap-2 text-secondary">
+                      <Ticket className="h-4 w-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Community Code</span>
+                   </div>
+                   <div className="flex gap-2">
+                      <Input 
+                        placeholder="ENTER CODE" 
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                        className="bg-background border-secondary/20 h-10 text-xs font-black tracking-widest uppercase"
+                        disabled={isVerifying}
+                      />
+                      <Button size="sm" onClick={handleReferralCode} disabled={isVerifying} className="bg-secondary text-secondary-foreground font-black px-4">
+                        {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      </Button>
+                   </div>
+                </div>
+             </Card>
+           </div>
         </section>
 
         {/* Duck of the Month Spotlight */}
