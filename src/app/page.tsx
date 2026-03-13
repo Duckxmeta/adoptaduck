@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -352,13 +353,29 @@ export default function Home() {
                   </div>
                 </div>
 
-                <Button 
-                  asChild
-                  size="lg" 
-                  className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
-                >
-                  <Link href="/login"><Users className="mr-3 h-5 w-5" /> JOIN THE SANCTUARY</Link>
-                </Button>
+                <div className="space-y-10">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary bg-primary/5 py-2 px-4 rounded-full w-fit mx-auto border border-primary/10">
+                    Join the community for free, or become a Member to provide direct care for our residents
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <Button 
+                      asChild
+                      size="lg" 
+                      className="w-full sm:w-auto bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
+                    >
+                      <Link href="/membership"><Heart className="mr-3 h-5 w-5 fill-current" /> UPGRADE TO MEMBER</Link>
+                    </Button>
+                    <Button 
+                      asChild
+                      variant="outline"
+                      size="lg" 
+                      className="w-full sm:w-auto border-secondary text-secondary font-black h-16 px-12 text-lg rounded-2xl hover:bg-secondary/10 transition-colors"
+                    >
+                      <Link href="/signup">JOIN THE FLOCK (FREE)</Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
