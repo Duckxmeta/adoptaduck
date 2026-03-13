@@ -409,14 +409,16 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right flex flex-col items-end gap-1">
+                  <div className="text-right flex flex-col items-end gap-1 shrink-0">
                     <Badge variant="outline" className={cn(
-                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 border-border",
+                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
                       (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
                     )}>
                       {bird.liveStatus || 'DAILY ROUTINE'}
                     </Badge>
-                    {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                    <div className="h-3 flex items-center justify-end w-full">
+                      {(hasVibe && isRecentlyUpdated) && <CheckCircle2 className="h-3 w-3 text-secondary" />}
+                    </div>
                   </div>
                 </Card>
               );
