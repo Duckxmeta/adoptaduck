@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -37,22 +36,18 @@ import {
   Egg,
   Send,
   History,
-  CalendarDays,
-  TrendingUp,
-  Award,
   Save,
   CheckCircle2,
   Clock,
   Eye,
-  EyeOff,
   User,
-  ArrowLeft,
-  Activity
+  Activity,
+  ArrowRight
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, updateDoc, increment, deleteDoc, addDoc, getDocs, where, writeBatch, limit } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, updateDoc, deleteDoc, addDoc, getDocs, where, writeBatch, limit } from 'firebase/firestore';
 import { Resident, DailyStatus, DuckOfTheMonthSettings, EggHistoryEntry } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -84,7 +79,6 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   
@@ -150,13 +144,13 @@ export default function AdminDashboard() {
   }, [todayEggData]);
 
   useEffect(() => {
-    if (!isUserLoading && !isAdmin) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router, isAdmin]);
+  }, [user, isUserLoading, router]);
 
   const handleUpdateStatus = (birdId: string, status: string) => {
-    if (!firestore || isPreviewMode) return;
+    if (!firestore || !isAdmin) return;
     const birdRef = doc(firestore, 'birds', birdId);
     
     updateDocumentNonBlocking(birdRef, {
@@ -180,7 +174,7 @@ export default function AdminDashboard() {
   };
 
   const handleUpdateDOTM = async (birdId: string, mission: string) => {
-    if (!firestore || isPreviewMode) return;
+    if (!firestore || !isAdmin) return;
     try {
       await setDoc(doc(firestore, 'settings', 'duck_of_the_month'), {
         birdId,
@@ -194,7 +188,7 @@ export default function AdminDashboard() {
   };
 
   const handlePublishDOTM = async () => {
-    if (!firestore || !dotmSettings?.birdId || isPreviewMode) return;
+    if (!firestore || !dotmSettings?.birdId || !isAdmin) return;
     setIsPublishing(true);
     try {
       const batch = writeBatch(firestore);
@@ -218,7 +212,7 @@ export default function AdminDashboard() {
   };
 
   const handleSyncEggs = async () => {
-    if (!firestore || !todayEggRef || isPreviewMode) return;
+    if (!firestore || !todayEggRef || !isAdmin) return;
     setIsSavingEggs(true);
     try {
       await setDoc(todayEggRef, {
@@ -237,7 +231,7 @@ export default function AdminDashboard() {
   };
 
   const handleSaveResident = (data: Partial<Resident>) => {
-    if (!firestore || isPreviewMode) return;
+    if (!firestore || !isAdmin) return;
     if (editingResident) {
       updateDocumentNonBlocking(doc(firestore, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() });
       toast({ title: "Resident Updated" });
@@ -254,13 +248,13 @@ export default function AdminDashboard() {
   };
 
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
-    if (!dailyStatusRef || isPreviewMode) return;
+    if (!dailyStatusRef || !isAdmin) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
     setDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
   const resetDailyTasks = () => {
-    if (!dailyStatusRef || isPreviewMode) return;
+    if (!dailyStatusRef || !isAdmin) return;
     setDocumentNonBlocking(dailyStatusRef, {
       morningFeeding: false, freshWater: false, eggCounter: false, healthCheck: false, nightlyPenUp: false,
       lastReset: new Date().toISOString()
@@ -275,7 +269,7 @@ export default function AdminDashboard() {
     return (completed / tasks.length) * 100;
   };
 
-  if (isUserLoading || !isAdmin) {
+  if (isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -289,63 +283,45 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
       <Navbar />
-      <BlankCertificateTemplate logoUrl={logoUrl} />
 
-      {/* Floating Exit Preview Button */}
-      {isPreviewMode && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] animate-in slide-in-from-bottom-4">
-          <Button 
-            onClick={() => setIsPreviewMode(false)}
-            className="bg-primary text-primary-foreground font-black px-8 h-14 rounded-2xl shadow-2xl shadow-primary/20 flex items-center gap-3 border-2 border-primary-foreground/20 hover:scale-105 transition-transform"
-          >
-            <EyeOff className="h-5 w-5" />
-            EXIT MEMBER PREVIEW
-          </Button>
-        </div>
-      )}
-
-      <main className="container mx-auto p-4 space-y-12 mt-4 no-print">
-        {/* DASHBOARD HEADER & PREVIEW TOGGLE */}
+      <main className="container mx-auto p-4 space-y-12 mt-4">
+        {/* DASHBOARD HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
            <div className="space-y-1">
-              <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
-                <LayoutDashboard className="h-7 w-7 text-primary" /> 
-                {isPreviewMode ? "SANCTUARY" : "MANAGER"} <span className="text-primary">{isPreviewMode ? "PULSE" : "PORTAL"}</span>
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
+                  <LayoutDashboard className="h-7 w-7 text-primary" /> 
+                  {isAdmin ? "MANAGER" : "SANCTUARY"} <span className="text-primary">{isAdmin ? "PORTAL" : "PULSE"}</span>
+                </h1>
+                <Badge variant={isAdmin ? "default" : "outline"} className={cn(
+                  "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 ml-2",
+                  isAdmin ? "bg-primary text-primary-foreground" : "border-secondary text-secondary"
+                )}>
+                  {isAdmin ? "Admin" : "Flock Member"}
+                </Badge>
+              </div>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">
-                {isPreviewMode ? "LIVE SANCTUARY FEED" : "SANCTUARY OPERATIONS"}
+                {isAdmin ? "SANCTUARY OPERATIONS" : "LIVE SANCTUARY FEED"}
               </p>
            </div>
 
-           <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "p-2 rounded-xl transition-colors",
-                  isPreviewMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                )}>
-                  {isPreviewMode ? <Eye className="h-5 w-5" /> : <Settings className="h-5 w-5" />}
+           {isAdmin && (
+             <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <Label className="text-[10px] font-black uppercase tracking-widest block">
+                      Admin: {user?.displayName?.split(' ')[0] || 'Staff'}
+                    </Label>
+                    <p className="text-[8px] font-bold text-muted-foreground uppercase">
+                      Managing Operations
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <Label htmlFor="preview-mode" className="text-[10px] font-black uppercase tracking-widest block cursor-pointer">
-                    {isPreviewMode ? "Member View" : "Manager Tools"}
-                  </Label>
-                  <p className="text-[8px] font-bold text-muted-foreground uppercase">
-                    {isPreviewMode ? "Auditing User Experience" : "Managing Operations"}
-                  </p>
-                </div>
-              </div>
-              <Switch 
-                id="preview-mode"
-                checked={isPreviewMode}
-                onCheckedChange={(val) => {
-                  setIsPreviewMode(val);
-                  toast({
-                    title: val ? "Member Preview Active" : "Manager Tools Restored",
-                    description: val ? "Management actions are temporarily disabled." : "Full control enabled.",
-                  });
-                }}
-              />
-           </Card>
+             </Card>
+           )}
         </div>
 
         {/* 1. EGG COUNTER */}
@@ -355,7 +331,7 @@ export default function AdminDashboard() {
               <Egg className="h-4 w-4 text-primary" />
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2>
             </div>
-            {isPreviewMode && (
+            {!isAdmin && (
               <div className="flex items-center gap-2 text-[#14F195]">
                 <Activity className="h-3 w-3 animate-pulse" />
                 <span className="text-[8px] font-black uppercase tracking-widest">Live Harvest Feed</span>
@@ -372,7 +348,7 @@ export default function AdminDashboard() {
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
               </div>
               
-              {!isPreviewMode && (
+              {isAdmin ? (
                 <div className="flex flex-col gap-4 w-full md:w-auto">
                   <div className="flex gap-4">
                     <Button 
@@ -398,6 +374,13 @@ export default function AdminDashboard() {
                     SAVE FOR TODAY
                   </Button>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <Badge variant="outline" className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-6 py-2 rounded-full font-black tracking-widest">
+                    <Activity className="h-3 w-3 mr-2 animate-pulse" /> LIVE FEED
+                  </Badge>
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">Updated by sanctuary staff in real-time</p>
+                </div>
               )}
             </div>
           </Card>
@@ -410,7 +393,7 @@ export default function AdminDashboard() {
               <ClipboardList className="h-4 w-4 text-primary" />
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
             </div>
-            {!isPreviewMode ? (
+            {isAdmin ? (
               <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
                 <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Day
               </Button>
@@ -422,10 +405,10 @@ export default function AdminDashboard() {
             )}
           </div>
           <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
-            {isPreviewMode && (
+            {!isAdmin && (
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Daily Sanctuary Health</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Health</span>
                   <span className="text-2xl font-headline font-black text-primary leading-none">{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-3 bg-muted" />
@@ -447,16 +430,16 @@ export default function AdminDashboard() {
                   )}>
                     <span className="text-xl">{task.icon}</span>
                     <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                    {!isPreviewMode ? (
-                      <Switch 
-                        checked={isCompleted}
-                        onCheckedChange={() => toggleDailyTask(task.key as any)}
-                      />
-                    ) : (
-                      <div className="h-6 flex items-center justify-center">
-                        {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5 opacity-20" />}
-                      </div>
-                    )}
+                    <div className="h-6 flex items-center justify-center">
+                      {isAdmin ? (
+                        <Switch 
+                          checked={isCompleted}
+                          onCheckedChange={() => toggleDailyTask(task.key as any)}
+                        />
+                      ) : (
+                        isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5 opacity-20" />
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -471,7 +454,7 @@ export default function AdminDashboard() {
               <Zap className="h-4 w-4 text-primary" />
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2>
             </div>
-            {isPreviewMode && (
+            {!isAdmin && (
               <div className="flex items-center gap-2 text-secondary">
                 <Activity className="h-3 w-3 animate-pulse" />
                 <span className="text-[8px] font-black uppercase tracking-widest">Real-time Broadcast</span>
@@ -489,10 +472,10 @@ export default function AdminDashboard() {
               return (
                 <Card 
                   key={bird.id} 
-                  onClick={() => !isPreviewMode && setVibeBird(bird)}
+                  onClick={() => isAdmin && setVibeBird(bird)}
                   className={cn(
                     "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl transition-all group",
-                    !isPreviewMode && "cursor-pointer hover:border-primary/50 active:scale-95",
+                    isAdmin && "cursor-pointer hover:border-primary/50 active:scale-95",
                     (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
                     isBroody && "border-primary/30"
                   )}
@@ -533,7 +516,7 @@ export default function AdminDashboard() {
         </section>
 
         {/* 4. SHOWCASE DIRECTORY (Admin Only) */}
-        {!isPreviewMode && (
+        {isAdmin && (
           <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-150">
             <div className="flex items-center gap-3">
               <Trophy className="h-4 w-4 text-primary" />
@@ -581,7 +564,7 @@ export default function AdminDashboard() {
         )}
 
         {/* 5. ADD NEW DUCK (Admin Only) */}
-        {!isPreviewMode && (
+        {isAdmin && (
           <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-200">
             <div className="flex items-center gap-3">
               <Bird className="h-4 w-4 text-primary" />
@@ -630,7 +613,7 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-black truncate">{bird.breed}</p>
                   </div>
-                  {!isPreviewMode ? (
+                  {isAdmin ? (
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
                         <ClipboardList className="h-3 w-3 mr-1" /> LOG
@@ -645,7 +628,7 @@ export default function AdminDashboard() {
                     </Button>
                   )}
                 </div>
-                {!isPreviewMode && (
+                {isAdmin && (
                   <Button 
                     variant="ghost" size="icon" 
                     className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
@@ -660,7 +643,7 @@ export default function AdminDashboard() {
         </section>
 
         {/* 7. 30-DAY EGG HISTORY (Admin Only) */}
-        {!isPreviewMode && (
+        {isAdmin && (
           <section className="space-y-4 animate-in fade-in duration-500">
             <div className="flex items-center gap-3">
               <History className="h-4 w-4 text-primary" />
@@ -694,7 +677,7 @@ export default function AdminDashboard() {
         )}
 
         {/* 8. SUPPORTER ASSETS (Admin Only) */}
-        {!isPreviewMode && (
+        {isAdmin && (
           <section className="pt-8 border-t border-border">
             <div className="flex items-center gap-3 mb-4">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -716,7 +699,7 @@ export default function AdminDashboard() {
       </main>
 
       {/* VIBE SELECTION MODAL */}
-      <Dialog open={!!vibeBird && !isPreviewMode} onOpenChange={(open) => !open && setVibeBird(null)}>
+      <Dialog open={!!vibeBird && isAdmin} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border">
             <div className="flex items-center gap-4">
@@ -778,68 +761,32 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
-      <HealthLogDialog 
-        open={isHealthLogOpen} onOpenChange={setIsHealthLogOpen} 
-        onSave={async (notes) => {
-          if (!firestore || !loggingResident) return;
-          await addDoc(collection(firestore, 'birds', loggingResident.id, 'healthLogs'), {
-            birdId: loggingResident.id, logDate: new Date().toISOString(), notes,
-          });
-          toast({ title: "Care Log Saved" });
-          setIsHealthLogOpen(false);
-        }} 
-        residentName={loggingResident?.name || ''} 
-      />
-      <DeleteResidentDialog
-        open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident}
-        offspringCount={birds?.filter(b => b.motherId === deletingResident?.id || b.fatherId === deletingResident?.id).length || 0}
-        onConfirm={async () => {
-          if (!firestore || !deletingResident) return;
-          await deleteDoc(doc(firestore, 'birds', deletingResident.id));
-          toast({ title: "Resident Removed" });
-        }}
-      />
-    </div>
-  );
-}
-
-function BlankCertificateTemplate({ logoUrl }: { logoUrl: string }) {
-  return (
-    <div className="hidden print:block fixed inset-0 z-[100] bg-white text-black p-0 m-0">
-      <div className="h-screen w-full flex items-center justify-center p-8 bg-white">
-        <div className="relative w-full max-w-[1000px] aspect-[1.414/1] bg-white border-[12px] border-[#FFD700] rounded-[3rem] p-16 flex flex-col items-center justify-between text-center overflow-hidden">
-          <Award className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] text-[#FFD700]/5 -rotate-12 pointer-events-none" />
-          <div className="space-y-6 w-full">
-            <div className="flex justify-center items-center gap-4">
-              <ShieldCheck className="h-10 w-10 text-[#FFD700]" />
-              <span className="text-[12px] font-bold uppercase tracking-[0.5em] text-gray-400">Official Sanctuary Document</span>
-              <ShieldCheck className="h-10 w-10 text-[#FFD700]" />
-            </div>
-            <h2 className="text-5xl font-black uppercase tracking-[0.1em] border-y-4 border-[#FFD700]/20 py-8">Guardian Certificate</h2>
-          </div>
-          <div className="space-y-12 py-4 w-full">
-            <p className="text-2xl font-medium text-gray-400 uppercase tracking-[0.3em]">This certifies that</p>
-            <div className="border-b-4 border-[#FFD700] w-3/4 mx-auto pb-2"><span className="text-6xl font-black uppercase opacity-10">Guardian Name</span></div>
-            <p className="text-3xl font-medium leading-relaxed max-w-2xl mx-auto">
-              is an Official Guardian of <br /><span className="text-[#FFD700] text-5xl font-black uppercase">____________________</span> <br />
-              <span className="text-xl text-gray-400 uppercase tracking-widest mt-4 block">For the 2026 Sanctuary Season</span>
-            </p>
-          </div>
-          <div className="w-full flex justify-between items-center pt-16 border-t-2 border-gray-100">
-            <div className="text-left space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Sanctuary Seal</p>
-              <div className="relative w-24 h-24"><Image src={logoUrl} alt="DDS Logo" fill className="object-contain" /></div>
-            </div>
-            <div className="flex-1 text-center italic text-gray-400 text-sm max-w-sm px-8">"Saving lives, one duck at a time. Your guardianship ensures safety and health."</div>
-            <div className="text-right space-y-1">
-               <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Serial No.</p>
-               <p className="text-2xl font-black text-[#FFD700]">No. ____</p>
-               <p className="text-[9px] font-bold text-gray-400 uppercase">DECENT DUCKS ORG</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {isAdmin && (
+        <>
+          <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
+          <HealthLogDialog 
+            open={isHealthLogOpen} onOpenChange={setIsHealthLogOpen} 
+            onSave={async (notes) => {
+              if (!firestore || !loggingResident) return;
+              await addDoc(collection(firestore, 'birds', loggingResident.id, 'healthLogs'), {
+                birdId: loggingResident.id, logDate: new Date().toISOString(), notes,
+              });
+              toast({ title: "Care Log Saved" });
+              setIsHealthLogOpen(false);
+            }} 
+            residentName={loggingResident?.name || ''} 
+          />
+          <DeleteResidentDialog
+            open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident}
+            offspringCount={birds?.filter(b => b.motherId === deletingResident?.id || b.fatherId === deletingResident?.id).length || 0}
+            onConfirm={async () => {
+              if (!firestore || !deletingResident) return;
+              await deleteDoc(doc(firestore, 'birds', deletingResident.id));
+              toast({ title: "Resident Removed" });
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
