@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -27,8 +26,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 
-const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
-
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
@@ -36,7 +33,12 @@ export default function Home() {
   const router = useRouter();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
@@ -53,7 +55,7 @@ export default function Home() {
   const featuredDuck = featuredBirds && featuredBirds.length > 0 ? featuredBirds[0] : null;
 
   useEffect(() => {
-    if (!auth || !firestore) return;
+    if (!auth || !firestore || !mounted) return;
 
     configureAuthPersistence(auth);
 
@@ -77,7 +79,7 @@ export default function Home() {
             description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
           });
           
-          router.push('/admin'); // Unified dashboard handles role
+          router.push('/admin'); 
         }
       } catch (error: any) {
         console.error("Auth Error:", error);
@@ -87,11 +89,13 @@ export default function Home() {
     };
 
     checkRedirect();
-  }, [auth, firestore, toast, router]);
+  }, [auth, firestore, toast, router, mounted]);
 
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
+
+  if (!mounted) return null;
 
   if (isVerifying) {
     return (
@@ -103,7 +107,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-1000">
       <Navbar />
       
       <main className="flex-1">
@@ -111,7 +115,7 @@ export default function Home() {
         <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-10000 hover:scale-105"
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-[20000ms] hover:scale-110"
             style={{ backgroundImage: `url('${heroImageUrl}')` }}
           />
           
@@ -223,7 +227,7 @@ export default function Home() {
           </div>
         </section>
 
-        {!user && (
+        {mounted && !user && (
           <section className="py-24 bg-secondary/5 relative overflow-hidden">
             <div className="container mx-auto px-4 relative z-10 text-center space-y-8">
               <div className="max-w-5xl mx-auto bg-card border-2 border-secondary/20 rounded-[3rem] p-10 md:p-20 shadow-2xl">

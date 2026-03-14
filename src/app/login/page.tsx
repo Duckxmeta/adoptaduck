@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -20,20 +19,21 @@ export default function MemberLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user && !isUserLoading) {
-      if (ADMIN_EMAILS.includes(user.email || '')) {
-        router.push('/admin');
-      } else {
-        router.push('/admin'); // Unified dashboard handles role view
-      }
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user && !isUserLoading && mounted) {
+      router.push('/admin');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, mounted, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +91,7 @@ export default function MemberLogin() {
     }
   };
 
-  if (isUserLoading) {
+  if (!mounted || isUserLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -100,7 +100,7 @@ export default function MemberLogin() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background selection:bg-primary selection:text-primary-foreground animate-in fade-in duration-700">
       <Link href="/" className="mb-8 flex items-center gap-2 text-primary hover:underline font-bold text-[10px] tracking-[0.3em] uppercase">
         <ArrowLeft className="h-3 w-3" /> BACK TO SANCTUARY
       </Link>
@@ -118,7 +118,7 @@ export default function MemberLogin() {
           <div className="grid grid-cols-1 gap-3">
             <Button 
               variant="outline" 
-              className="w-full h-14 rounded-xl border-border font-black text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-primary/5 transition-colors"
+              className="w-full h-14 rounded-xl border-border font-black text-xs tracking-widest flex items-center justify-center gap-3 hover:bg-primary/5 transition-all"
               onClick={handleGoogleLogin}
               disabled={loading}
             >
@@ -132,7 +132,7 @@ export default function MemberLogin() {
             </Button>
             <Button 
               variant="ghost" 
-              className="w-full h-12 rounded-xl text-muted-foreground font-black text-[10px] tracking-[0.2em] flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-xl text-muted-foreground font-black text-[10px] tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-muted/5 transition-all"
               onClick={handleGuestLogin}
               disabled={loading}
             >
