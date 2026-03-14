@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -16,7 +17,7 @@ export function Navbar() {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const membershipUrl = "/membership";
+  const supportUrl = "/support";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
@@ -55,7 +56,6 @@ export function Navbar() {
 
   return (
     <>
-      {/* Desktop Top Nav & Mobile Header */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 md:py-4">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -67,7 +67,6 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Desktop Only Links */}
           <div className="hidden md:flex items-center gap-8">
             {user ? (
               <>
@@ -92,7 +91,7 @@ export function Navbar() {
                   <Lock className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" /> Member Login
                 </Link>
                 <Button asChild className="bg-primary text-primary-foreground hover:scale-105 transition-transform font-black rounded-xl px-6 h-11 shadow-[0_0_15px_rgba(255,215,0,0.3)]">
-                  <Link href={membershipUrl}>
+                  <Link href="/support#adopt">
                     <Heart className="mr-2 h-4 w-4 fill-current" />
                     ADOPT NOW
                   </Link>
@@ -101,18 +100,16 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Right Action */}
           <div className="md:hidden">
             {!isAdmin && (
               <Button size="sm" asChild className="bg-primary text-primary-foreground font-black rounded-lg h-10 px-4 text-[10px] tracking-widest uppercase">
-                 <Link href={membershipUrl}>ADOPT</Link>
+                 <Link href="/support#adopt">ADOPT</Link>
               </Button>
             )}
           </div>
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/90 backdrop-blur-xl border-t border-border pb-safe">
         <div className="flex items-center justify-around h-16 px-2">
           {navLinks.map((link) => {

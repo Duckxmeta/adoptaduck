@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -29,7 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
@@ -76,7 +77,7 @@ export default function Home() {
 
           toast({
             title: "Access Verified",
-            description: `Welcome to the sanctuary, ${result.user.displayName || 'Friend'}.`,
+            description: `Welcome back!`,
           });
           
           router.push('/admin'); 
@@ -101,7 +102,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary space-y-4">
         <Loader2 className="h-12 w-12 animate-spin" />
-        <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Verifying Sanctuary Credentials...</p>
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Entering Sanctuary...</p>
       </div>
     );
   }
@@ -112,47 +113,58 @@ export default function Home() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
+        <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-[20000ms] hover:scale-110"
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-[30000ms] scale-110"
             style={{ backgroundImage: `url('${heroImageUrl}')` }}
           />
           
           <div className="container mx-auto px-4 relative z-20 text-center">
-            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
               <Sparkles className="h-3.5 w-3.5" />
               Virtual Sanctuary
             </div>
-            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter text-foreground uppercase text-center">
-              VIRTUAL <span className="text-primary">SANCTUARY</span>
+            <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter uppercase text-center">
+              THE <span className="text-primary">FLOCK</span> PULSE
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed">
-              Providing a quiet, high-quality home for our flock. We prioritize stress-free environments and dedicated daily care.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed px-4">
+              Step inside the world's most transparent duck sanctuary. Follow every rescue, every egg, and every heartbeat in real-time.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-14 px-10 text-lg rounded-xl" asChild>
-                <Link href="/flock">VISIT THE FLOCK</Link>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:w-auto px-12 text-lg rounded-2xl shadow-2xl" asChild>
+                <Link href="/support#adopt">ADOPT A RESIDENT</Link>
               </Button>
-              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-14 px-10 text-lg rounded-xl shadow-2xl" asChild>
-                <Link href="/login">MEMBER DASHBOARD</Link>
+              <Button size="lg" variant="outline" className="border-white/20 text-white font-black backdrop-blur-md hover:bg-white/10 h-16 w-full sm:w-auto px-12 text-lg rounded-2xl" asChild>
+                <Link href="/flock">MEET THE FLOCK</Link>
               </Button>
             </div>
           </div>
 
-          <div className="absolute bottom-6 right-6 md:bottom-10 md:right-10 z-20">
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-              <p className="text-[10px] font-headline font-black uppercase tracking-[0.2em] text-white">
-                Residents: <span className="text-primary text-sm ml-1">{birds?.length || 0}</span> 
-              </p>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+            <div className="flex flex-col items-center gap-2 opacity-50">
+              <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
+              <div className="w-0.5 h-10 bg-primary/50" />
+            </div>
+          </div>
+        </section>
+
+        {/* Support Section - The Middle Fix */}
+        <section className="py-24 bg-card/50 border-y border-border">
+          <div className="container mx-auto px-4 text-center space-y-8">
+            <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From emergency rescues to daily layers, your contributions keep the sanctuary running.</p>
+            <div className="flex justify-center">
+              <Button asChild size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                <Link href="/support#donate">SUPPORT THE FLOCK <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
+              </Button>
             </div>
           </div>
         </section>
 
         {/* Featured Resident Spotlight */}
         {featuredDuck && (
-          <section className="bg-primary/5 border-y border-primary/10 py-24 relative overflow-hidden">
+          <section className="bg-primary/5 border-y border-primary/10 py-24">
             <div className="container mx-auto px-4">
               <Card className="bg-card border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-12 items-center">
@@ -175,11 +187,9 @@ export default function Home() {
                     <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
                       "{featuredDuck.personalityTraits.split('.')[0]}."
                     </p>
-                    <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                      <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
-                        <Link href="/flock">LEARN MORE <ArrowRight className="h-4 w-4" /></Link>
-                      </Button>
-                    </div>
+                    <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
+                      <Link href={`/residents/${featuredDuck.id}`}>LEARN MORE <ArrowRight className="h-4 w-4" /></Link>
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -188,63 +198,42 @@ export default function Home() {
         )}
 
         {/* Educational Section */}
-        <section className="py-32 bg-card/30 border-y border-border">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16 space-y-4">
-              <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-widest">WHY WE EXIST</Badge>
-              <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
-            </div>
+        <section className="py-32 container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-widest">WHY WE EXIST</Badge>
+            <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
+          </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="relative aspect-square">
-                    <Image src={domesticImageUrl} alt="Domestic" fill className="object-cover" />
-                  </div>
-                  <CardContent className="p-8 flex flex-col justify-center space-y-4">
-                    <h3 className="text-2xl font-headline font-black text-primary">Domestic Ducks</h3>
-                    <p className="text-foreground/80 text-sm leading-relaxed">
-                      Breeds like Pekins are bred for human care. They <strong>cannot fly</strong> or survive in the wild. They face certain predation without a safe sanctuary home.
-                    </p>
-                  </CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="relative aspect-square">
+                  <Image src={domesticImageUrl} alt="Domestic" fill className="object-cover" />
                 </div>
-              </Card>
+                <CardContent className="p-8 flex flex-col justify-center space-y-4">
+                  <h3 className="text-2xl font-headline font-black text-primary">Domestic Ducks</h3>
+                  <p className="text-foreground/80 text-sm leading-relaxed">
+                    Bred for human care, they <strong>cannot fly</strong> or survive in the wild. Without a sanctuary, they face certain predation.
+                  </p>
+                </CardContent>
+              </div>
+            </Card>
 
-              <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden group hover:glow-purple transition-all duration-500 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                  <div className="relative aspect-square">
-                    <Image src={wildImageUrl} alt="Wild" fill className="object-cover" />
-                  </div>
-                  <CardContent className="p-8 flex flex-col justify-center space-y-4">
-                    <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
-                    <p className="text-foreground/80 text-sm leading-relaxed">
-                      Wild Mallards are self-sufficient aviators. They need <strong>nature and space</strong> to migrate and thrive independently. They belong in the wild.
-                    </p>
-                  </CardContent>
+            <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="relative aspect-square">
+                  <Image src={wildImageUrl} alt="Wild" fill className="object-cover" />
                 </div>
-              </Card>
-            </div>
+                <CardContent className="p-8 flex flex-col justify-center space-y-4">
+                  <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
+                  <p className="text-foreground/80 text-sm leading-relaxed">
+                    Wild Mallards are independent aviators. They need <strong>space to migrate</strong> and thrive without human intervention.
+                  </p>
+                </CardContent>
+              </div>
+            </Card>
           </div>
         </section>
-
-        {mounted && !user && (
-          <section className="py-24 bg-secondary/5 relative overflow-hidden">
-            <div className="container mx-auto px-4 relative z-10 text-center space-y-8">
-              <div className="max-w-5xl mx-auto bg-card border-2 border-secondary/20 rounded-[3rem] p-10 md:p-20 shadow-2xl">
-                <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Join the <span className="text-secondary">Flock</span></h2>
-                <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto mt-4">Get real-time updates from the sanctuary and follow every rescue story.</p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
-                  <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-16 px-12 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                    <Link href="/signup">CREATE ACCOUNT</Link>
-                  </Button>
-                  <Button asChild variant="outline" size="lg" className="border-secondary text-secondary font-black h-16 px-12 text-lg rounded-2xl hover:bg-secondary/10">
-                    <Link href="/login">MEMBER LOGIN</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
       </main>
 
       <Footer />

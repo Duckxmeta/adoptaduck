@@ -1,14 +1,15 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 
 export function Footer() {
-  const membershipUrl = "/membership";
+  const supportUrl = "/support";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   return (
-    <footer id="contact-section" className="w-full bg-background border-t border-secondary/20 pt-16 pb-8">
+    <footer id="contact-section" className="w-full bg-background border-t border-secondary/20 pt-16 pb-24 md:pb-8">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center text-center space-y-8 mb-16">
           <div className="relative w-24 h-24 overflow-hidden mb-2">
@@ -26,7 +27,7 @@ export function Footer() {
             </p>
           </div>
           <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl hover:scale-105 transition-transform shadow-lg">
-            <Link href={membershipUrl} title="Support the Flock">
+            <Link href="/support#donate" title="Support the Flock">
               <Heart className="mr-2 h-4 w-4 fill-current" />
               SUPPORT THE FLOCK
             </Link>
@@ -45,7 +46,7 @@ export function Footer() {
             <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Community</h5>
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/login" className="hover:text-primary transition-colors">Member Login</Link></li>
-              <li><Link href="/membership" className="hover:text-primary transition-colors">Membership</Link></li>
+              <li><Link href="/support#membership" className="hover:text-primary transition-colors">Membership</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
