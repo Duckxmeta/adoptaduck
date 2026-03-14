@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -47,7 +48,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, updateDoc, deleteDoc, addDoc, getDocs, where, writeBatch, limit } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, updateDoc, deleteDoc, addDoc, getDocs, where, writeBatch, limit, serverTimestamp } from 'firebase/firestore';
 import { Resident, DailyStatus, DuckOfTheMonthSettings, EggHistoryEntry } from '@/lib/types';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -60,6 +61,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+const MASTER_UID = 'cgQheQMuxqZd4N825PppPl72GtE2';
 
 const PRESET_VIBES = [
   { label: 'Chill', emoji: '🌿' },
@@ -70,8 +72,6 @@ const PRESET_VIBES = [
   { label: 'Vigilant', emoji: '🛡️' },
   { label: 'Vocal', emoji: '📢' },
 ];
-
-const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -88,17 +88,29 @@ export default function AdminDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
 
-  // Vibe Selection State
   const [vibeBird, setVibeBird] = useState<Resident | null>(null);
-
   const [missionInput, setMissionInput] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   
   const todayDate = format(new Date(), 'yyyy-MM-dd');
-  const isAdmin = user && (ADMIN_EMAILS.includes(user.email || '') || user.uid === 'cgQheQMuxqZd4N825PppPl72GtE2');
+  const isAdmin = user && (ADMIN_EMAILS.includes(user.email || '') || user.uid === MASTER_UID);
 
   const [localEggCount, setLocalEggCount] = useState(0);
+
+  // Force Admin Sync for Master Account
+  useEffect(() => {
+    if (user?.uid === MASTER_UID && firestore) {
+      const userRef = doc(firestore, 'users', user.uid);
+      setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        role: 'admin',
+        isAdmin: true,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+  }, [user, firestore]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -305,7 +317,7 @@ export default function AdminDashboard() {
               </p>
            </div>
 
-           {isAdmin && (
+           {user && (
              <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -313,10 +325,10 @@ export default function AdminDashboard() {
                   </div>
                   <div className="space-y-0.5">
                     <Label className="text-[10px] font-black uppercase tracking-widest block">
-                      Admin: {user?.displayName?.split(' ')[0] || 'Staff'}
+                      {isAdmin ? 'Admin:' : 'Member:'} {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Staff'}
                     </Label>
                     <p className="text-[8px] font-bold text-muted-foreground uppercase">
-                      Managing Operations
+                      {isAdmin ? 'Managing Operations' : 'Sanctuary Pulse View'}
                     </p>
                   </div>
                 </div>
@@ -405,15 +417,13 @@ export default function AdminDashboard() {
             )}
           </div>
           <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
-            {!isAdmin && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Health</span>
-                  <span className="text-2xl font-headline font-black text-primary leading-none">{Math.round(progress)}%</span>
-                </div>
-                <Progress value={progress} className="h-3 bg-muted" />
+            <div className="space-y-2">
+              <div className="flex justify-between items-end">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Health</span>
+                <span className="text-2xl font-headline font-black text-primary leading-none">{Math.round(progress)}%</span>
               </div>
-            )}
+              <Progress value={progress} className="h-3 bg-muted" />
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {[
                 { label: "Feeding", icon: "🌾", key: "morningFeeding" },
@@ -431,14 +441,11 @@ export default function AdminDashboard() {
                     <span className="text-xl">{task.icon}</span>
                     <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
                     <div className="h-6 flex items-center justify-center">
-                      {isAdmin ? (
-                        <Switch 
-                          checked={isCompleted}
-                          onCheckedChange={() => toggleDailyTask(task.key as any)}
-                        />
-                      ) : (
-                        isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5 opacity-20" />
-                      )}
+                      <Switch 
+                        checked={isCompleted}
+                        disabled={!isAdmin}
+                        onCheckedChange={() => toggleDailyTask(task.key as any)}
+                      />
                     </div>
                   </div>
                 );
@@ -613,20 +620,28 @@ export default function AdminDashboard() {
                     </div>
                     <p className="text-[8px] text-muted-foreground uppercase tracking-widest font-black truncate">{bird.breed}</p>
                   </div>
-                  {isAdmin ? (
-                    <div className="flex gap-2">
+                  <div className="flex gap-2">
+                    {isAdmin && (
                       <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
                         <ClipboardList className="h-3 w-3 mr-1" /> LOG
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
-                        <Settings className="h-3 w-3 mr-1" /> EDIT
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest mt-2">
-                      <Link href={`/residents/${bird.id}`}>VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></Link>
+                    )}
+                    <Button asChild variant={isAdmin ? "ghost" : "outline"} size="sm" className={cn(
+                      "h-8 px-2 text-[8px] font-black uppercase tracking-widest",
+                      isAdmin ? "text-muted-foreground" : "w-full mt-2"
+                    )} onClick={() => {
+                      if (isAdmin) {
+                        setEditingResident(bird); 
+                        setIsDialogOpen(true);
+                      }
+                    }}>
+                      {isAdmin ? (
+                        <span><Settings className="h-3 w-3 mr-1 inline" /> EDIT</span>
+                      ) : (
+                        <Link href={`/residents/${bird.id}`}>VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3 inline" /></Link>
+                      )}
                     </Button>
-                  )}
+                  </div>
                 </div>
                 {isAdmin && (
                   <Button 

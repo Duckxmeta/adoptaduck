@@ -13,7 +13,9 @@
         "backstory": { "type": "string" },
         "primaryImageUrl": { "type": "string" },
         "isFoundingResident": { "type": "boolean" },
-        "generation": { "type": "number" }
+        "generation": { "type": "number" },
+        "liveStatus": { "type": "string" },
+        "statusLastUpdated": { "type": "string" }
       }
     },
     "EggHistory": {
@@ -26,6 +28,20 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
+    "DailyStatus": {
+      "title": "DailyStatus",
+      "type": "object",
+      "description": "Sanctuary routine tracker.",
+      "properties": {
+        "id": { "type": "string" },
+        "morningFeeding": { "type": "boolean" },
+        "freshWater": { "type": "boolean" },
+        "eggCounter": { "type": "boolean" },
+        "healthCheck": { "type": "boolean" },
+        "nightlyPenUp": { "type": "boolean" },
+        "lastReset": { "type": "string" }
+      }
+    },
     "Donation": {
       "title": "Donation",
       "type": "object",
@@ -34,9 +50,8 @@
         "amount": { "type": "number" },
         "designation": { "type": "string", "enum": ["feed", "medical", "infrastructure"] },
         "timestamp": { "type": "string", "format": "date-time" },
-        "donorDisplayName": { "type": "string", "description": "Public-facing name for the ledger." },
-        "donorPrivateName": { "type": "string", "description": "Legal name from PayPal (Admin only)." },
-        "donorPrivateEmail": { "type": "string", "description": "Email from PayPal (Admin only)." }
+        "donorDisplayName": { "type": "string" },
+        "uid": { "type": "string" }
       }
     }
   },
@@ -52,12 +67,13 @@
       "schema": "#/backend/entities/EggHistory",
       "description": "Daily aggregate of egg collection."
     },
+    "/daily_status/{statusId}": {
+      "schema": "#/backend/entities/DailyStatus",
+      "description": "Real-time sanctuary routine state."
+    },
     "/donations/{donationId}": {
       "schema": "#/backend/entities/Donation",
-      "description": "Records of financial support with privacy tiers."
-    },
-    "/ledger/{expenseId}": {
-      "description": "Transparency ledger for sanctuary spending."
+      "description": "Financial support records."
     }
   }
 }
