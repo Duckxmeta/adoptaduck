@@ -29,7 +29,10 @@ import {
   Globe,
   Stethoscope,
   Bird,
-  Star
+  Star,
+  BookOpen,
+  MapPin,
+  Baby
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -51,17 +54,10 @@ function SupportContent() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
-  const [amount, setAmount] = useState<string>('8.33');
+  const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('one-time');
+  const [amount, setAmount] = useState<string>('10');
   const [designation, setDesignation] = useState<string>('feed');
   const [donorDisplayName, setDonorDisplayName] = useState('');
-
-  const donationsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'donations'), orderBy('timestamp', 'desc'), limit(50));
-  }, [firestore]);
-
-  const { data: donations } = useCollection(donationsQuery);
 
   const handlePaymentSuccess = async (paypalDetails: any, amountValue: number, isOneTime: boolean) => {
     if (!firestore) return;
@@ -189,7 +185,7 @@ function SupportContent() {
                       <Input 
                         placeholder="0.00" 
                         type="number"
-                        value={['5', '10', '20'].includes(amount) && frequency === 'one-time' ? '' : amount}
+                        value={amount}
                         onChange={(e) => { setFrequency('one-time'); setAmount(e.target.value); }}
                         className="h-14 rounded-xl border-2 border-border font-headline font-black text-xl pl-10"
                       />
@@ -198,23 +194,21 @@ function SupportContent() {
                   </div>
                 </div>
 
-                {frequency === 'one-time' && (
-                  <div className="pt-4 flex justify-center">
-                    <div className="w-full max-w-sm">
-                      <PayPalButtons 
-                        style={{ layout: "vertical", shape: "rect", label: "donate", color: "gold" }}
-                        createOrder={(data, actions) => actions.order.create({
-                          intent: "CAPTURE",
-                          purchase_units: [{ amount: { currency_code: "USD", value: amount || "5" }, description: `Support: ${designation}` }]
-                        })}
-                        onApprove={async (data, actions) => {
-                          const details = await actions.order?.capture();
-                          handlePaymentSuccess(details, Number(amount || 5), true);
-                        }}
-                      />
-                    </div>
+                <div className="pt-4 flex justify-center">
+                  <div className="w-full max-w-sm">
+                    <PayPalButtons 
+                      style={{ layout: "vertical", shape: "rect", label: "donate", color: "gold" }}
+                      createOrder={(data, actions) => actions.order.create({
+                        intent: "CAPTURE",
+                        purchase_units: [{ amount: { currency_code: "USD", value: amount || "10" }, description: `Support: ${designation}` }]
+                      })}
+                      onApprove={async (data, actions) => {
+                        const details = await actions.order?.capture();
+                        handlePaymentSuccess(details, Number(amount || 10), true);
+                      }}
+                    />
                   </div>
-                )}
+                </div>
               </div>
             </Card>
           </section>
@@ -258,7 +252,10 @@ function SupportContent() {
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Guardian</h3>
                   <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Adopt-a-Duck Experience</p>
                 </div>
-                <div className="text-4xl font-headline font-black text-primary relative z-10">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="space-y-1 relative z-10">
+                  <div className="text-4xl font-headline font-black text-primary">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest">($.27 a day)</p>
+                </div>
                 <ul className="flex-1 space-y-3 relative z-10">
                   {[
                     'Official Virtual Adoption',
@@ -288,7 +285,10 @@ function SupportContent() {
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Founding Member</h3>
                   <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Lifetime Impact</p>
                 </div>
-                <div className="text-4xl font-headline font-black text-secondary">$88<span className="text-xs font-medium text-muted-foreground ml-1">/yr</span></div>
+                <div className="space-y-1">
+                  <div className="text-4xl font-headline font-black text-secondary">$75<span className="text-xs font-medium text-muted-foreground ml-1">/yr</span></div>
+                  <p className="text-[10px] font-black text-secondary uppercase tracking-widest">($.20 a day)</p>
+                </div>
                 <ul className="flex-1 space-y-3">
                   {[
                     'Everything in Guardian',
@@ -306,42 +306,67 @@ function SupportContent() {
                   <PayPalButtons 
                     style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "blue" }}
                     createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_YEARLY })}
-                    onApprove={async (data, actions) => handlePaymentSuccess(data, 88, false)}
+                    onApprove={async (data, actions) => handlePaymentSuccess(data, 75, false)}
                   />
                 </div>
               </Card>
             </div>
           </section>
 
-          {/* 4. COMMUNITY IMPACT ACCESS */}
+          {/* 4. CLASSROOM & COMMUNITY ACCESS */}
           <section id="community" className="container mx-auto px-4 scroll-mt-24">
             <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
                 <Users className="h-40 w-40 text-primary" />
               </div>
               
-              <div className="space-y-8 relative z-10 text-center">
+              <div className="space-y-10 relative z-10 text-center">
                 <div className="space-y-4">
                   <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Sponsored Access</Badge>
-                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">Classroom & <span className="text-primary">Community</span></h2>
+                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
                   <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
-                  {[
-                    { t: "Formal Education", d: "K-12 schools & programs", i: <ShieldCheck className="h-4 w-4" /> },
-                    { t: "Home Learning", d: "Homeschool & 4-H clubs", i: <Users className="h-4 w-4" /> },
-                    { t: "Discovery", d: "Museums & preserves", i: <Globe className="h-4 w-4" /> },
-                    { t: "Therapeutic", d: "Care & nursing centers", i: <Stethoscope className="h-4 w-4" /> }
-                  ].map((g, i) => (
-                    <div key={i} className="p-4 bg-background/40 rounded-2xl border border-border flex gap-3 items-start">
-                      <div className="mt-1 text-primary">{g.i}</div>
-                      <div>
-                        <h4 className="font-headline font-black text-[10px] uppercase tracking-widest">{g.t}</h4>
-                        <p className="text-[10px] text-muted-foreground font-medium">{g.d}</p>
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
+                  <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                    <div className="flex items-center gap-3 text-primary mb-2">
+                      <ShieldCheck className="h-5 w-5" />
+                      <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
                     </div>
-                  ))}
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Traditional K-12 classrooms and dedicated school programs looking to integrate live sanctuary logs into their science or biology curriculum.
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                    <div className="flex items-center gap-3 text-primary mb-2">
+                      <Users className="h-5 w-5" />
+                      <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Homeschooling collectives, after-school clubs, and 4-H or library-based initiatives focused on agricultural stewardship.
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                    <div className="flex items-center gap-3 text-primary mb-2">
+                      <Globe className="h-5 w-5" />
+                      <h4 className="font-headline font-black text-xs uppercase tracking-widest">Public Discovery</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Agricultural programs at museums, youth centers, and nature preserves. Our 'Virtual Gates' are open worldwide—from Tennessee to Japan!
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                    <div className="flex items-center gap-3 text-primary mb-2">
+                      <Stethoscope className="h-5 w-5" />
+                      <h4 className="font-headline font-black text-xs uppercase tracking-widest">Therapeutic Environments</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Nursing homes, assisted living facilities, and memory care centers using the Sanctuary Pulse for resident engagement and comfort.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="pt-8">
