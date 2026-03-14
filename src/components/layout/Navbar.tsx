@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home, User } from 'lucide-react';
+import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home } from 'lucide-react';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
@@ -17,7 +17,6 @@ export function Navbar() {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const supportUrl = "/support";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');

@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { 
   Select, 
   SelectContent, 
@@ -19,42 +18,30 @@ import {
 } from "@/components/ui/select";
 import { 
   Heart, 
-  Wallet, 
   ArrowRight,
   Sparkles,
   Loader2,
   Waves,
   Trophy,
-  BellRing,
-  TrendingUp,
-  Activity,
-  User,
   ShieldCheck,
   CheckCircle2,
   Users,
-  Zap,
   Globe,
   Stethoscope,
-  Bird
+  Bird,
+  Star
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
-import { Progress } from '@/components/ui/progress';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import Link from 'next/link';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
 const PLAN_MONTHLY = "P-70H86074FR874700TNGZW23I";
 const PLAN_YEARLY = "P-620528699F672715MNGZW36Q";
-
-const GOALS = {
-  feed: 300,
-  medical: 500,
-  infrastructure: 1000
-};
 
 function SupportContent() {
   const router = useRouter();
@@ -66,11 +53,9 @@ function SupportContent() {
   
   const [frequency, setFrequency] = useState<'one-time' | 'monthly' | 'yearly'>('monthly');
   const [amount, setAmount] = useState<string>('8.33');
-  const [designation, setDesignation] = useState<string>('');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [designation, setDesignation] = useState<string>('feed');
   const [donorDisplayName, setDonorDisplayName] = useState('');
 
-  // Live Tracking Queries
   const donationsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'donations'), orderBy('timestamp', 'desc'), limit(50));
@@ -78,35 +63,16 @@ function SupportContent() {
 
   const { data: donations } = useCollection(donationsQuery);
 
-  const stats = useMemo(() => {
-    if (!donations) return { feed: 0, medical: 0, infrastructure: 0 };
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthly = donations.filter(d => {
-      const date = new Date(d.timestamp);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-    });
-
-    return {
-      feed: monthly.filter(d => d.designation === 'feed').reduce((s, d) => s + d.amount, 0),
-      medical: monthly.filter(d => d.designation === 'medical').reduce((s, d) => s + d.amount, 0),
-      infrastructure: monthly.filter(d => d.designation === 'infrastructure').reduce((s, d) => s + d.amount, 0)
-    };
-  }, [donations]);
-
   const handlePaymentSuccess = async (paypalDetails: any, amountValue: number, isOneTime: boolean) => {
     if (!firestore) return;
 
     try {
       if (isOneTime) {
-        const payer = paypalDetails.payer || {};
         await addDoc(collection(firestore, 'donations'), {
           amount: amountValue,
           designation: designation || 'general',
           timestamp: new Date().toISOString(),
-          donorDisplayName: donorDisplayName.trim() || 'A Kind Supporter',
+          donorDisplayName: donorDisplayName.trim() || user?.displayName || 'A Kind Supporter',
           uid: user?.uid || null
         });
       }
@@ -114,7 +80,7 @@ function SupportContent() {
       if (user) {
         const userRef = doc(firestore, 'users', user.uid);
         await setDoc(userRef, {
-          role: 'member',
+          role: frequency === 'one-time' ? 'member' : frequency === 'yearly' ? 'founding' : 'guardian',
           updatedAt: serverTimestamp()
         }, { merge: true });
       }
@@ -232,7 +198,7 @@ function SupportContent() {
                   </div>
                 </div>
 
-                {frequency === 'one-time' && designation && (
+                {frequency === 'one-time' && (
                   <div className="pt-4 flex justify-center">
                     <div className="w-full max-w-sm">
                       <PayPalButtons 
@@ -263,12 +229,12 @@ function SupportContent() {
               <div className="h-px bg-border flex-1" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {/* Free Tier */}
-              <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl opacity-80">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Flock Member */}
+              <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl opacity-90 border-t-4 border-t-muted">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Flock Member</h3>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Digital Access Only</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Digital Observer</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">$0</div>
                 <ul className="flex-1 space-y-3">
@@ -283,13 +249,13 @@ function SupportContent() {
                 </Button>
               </Card>
 
-              {/* Premium Tier */}
-              <Card className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-primary/10">
+              {/* Guardian */}
+              <Card className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-primary/10 scale-105 z-10 border-t-8 border-t-primary">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <Heart className="h-20 w-20 text-primary fill-primary" />
                 </div>
                 <div className="space-y-1 relative z-10">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Sanctuary Member</h3>
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Guardian</h3>
                   <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Adopt-a-Duck Experience</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-primary relative z-10">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
@@ -310,8 +276,37 @@ function SupportContent() {
                 <div className="pt-4">
                   <PayPalButtons 
                     style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "gold" }}
-                    createSubscription={(data, actions) => actions.subscription.create({ plan_id: frequency === 'monthly' ? PLAN_MONTHLY : PLAN_YEARLY })}
+                    createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_MONTHLY })}
                     onApprove={async (data, actions) => handlePaymentSuccess(data, 8.33, false)}
+                  />
+                </div>
+              </Card>
+
+              {/* Founding Member */}
+              <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl border-t-4 border-t-secondary">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Founding Member</h3>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Lifetime Impact</p>
+                </div>
+                <div className="text-4xl font-headline font-black text-secondary">$88<span className="text-xs font-medium text-muted-foreground ml-1">/yr</span></div>
+                <ul className="flex-1 space-y-3">
+                  {[
+                    'Everything in Guardian',
+                    'Name on Physical Ledger',
+                    'Annual Impact Report',
+                    'Founding Member Seal',
+                    'Priority Rescue Alerts'
+                  ].map((p, i) => (
+                    <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
+                      <Star className="h-4 w-4 text-secondary" /> {p}
+                    </li>
+                  ))}
+                </ul>
+                <div className="pt-4">
+                  <PayPalButtons 
+                    style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "blue" }}
+                    createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_YEARLY })}
+                    onApprove={async (data, actions) => handlePaymentSuccess(data, 88, false)}
                   />
                 </div>
               </Card>
