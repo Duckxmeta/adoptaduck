@@ -24,7 +24,7 @@ import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { Navbar } from '@/components/layout/Navbar';
-import { format, isAfter, subMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -63,7 +63,6 @@ export default function AdminDashboard() {
 
   const isUserAdmin = !!(user.email && ADMIN_EMAILS.includes(user.email));
 
-  // SAFETY FIRST: Strictly separate Admin vs Member UI to prevent unauthorized queries
   if (isUserAdmin) {
     return <ManagerPortal user={user} />;
   }
@@ -71,15 +70,11 @@ export default function AdminDashboard() {
   return <MemberPulseView user={user} />;
 }
 
-/**
- * MANAGER PORTAL: Full operational control for authorized staff
- */
 function ManagerPortal({ user }: { user: any }) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const todayDate = format(new Date(), 'yyyy-MM-dd');
 
-  // Dashboard States
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
@@ -90,11 +85,9 @@ function ManagerPortal({ user }: { user: any }) {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
 
-  // Queries
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
-  const historyQuery = useMemoFirebase(() => query(collection(firestore!, 'egg_history'), orderBy('id', 'desc'), limit(30)), [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: todayEggData } = useDoc<EggHistoryEntry>(todayEggRef);
@@ -133,63 +126,70 @@ function ManagerPortal({ user }: { user: any }) {
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24 font-body">
+    <div className="min-h-screen bg-background text-foreground pb-32 font-body">
       <Navbar />
-      <main className="container mx-auto p-4 space-y-12 mt-4">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
-           <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
-                  <LayoutDashboard className="h-7 w-7 text-primary" /> MANAGER <span className="text-primary">PORTAL</span>
-                </h1>
-                <Badge className="bg-primary text-primary-foreground border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5 ml-2">ADMIN</Badge>
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">SANCTUARY OPERATIONS</p>
-           </div>
+      <main className="container mx-auto p-4 space-y-10 mt-4 md:mt-8">
+        {/* MOBILE OPTIMIZED HEADER */}
+        <div className="flex flex-col gap-2 pb-6 border-b border-border">
+          <div className="flex items-center justify-between">
+            <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
+              <LayoutDashboard className="h-6 w-6 text-primary" /> MANAGER <span className="text-primary">PORTAL</span>
+            </h1>
+            <Badge className="bg-primary text-primary-foreground text-[8px] font-black tracking-widest px-2 py-0.5">ADMIN</Badge>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
-        {/* EGG COUNTER */}
+        {/* EGG COUNTER - Large Touch Targets */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Egg className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2></div>
-          <Card className="bg-card border-border rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <Card className="bg-card border-border rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left space-y-1">
               <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">TODAY'S TOTAL</h2>
-              <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
-              <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+              <h3 className="text-7xl md:text-8xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
             </div>
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <div className="flex gap-4">
-                <Button onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))} variant="outline" className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border"><Minus /></Button>
-                <Button onClick={() => setLocalEggCount(localEggCount + 1)} className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg"><Plus /></Button>
+                <Button onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))} variant="outline" className="flex-1 h-[80px] rounded-2xl border-2 border-border"><Minus className="h-6 w-6" /></Button>
+                <Button onClick={() => setLocalEggCount(localEggCount + 1)} className="flex-1 h-[80px] rounded-2xl bg-primary text-primary-foreground shadow-lg"><Plus className="h-6 w-6" /></Button>
               </div>
-              <Button onClick={handleSyncEggs} disabled={isSavingEggs} className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2">
-                {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} SAVE
+              <Button onClick={handleSyncEggs} disabled={isSavingEggs} className="w-full h-14 bg-secondary text-secondary-foreground font-black rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm tracking-widest">
+                {isSavingEggs ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} SAVE FOR TODAY
               </Button>
             </div>
           </Card>
         </section>
 
-        {/* DAILY ROUTINE */}
+        {/* DAILY ROUTINE - Large Cards for Mobile */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><ClipboardList className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2></div>
-          <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="space-y-2">
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl space-y-8">
+            <div className="space-y-3">
               <div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Health</span><span className="text-2xl font-headline font-black text-primary">{Math.round(progress)}%</span></div>
-              <Progress value={progress} className="h-3 bg-muted" />
+              <Progress value={progress} className="h-4 bg-muted" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               {[
                 { label: "Feeding", icon: "🌾", key: "morningFeeding" },
-                { label: "Water", icon: "💧", key: "freshWater" },
-                { label: "Eggs", icon: "🥚", key: "eggCounter" },
-                { label: "Health", icon: "🩺", key: "healthCheck" },
-                { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
+                { label: "Fresh Water", icon: "💧", key: "freshWater" },
+                { label: "Egg Count", icon: "🥚", key: "eggCounter" },
+                { label: "Health Check", icon: "🩺", key: "healthCheck" },
+                { label: "Nightly Pen", icon: "🌙", key: "nightlyPenUp" }
               ].map((task) => (
-                <div key={task.key} className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all", dailyStatus?.[task.key as keyof DailyStatus] ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-background/50 border-border text-muted-foreground")}>
-                  <span className="text-xl">{task.icon}</span>
-                  <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                  <Switch checked={!!dailyStatus?.[task.key as keyof DailyStatus]} onCheckedChange={() => toggleDailyTask(task.key as any)} />
+                <div key={task.key} className={cn(
+                  "flex items-center justify-between p-5 rounded-2xl border transition-all h-[70px] md:h-auto md:flex-col md:gap-3",
+                  dailyStatus?.[task.key as keyof DailyStatus] ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-background/50 border-border text-muted-foreground"
+                )}>
+                  <div className="flex items-center gap-4 md:flex-col md:gap-2">
+                    <span className="text-2xl">{task.icon}</span>
+                    <Label className="text-[10px] font-black uppercase tracking-widest">{task.label}</Label>
+                  </div>
+                  <Switch 
+                    className="scale-125"
+                    checked={!!dailyStatus?.[task.key as keyof DailyStatus]} 
+                    onCheckedChange={() => toggleDailyTask(task.key as any)} 
+                  />
                 </div>
               ))}
             </div>
@@ -199,16 +199,16 @@ function ManagerPortal({ user }: { user: any }) {
         {/* VIBE BOARD */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {foundingFour.map((bird) => (
-              <Card key={bird.id} onClick={() => setVibeBird(bird)} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all group">
+              <Card key={bird.id} onClick={() => setVibeBird(bird)} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all min-h-[80px]">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
                     {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
                   </div>
-                  <div><h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3><p className="text-[10px] font-bold text-muted-foreground uppercase">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
+                  <div className="min-w-0"><h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3><p className="text-[8px] font-bold text-muted-foreground uppercase truncate">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
                 </div>
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 min-w-[120px] justify-center text-primary border-primary/30">
+                <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
                   {bird.liveStatus || 'DAILY ROUTINE'}
                 </Badge>
               </Card>
@@ -220,42 +220,42 @@ function ManagerPortal({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
-            <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary/10 text-primary border border-primary/20 h-8 rounded-lg px-4 text-[10px] font-black uppercase tracking-widest"><Plus className="h-3 w-3 mr-1" /> ADD BIRD</Button>
+            <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary/10 text-primary border border-primary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"><Plus className="h-4 w-4 mr-1" /> ADD BIRD</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative">
-                <div className="relative w-24 aspect-square overflow-hidden shrink-0 border-r border-border">
+                <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">
                   {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
-                <div className="flex-1 p-3 flex flex-col justify-between">
-                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[8px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
+                <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
                   <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
+                    <Button variant="ghost" size="sm" className="h-10 px-3 text-[10px] font-black uppercase text-secondary bg-secondary/5 rounded-lg" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
+                    <Button variant="ghost" size="sm" className="h-10 px-3 text-[10px] font-black uppercase text-muted-foreground bg-muted/5 rounded-lg" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive" onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}><Trash2 className="h-3 w-3" /></Button>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
               </Card>
             ))}
           </div>
         </section>
       </main>
 
-      {/* MODALS */}
+      {/* MODALS - Full Height on Mobile */}
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
-        <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl">
-          <DialogHeader className="p-8 bg-primary/5 border-b border-border"><DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle></DialogHeader>
-          <div className="p-6 grid grid-cols-2 gap-3">
+        <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
+          <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0"><DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle></DialogHeader>
+          <div className="p-6 grid grid-cols-2 gap-3 overflow-y-auto flex-1">
             {PRESET_VIBES.map((vibe) => (
-              <Button key={vibe.label} variant="outline" className="h-[80px] rounded-[1.5rem] flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground group" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}>
+              <Button key={vibe.label} variant="outline" className="h-[90px] rounded-[1.5rem] flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground group" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}>
                 <span className="text-3xl group-hover:scale-110 transition-transform">{vibe.emoji}</span><span className="text-[10px] font-black uppercase tracking-widest">{vibe.label}</span>
               </Button>
             ))}
           </div>
-          <div className="px-6 pb-8 space-y-3">
-            <Button variant="outline" className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}>RESET</Button>
-            <Button variant="ghost" onClick={() => setVibeBird(null)} className="w-full text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Cancel</Button>
+          <div className="p-6 space-y-3 bg-card border-t border-border shrink-0">
+            <Button variant="outline" className="w-full h-14 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}>RESET STATUS</Button>
+            <Button variant="ghost" onClick={() => setVibeBird(null)} className="w-full h-12 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Dismiss</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -286,9 +286,6 @@ function ManagerPortal({ user }: { user: any }) {
   );
 }
 
-/**
- * MEMBER PULSE VIEW: Read-only live feed for Flock Members & Guests
- */
 function MemberPulseView({ user }: { user: any }) {
   const firestore = useFirestore();
   const todayDate = format(new Date(), 'yyyy-MM-dd');
@@ -306,31 +303,27 @@ function MemberPulseView({ user }: { user: any }) {
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-24 font-body">
+    <div className="min-h-screen bg-background text-foreground pb-32 font-body">
       <Navbar />
-      <main className="container mx-auto p-4 space-y-12 mt-4 animate-in fade-in duration-700">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
-           <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h1 className="font-headline font-black text-3xl uppercase tracking-tighter flex items-center gap-3">
-                  <LayoutDashboard className="h-7 w-7 text-primary" /> SANCTUARY <span className="text-primary">PULSE</span>
-                </h1>
-                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 ml-2 border-secondary text-secondary">
-                  {isGuest ? "GUEST" : "FLOCK MEMBER"}
-                </Badge>
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">LIVE SANCTUARY FEED</p>
-           </div>
+      <main className="container mx-auto p-4 space-y-10 mt-4 md:mt-8 animate-in fade-in duration-700">
+        <div className="flex flex-col gap-2 pb-6 border-b border-border">
+          <div className="flex items-center justify-between">
+            <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
+              <LayoutDashboard className="h-6 w-6 text-primary" /> SANCTUARY <span className="text-primary">PULSE</span>
+            </h1>
+            <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border-secondary text-secondary">
+              {isGuest ? "GUEST" : "MEMBER"}
+            </Badge>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Live Sanctuary Feed</p>
         </div>
 
-        {/* GUEST BANNER */}
         {isGuest && (
-          <Card className="bg-primary/10 border-2 border-dashed border-primary/30 rounded-3xl p-8 text-center space-y-4">
+          <Card className="bg-primary/10 border-2 border-dashed border-primary/30 rounded-[2.5rem] p-8 text-center space-y-4">
             <div className="flex justify-center"><Sparkles className="h-8 w-8 text-primary animate-pulse" /></div>
-            <h2 className="text-xl font-headline font-black uppercase">Viewing as a <span className="text-primary">Guest</span></h2>
-            <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">You're seeing the live sanctuary pulse! Sign up to save your favorite ducks and unlock the lineage records.</p>
-            <Button asChild className="bg-primary text-primary-foreground font-black px-8 rounded-xl h-12 shadow-lg hover:scale-105 transition-transform"><Link href="/signup">JOIN THE FLOCK</Link></Button>
+            <h2 className="text-xl font-headline font-black uppercase tracking-tight">Viewing as <span className="text-primary">Guest</span></h2>
+            <p className="text-[16px] text-muted-foreground font-medium max-w-md mx-auto leading-relaxed">Join the flock to unlock lineage records and receive direct rescue notifications.</p>
+            <Button asChild className="bg-primary text-primary-foreground font-black px-8 rounded-xl h-14 shadow-lg hover:scale-105 transition-transform"><Link href="/signup">JOIN THE FLOCK</Link></Button>
           </Card>
         )}
 
@@ -338,43 +331,48 @@ function MemberPulseView({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3"><Egg className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2></div>
-            <Badge variant="outline" className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-4 py-1 rounded-full font-black tracking-widest text-[8px]">
-              <Activity className="h-3 w-3 mr-2 animate-pulse" /> LIVE FEED
+            <Badge variant="outline" className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-4 py-1.5 rounded-full font-black tracking-widest text-[8px]">
+              <Activity className="h-3 w-3 mr-2 animate-pulse" /> LIVE
             </Badge>
           </div>
-          <Card className="bg-card border-border rounded-3xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
+          <Card className="bg-card border-border rounded-[2.5rem] p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left space-y-1">
               <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">TODAY'S TOTAL</h2>
-              <h3 className="text-7xl font-headline font-black text-primary tracking-tighter leading-none">{todayEggData?.count || 0}</h3>
-              <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+              <h3 className="text-8xl md:text-9xl font-headline font-black text-primary tracking-tighter leading-none">{todayEggData?.count || 0}</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
             </div>
-            <div className="text-center md:text-right max-w-[250px] space-y-3">
-              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">Updated by sanctuary staff in real-time as eggs are harvested.</p>
-              <div className="flex justify-center md:justify-end gap-1">{[1,2,3].map(i => <div key={i} className="w-4 h-5 bg-primary/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.2}s` }} />)}</div>
+            <div className="text-center md:text-right max-w-[250px] space-y-4">
+              <p className="text-[12px] text-muted-foreground uppercase font-black tracking-tight leading-relaxed">Real-time counts as staff complete the daily harvest.</p>
+              <div className="flex justify-center md:justify-end gap-1.5">{[1,2,3,4].map(i => <div key={i} className="w-5 h-6 bg-primary/20 rounded-full animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
             </div>
           </Card>
         </section>
 
-        {/* DAILY ROUTINE */}
+        {/* DAILY ROUTINE - Large Cards */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><ClipboardList className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2></div>
-          <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Health</span><span className="text-2xl font-headline font-black text-primary">{Math.round(progress)}%</span></div>
-              <Progress value={progress} className="h-3 bg-muted" />
+          <Card className="bg-card border-border rounded-[2.5rem] p-6 shadow-xl space-y-8">
+            <div className="space-y-3">
+              <div className="flex justify-between items-end"><span className="text-[10px] font-black uppercase tracking-widest text-primary">Sanctuary Status</span><span className="text-2xl font-headline font-black text-primary">{Math.round(progress)}%</span></div>
+              <Progress value={progress} className="h-4 bg-muted" />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               {[
                 { label: "Feeding", icon: "🌾", key: "morningFeeding" },
-                { label: "Water", icon: "💧", key: "freshWater" },
-                { label: "Eggs", icon: "🥚", key: "eggCounter" },
-                { label: "Health", icon: "🩺", key: "healthCheck" },
+                { label: "Fresh Water", icon: "💧", key: "freshWater" },
+                { label: "Egg Counter", icon: "🥚", key: "eggCounter" },
+                { label: "Health Check", icon: "🩺", key: "healthCheck" },
                 { label: "Pen Up", icon: "🌙", key: "nightlyPenUp" }
               ].map((task) => (
-                <div key={task.key} className={cn("flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all", dailyStatus?.[task.key as keyof DailyStatus] ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-background/50 border-border text-muted-foreground")}>
-                  <span className="text-xl">{task.icon}</span>
-                  <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                  <Switch checked={!!dailyStatus?.[task.key as keyof DailyStatus]} disabled />
+                <div key={task.key} className={cn(
+                  "flex items-center justify-between p-5 rounded-2xl border h-[70px] md:h-auto md:flex-col md:gap-3",
+                  dailyStatus?.[task.key as keyof DailyStatus] ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-background/50 border-border text-muted-foreground"
+                )}>
+                  <div className="flex items-center gap-4 md:flex-col md:gap-2">
+                    <span className="text-2xl">{task.icon}</span>
+                    <Label className="text-[10px] font-black uppercase tracking-widest">{task.label}</Label>
+                  </div>
+                  <Switch checked={!!dailyStatus?.[task.key as keyof DailyStatus]} disabled className="scale-125 opacity-100" />
                 </div>
               ))}
             </div>
@@ -384,16 +382,16 @@ function MemberPulseView({ user }: { user: any }) {
         {/* VIBE BOARD */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {foundingFour.map((bird) => (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl">
+              <Card key={bird.id} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl min-h-[80px]">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
                     {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
                   </div>
-                  <div><h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3><p className="text-[10px] font-bold text-muted-foreground uppercase">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
+                  <div className="min-w-0"><h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3><p className="text-[8px] font-bold text-muted-foreground uppercase truncate">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
                 </div>
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 min-w-[120px] justify-center text-primary border-primary/30">
+                <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
                   {bird.liveStatus || 'DAILY ROUTINE'}
                 </Badge>
               </Card>
@@ -406,13 +404,13 @@ function MemberPulseView({ user }: { user: any }) {
           <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative">
-                <div className="relative w-24 aspect-square overflow-hidden shrink-0 border-r border-border">
+              <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative min-h-[100px]">
+                <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">
                   {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
-                <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
-                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[8px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
-                  <StoryModal resident={bird} trigger={<Button variant="outline" size="sm" className="w-full h-8 mt-2 text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5">VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></Button>} />
+                <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
+                  <StoryModal resident={bird} trigger={<Button variant="outline" size="sm" className="w-full h-10 mt-3 text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5 rounded-lg">VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></Button>} />
                 </div>
               </Card>
             ))}

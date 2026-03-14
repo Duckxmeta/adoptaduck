@@ -10,7 +10,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Heart, BookOpen, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
+import { Heart, BookOpen, Sparkles, ArrowLeft } from "lucide-react";
 import { Resident } from "@/lib/types";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -41,8 +41,9 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="bg-card text-card-foreground border-border max-w-2xl p-0 overflow-hidden rounded-[2rem] shadow-2xl">
-        <div className="relative aspect-video w-full bg-muted flex items-center justify-center">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-2xl p-0 overflow-hidden rounded-[2.5rem] shadow-2xl h-[95vh] md:h-auto flex flex-col">
+        {/* Full Image Header */}
+        <div className="relative aspect-[4/3] md:aspect-video w-full bg-muted flex items-center justify-center shrink-0">
           {hasImage ? (
             <Image 
               src={resident.primaryImageUrl} 
@@ -53,9 +54,9 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
           ) : (
             <span className="text-8xl">🦆</span>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-          <div className="absolute bottom-6 left-8">
-            <DialogTitle className="text-4xl font-headline font-black text-white uppercase tracking-tighter leading-none">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          <div className="absolute bottom-6 left-8 right-8">
+            <DialogTitle className="text-4xl md:text-5xl font-headline font-black text-white uppercase tracking-tighter leading-none">
               {resident.name}
             </DialogTitle>
             <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2">
@@ -64,33 +65,37 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
           </div>
         </div>
 
-        <div className="p-10 space-y-8">
+        {/* Scrollable Story Content */}
+        <div className="p-8 md:p-10 space-y-8 overflow-y-auto flex-1 custom-scrollbar">
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-secondary">
               <BookOpen className="h-5 w-5" />
               <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Story</span>
             </div>
-            <DialogDescription className="text-muted-foreground text-lg leading-relaxed font-medium italic">
+            <DialogDescription className="text-foreground/90 text-[16px] md:text-lg leading-relaxed font-medium italic">
               &quot;{fullStory}&quot;
             </DialogDescription>
           </div>
 
-          <div className="pt-4 flex flex-col gap-4">
-            <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
-              <Link href="/membership">BECOME A GUARDIAN <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
-            </Button>
-            
-            {/* Mobile-only easy close button */}
-            <DialogClose asChild>
-              <Button variant="ghost" className="md:hidden w-full h-12 text-[10px] font-black uppercase tracking-widest text-muted-foreground border border-border/50 rounded-xl">
-                <ArrowLeft className="mr-2 h-3 w-3" /> Back to Flock
-              </Button>
-            </DialogClose>
-
-            <p className="text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.2em]">
-              Your support directly funds life-saving care at the sanctuary
-            </p>
+          <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+             <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Heritage</p>
+             <p className="text-sm text-muted-foreground leading-relaxed">
+               {resident.breed} • {resident.sex === 'female' ? 'Hen' : 'Drake'} • {resident.source || 'Rescue'}
+             </p>
           </div>
+        </div>
+
+        {/* Fixed Mobile Bottom Controls */}
+        <div className="p-6 md:p-8 bg-card border-t border-border shrink-0 space-y-4">
+          <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
+            <Link href="/membership">BECOME A GUARDIAN <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
+          </Button>
+          
+          <DialogClose asChild>
+            <Button variant="ghost" className="w-full h-12 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-primary transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Flock
+            </Button>
+          </DialogClose>
         </div>
       </DialogContent>
     </Dialog>

@@ -33,6 +33,8 @@
   }
   body {
     @apply bg-background text-foreground font-body antialiased;
+    /* Prevent squinting on mobile */
+    font-size: 16px;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline font-black tracking-tight uppercase;
@@ -48,6 +50,21 @@
   }
   .duck-card-hover {
     @apply transition-all duration-300 hover:scale-[1.02] hover:glow-purple border border-transparent hover:border-secondary/30;
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
   }
   
   @keyframes subtle-pulse {
