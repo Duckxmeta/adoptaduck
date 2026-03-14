@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -46,6 +45,7 @@ export function Navbar() {
     </Link>
   );
 
+  // BOTTOM NAVIGATION BAR LINKS
   const navLinks = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'The Flock', href: '/flock', icon: Bird },
@@ -55,6 +55,7 @@ export function Navbar() {
 
   return (
     <>
+      {/* Desktop Navigation */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 md:py-4">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -67,12 +68,12 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-8">
+            <Link href="/" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors", pathname === '/' && "text-primary")}>Home</Link>
+            <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
+              <Bird className="h-3.5 w-3.5" /> The Flock
+            </Link>
             {user ? (
               <>
-                <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
-                <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
-                  <Bird className="h-3.5 w-3.5" /> The Flock
-                </Link>
                 <Link href="/admin" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", isInDashboard && "text-primary")}>
                   <LayoutDashboard className="h-3.5 w-3.5" /> {isAdmin ? 'Manager Portal' : 'My Dashboard'}
                 </Link>
@@ -82,10 +83,6 @@ export function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
-                <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
-                  <Bird className="h-3.5 w-3.5" /> The Flock
-                </Link>
                 <Link href="/login" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5 group", pathname === '/login' && "text-primary")}>
                   <Lock className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" /> Member Login
                 </Link>
@@ -99,9 +96,10 @@ export function Navbar() {
             )}
           </div>
 
+          {/* Mobile Only Quick Action */}
           <div className="md:hidden">
             {!isAdmin && (
-              <Button size="sm" asChild className="bg-primary text-primary-foreground font-black rounded-lg h-10 px-4 text-[10px] tracking-widest uppercase">
+              <Button size="sm" asChild className="bg-primary text-primary-foreground font-black rounded-lg h-10 px-4 text-[10px] tracking-widest uppercase shadow-lg">
                  <Link href="/support#adopt">ADOPT</Link>
               </Button>
             )}
@@ -109,7 +107,8 @@ export function Navbar() {
         </div>
       </nav>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/90 backdrop-blur-xl border-t border-border pb-safe">
+      {/* FIXED BOTTOM NAVIGATION BAR - MOBILE FIRST */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-white/5 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
         <div className="flex items-center justify-around h-16 px-2">
           {navLinks.map((link) => {
             const Icon = link.icon;
@@ -120,7 +119,7 @@ export function Navbar() {
                 <button 
                   key={link.label}
                   onClick={link.onClick}
-                  className="flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground"
+                  className="flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground active:scale-95 transition-transform"
                 >
                   <Icon className="h-5 w-5" />
                   <span className="text-[8px] font-black uppercase tracking-widest">{link.label}</span>
@@ -133,7 +132,7 @@ export function Navbar() {
                 key={link.label}
                 href={link.href!}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
+                  "flex flex-col items-center justify-center gap-1 w-full h-full transition-all active:scale-95",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
               >

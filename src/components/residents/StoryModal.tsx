@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -42,17 +41,17 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="bg-card text-card-foreground border-border max-w-2xl p-0 overflow-hidden rounded-[2.5rem] shadow-2xl h-[95vh] md:h-auto flex flex-col">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-2xl p-0 overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-2xl h-[95vh] md:h-auto flex flex-col focus:outline-none">
         
-        {/* STICKY HEADER */}
-        <div className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 h-16 shrink-0">
+        {/* STICKY HEADER - FIXED FOR MOBILE REACH */}
+        <div className="sticky top-0 z-[70] w-full bg-background/95 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 h-16 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-primary"><Sparkles className="h-4 w-4" /></span>
-            <span className="font-headline font-black uppercase text-sm tracking-widest">{resident.name}</span>
+            <span className="font-headline font-black uppercase text-sm tracking-widest truncate max-w-[150px]">{resident.name}</span>
           </div>
           <DialogClose asChild>
-            <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">
-              <X className="h-5 w-5" />
+            <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors group">
+              <X className="h-5 w-5 text-white group-hover:scale-110 transition-transform" />
             </button>
           </DialogClose>
         </div>
@@ -82,7 +81,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
             </div>
           </div>
 
-          <div className="p-8 md:p-10 space-y-8 pb-32">
+          <div className="p-8 md:p-10 space-y-8 pb-40">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-secondary">
                 <BookOpen className="h-5 w-5" />
@@ -95,15 +94,15 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
 
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Heritage</p>
-               <p className="text-sm text-muted-foreground leading-relaxed">
+               <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                  {resident.breed} • {resident.sex === 'female' ? 'Hen' : 'Drake'} • {resident.source || 'Rescue'}
                </p>
             </div>
           </div>
         </div>
 
-        {/* FIXED FOOTER */}
-        <div className="sticky bottom-0 z-50 p-6 bg-gradient-to-t from-background via-background/95 to-transparent shrink-0 space-y-4 pt-10">
+        {/* FIXED FOOTER - STICKY FOR CONVERSION */}
+        <div className="sticky bottom-0 z-[70] p-6 bg-gradient-to-t from-background via-background/95 to-transparent shrink-0 space-y-4 pt-10 border-t border-white/5">
           <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
             <Link href="/support#membership">BECOME A GUARDIAN <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
           </Button>

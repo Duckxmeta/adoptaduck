@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -97,7 +96,7 @@ function SupportContent() {
         intent: frequency === 'one-time' ? "capture" : "subscription"
       }}
     >
-      <div className="min-h-screen flex flex-col bg-background text-foreground font-body pb-20">
+      <div className="min-h-screen flex flex-col bg-background text-foreground font-body pb-32">
         <Navbar />
 
         <main className="flex-1 space-y-20 pt-12">
@@ -105,7 +104,7 @@ function SupportContent() {
           <section className="container mx-auto px-4 text-center space-y-4">
             <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Support Hub</Badge>
             <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">CHOOSE YOUR <span className="text-primary">IMPACT</span></h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">Your contributions provide food, medicine, and a safe forever home for our residents.</p>
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Your contributions provide food, medicine, and a safe forever home for our residents.</p>
           </section>
 
           {/* 1. VIRTUAL ADOPTION SECTION */}
@@ -333,7 +332,7 @@ function SupportContent() {
                       <ShieldCheck className="h-5 w-5" />
                       <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       Traditional K-12 classrooms and dedicated school programs looking to integrate live sanctuary logs into their science or biology curriculum.
                     </p>
                   </div>
@@ -343,7 +342,7 @@ function SupportContent() {
                       <Users className="h-5 w-5" />
                       <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       Homeschooling collectives, after-school clubs, and 4-H or library-based initiatives focused on agricultural stewardship.
                     </p>
                   </div>
@@ -353,7 +352,7 @@ function SupportContent() {
                       <Globe className="h-5 w-5" />
                       <h4 className="font-headline font-black text-xs uppercase tracking-widest">Public Discovery</h4>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       Agricultural programs at museums, youth centers, and nature preserves. Our 'Virtual Gates' are open worldwide—from Tennessee to Japan!
                     </p>
                   </div>
@@ -363,7 +362,7 @@ function SupportContent() {
                       <Stethoscope className="h-5 w-5" />
                       <h4 className="font-headline font-black text-xs uppercase tracking-widest">Therapeutic Environments</h4>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                       Nursing homes, assisted living facilities, and memory care centers using the Sanctuary Pulse for resident engagement and comfort.
                     </p>
                   </div>
