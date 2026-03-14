@@ -7,9 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Heart, BookOpen, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, BookOpen, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { Resident } from "@/lib/types";
 import Link from 'next/link';
 import Image from 'next/image';
@@ -78,6 +79,14 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
             <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
               <Link href="/membership">BECOME A GUARDIAN <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
             </Button>
+            
+            {/* Mobile-only easy close button */}
+            <DialogClose asChild>
+              <Button variant="ghost" className="md:hidden w-full h-12 text-[10px] font-black uppercase tracking-widest text-muted-foreground border border-border/50 rounded-xl">
+                <ArrowLeft className="mr-2 h-3 w-3" /> Back to Flock
+              </Button>
+            </DialogClose>
+
             <p className="text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.2em]">
               Your support directly funds life-saving care at the sanctuary
             </p>
