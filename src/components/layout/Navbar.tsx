@@ -25,7 +25,7 @@ export function Navbar() {
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
-  const isInAdmin = pathname.startsWith('/admin');
+  const isInDashboard = pathname === '/admin';
 
   const handleLogout = async () => {
     if (auth) {
@@ -56,7 +56,7 @@ export function Navbar() {
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Logo />
-          {isInAdmin && (
+          {isInDashboard && isAdmin && (
              <Link href="/" className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors ml-4 border-l border-border pl-6">
                <ArrowLeft className="h-3 w-3" /> View Site
              </Link>
@@ -64,24 +64,14 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-8">
-          {isAdmin ? (
-            <>
-              <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Site Home</Link>
-              <Link href="/admin" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", isInAdmin && "text-primary")}>
-                <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
-              </Link>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-destructive transition-colors p-0 h-auto">
-                <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logout
-              </Button>
-            </>
-          ) : user ? (
+          {user ? (
             <>
               <Link href="/" className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors">Home</Link>
               <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
                 <Bird className="h-3.5 w-3.5" /> The Flock
               </Link>
-              <Link href="/dashboard" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/dashboard' && "text-primary")}>
-                <User className="h-3.5 w-3.5" /> My Dashboard
+              <Link href="/admin" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", isInDashboard && "text-primary")}>
+                <LayoutDashboard className="h-3.5 w-3.5" /> {isAdmin ? 'Manager Portal' : 'My Dashboard'}
               </Link>
               <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-destructive transition-colors p-0 h-auto">
                 <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logout
@@ -122,17 +112,11 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="bg-background border-border">
               <div className="flex flex-col gap-8 mt-16">
-                {isAdmin ? (
-                  <>
-                    <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">View Site</Link>
-                    <Link href="/admin" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">Dashboard</Link>
-                    <button onClick={handleLogout} className="text-left text-2xl font-headline font-black uppercase tracking-tighter text-destructive">Logout</button>
-                  </>
-                ) : user ? (
+                {user ? (
                   <>
                     <Link href="/" className="text-2xl font-headline font-black uppercase tracking-tighter">Home</Link>
                     <Link href="/flock" className="text-2xl font-headline font-black uppercase tracking-tighter">The Flock</Link>
-                    <Link href="/dashboard" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">My Dashboard</Link>
+                    <Link href="/admin" className="text-2xl font-headline font-black uppercase tracking-tighter text-primary">{isAdmin ? 'Manager Portal' : 'My Dashboard'}</Link>
                     <button onClick={handleLogout} className="text-left text-2xl font-headline font-black uppercase tracking-tighter text-destructive">Logout</button>
                   </>
                 ) : (
