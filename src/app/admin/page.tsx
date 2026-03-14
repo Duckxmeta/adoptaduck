@@ -1,56 +1,36 @@
+
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
-  Plus, 
-  Minus,
-  Settings, 
-  Loader2, 
-  ChevronRight,
-  ClipboardList,
-  RotateCcw,
-  LayoutDashboard,
-  Trash2,
-  Bird,
-  Zap,
-  Egg,
-  Save,
-  History,
-  User,
-  Activity,
-  Heart
+  Plus, Minus, Settings, Loader2, ChevronRight, ClipboardList, RotateCcw,
+  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, writeBatch, getDocs, where, limit } from 'firebase/firestore';
-import { Resident, DailyStatus, DuckOfTheMonthSettings, EggHistoryEntry } from '@/lib/types';
-import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit } from 'firebase/firestore';
+import { Resident, DailyStatus, EggHistoryEntry } from '@/lib/types';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { Navbar } from '@/components/layout/Navbar';
-import { format, parseISO, isAfter, subMinutes } from 'date-fns';
+import { format, isAfter, subMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
-const MASTER_UID = 'cgQheQMuxqZd4N825PppPl72GtE2';
-
 const PRESET_VIBES = [
   { label: 'Chill', emoji: '🌿' },
   { label: 'Energetic', emoji: '⚡' },
@@ -67,10 +47,9 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // 1. GATEKEEPER ROLE CHECK
-  const isUserAdmin = !!(user && (ADMIN_EMAILS.includes(user.email || '') || user.uid === MASTER_UID));
+  const isUserAdmin = !!(user && ADMIN_EMAILS.includes(user.email || ''));
+  const isGuest = !!(user?.isAnonymous);
 
-  // State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
@@ -89,9 +68,7 @@ export default function AdminDashboard() {
     }
   }, [user, isUserLoading, router]);
 
-  // 2. DATA ISOLATION - Hooks must run every render, but we pass null to queries if user is unauthorized
-  
-  // Publicly readable data (for Pulse view)
+  // Data queries
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
@@ -107,15 +84,10 @@ export default function AdminDashboard() {
     return doc(firestore, 'daily_status', 'today');
   }, [firestore]);
 
-  // Admin-only data (Strictly gated by isUserAdmin)
+  // Restricted queries (Admin Only)
   const historyQuery = useMemoFirebase(() => {
     if (!firestore || !isUserAdmin) return null;
     return query(collection(firestore, 'egg_history'), orderBy('id', 'desc'), limit(30));
-  }, [firestore, isUserAdmin]);
-
-  const dotmRef = useMemoFirebase(() => {
-    if (!firestore || !isUserAdmin) return null;
-    return doc(firestore, 'settings', 'duck_of_the_month');
   }, [firestore, isUserAdmin]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
@@ -129,7 +101,7 @@ export default function AdminDashboard() {
     }
   }, [todayEggData]);
 
-  // Admin Actions
+  // Actions
   const handleUpdateStatus = (birdId: string, status: string) => {
     if (!firestore || !isUserAdmin) return;
     const birdRef = doc(firestore, 'birds', birdId);
@@ -146,42 +118,16 @@ export default function AdminDashboard() {
     setIsSavingEggs(true);
     try {
       await setDoc(todayEggRef, { count: localEggCount, updatedAt: new Date().toISOString() }, { merge: true });
-      toast({ title: "Eggs Synced!", description: `${localEggCount} eggs recorded for ${format(new Date(), 'MMM dd')}` });
-    } catch (error: any) {
+      toast({ title: "Eggs Synced!", description: `${localEggCount} recorded.` });
+    } catch (e) {
       toast({ variant: "destructive", title: "Sync Error" });
     } finally { setIsSavingEggs(false); }
-  };
-
-  const handleSaveResident = (data: Partial<Resident>) => {
-    if (!firestore || !isUserAdmin) return;
-    if (editingResident) {
-      updateDocumentNonBlocking(doc(firestore, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() });
-      toast({ title: "Resident Updated" });
-    } else {
-      const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-      setDocumentNonBlocking(doc(firestore, 'birds', newId), { ...data, id: newId, createdAt: new Date().toISOString() }, { merge: true });
-      toast({ title: "Resident Added" });
-    }
-    setIsDialogOpen(false);
   };
 
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
     if (!dailyStatusRef || !isUserAdmin) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
-    setDocumentNonBlocking(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
-  };
-
-  const resetDailyTasks = () => {
-    if (!dailyStatusRef || !isUserAdmin) return;
-    setDocumentNonBlocking(dailyStatusRef, { morningFeeding: false, freshWater: false, eggCounter: false, healthCheck: false, nightlyPenUp: false, lastReset: new Date().toISOString() }, { merge: true });
-    toast({ title: "Checklist Reset" });
-  };
-
-  const calculateProgress = () => {
-    if (!dailyStatus) return 0;
-    const tasks = ['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'];
-    const completed = tasks.filter(t => !!(dailyStatus as any)[t]).length;
-    return (completed / tasks.length) * 100;
+    setDoc(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
   if (isUserLoading) {
@@ -193,7 +139,7 @@ export default function AdminDashboard() {
   }
 
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
-  const progress = calculateProgress();
+  const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 font-body">
@@ -212,7 +158,7 @@ export default function AdminDashboard() {
                   "text-[8px] font-black uppercase tracking-widest px-2 py-0.5 ml-2",
                   isUserAdmin ? "bg-primary text-primary-foreground" : "border-secondary text-secondary"
                 )}>
-                  {isUserAdmin ? "Admin" : "Flock Member"}
+                  {isUserAdmin ? "Admin" : isGuest ? "Guest" : "Flock Member"}
                 </Badge>
               </div>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">
@@ -220,7 +166,7 @@ export default function AdminDashboard() {
               </p>
            </div>
 
-           {user && (
+           {user && !isGuest && (
              <Card className="bg-card border-border rounded-2xl p-4 flex items-center gap-6 shadow-lg">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -228,10 +174,10 @@ export default function AdminDashboard() {
                   </div>
                   <div className="space-y-0.5">
                     <Label className="text-[10px] font-black uppercase tracking-widest block">
-                      {isUserAdmin ? 'Admin:' : 'Member:'} {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Staff'}
+                      {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Staff'}
                     </Label>
                     <p className="text-[8px] font-bold text-muted-foreground uppercase">
-                      {isUserAdmin ? 'Managing Operations' : 'Sanctuary Pulse View'}
+                      {isUserAdmin ? 'Operational Control' : 'Active Member'}
                     </p>
                   </div>
                 </div>
@@ -239,7 +185,19 @@ export default function AdminDashboard() {
            )}
         </div>
 
-        {/* 1. EGG COUNTER */}
+        {/* GUEST BANNER */}
+        {isGuest && (
+          <Card className="bg-primary/10 border-2 border-dashed border-primary/30 rounded-3xl p-8 text-center space-y-4 animate-in fade-in duration-700">
+            <div className="flex justify-center"><Sparkles className="h-8 w-8 text-primary animate-pulse" /></div>
+            <h2 className="text-xl font-headline font-black uppercase">Viewing as a <span className="text-primary">Guest</span></h2>
+            <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">You're seeing the live sanctuary pulse! Sign up to save your favorite ducks and unlock the lineage records.</p>
+            <Button asChild className="bg-primary text-primary-foreground font-black px-8 rounded-xl h-12 shadow-lg">
+              <Link href="/signup">JOIN THE FLOCK</Link>
+            </Button>
+          </Card>
+        )}
+
+        {/* EGG COUNTER */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -263,38 +221,27 @@ export default function AdminDashboard() {
               {isUserAdmin ? (
                 <div className="flex flex-col gap-4 w-full md:w-auto">
                   <div className="flex gap-4">
-                    <Button onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))} variant="outline" className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border hover:border-destructive transition-all">
-                      <Minus className="h-7 w-7" />
-                    </Button>
-                    <Button onClick={() => setLocalEggCount(localEggCount + 1)} className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform">
-                      <Plus className="h-7 w-7" />
-                    </Button>
+                    <Button onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))} variant="outline" className="flex-1 md:w-20 h-20 rounded-2xl border-2 border-border"><Minus /></Button>
+                    <Button onClick={() => setLocalEggCount(localEggCount + 1)} className="flex-1 md:w-20 h-20 rounded-2xl bg-primary text-primary-foreground shadow-lg"><Plus /></Button>
                   </div>
-                  <Button onClick={handleSyncEggs} disabled={isSavingEggs || localEggCount === todayEggData?.count} className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2">
-                    {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} SAVE FOR TODAY
+                  <Button onClick={handleSyncEggs} disabled={isSavingEggs} className="w-full bg-secondary text-secondary-foreground font-black rounded-xl h-12 shadow-lg flex items-center justify-center gap-2">
+                    {isSavingEggs ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} SAVE
                   </Button>
                 </div>
               ) : (
-                <div className="text-center md:text-right space-y-2">
-                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter max-w-[200px]">Updated by sanctuary staff in real-time as eggs are harvested.</p>
-                </div>
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter text-center md:text-right max-w-[200px]">Updated by sanctuary staff in real-time as eggs are harvested.</p>
               )}
             </div>
           </Card>
         </section>
 
-        {/* 2. DAILY CHECK LIST */}
+        {/* DAILY ROUTINE */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <ClipboardList className="h-4 w-4 text-primary" />
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2>
             </div>
-            {isUserAdmin && (
-              <Button variant="ghost" size="sm" onClick={resetDailyTasks} className="text-[8px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
-                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset Day
-              </Button>
-            )}
           </div>
           <Card className="bg-card border-border rounded-2xl p-6 shadow-xl space-y-6">
             <div className="space-y-2">
@@ -320,9 +267,7 @@ export default function AdminDashboard() {
                   )}>
                     <span className="text-xl">{task.icon}</span>
                     <Label className="text-[8px] font-black uppercase tracking-tight text-center">{task.label}</Label>
-                    <div className="h-6 flex items-center justify-center">
-                      <Switch checked={isCompleted} disabled={!isUserAdmin} onCheckedChange={() => toggleDailyTask(task.key as any)} />
-                    </div>
+                    <Switch checked={isCompleted} disabled={!isUserAdmin} onCheckedChange={() => toggleDailyTask(task.key as any)} />
                   </div>
                 );
               })}
@@ -330,7 +275,7 @@ export default function AdminDashboard() {
           </Card>
         </section>
 
-        {/* 3. VIBE BOARD */}
+        {/* VIBE BOARD */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Zap className="h-4 w-4 text-primary" />
@@ -339,44 +284,37 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {foundingFour.map((bird) => {
               const isRecentlyUpdated = bird.statusLastUpdated && isAfter(new Date(bird.statusLastUpdated), subMinutes(new Date(), 60));
-              const isBroody = bird.liveStatus?.includes('BROODY');
               const hasVibe = !!bird.liveStatus;
               return (
                 <Card key={bird.id} onClick={() => isUserAdmin && setVibeBird(bird)} className={cn(
                   "bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl transition-all group",
-                  isUserAdmin && "cursor-pointer hover:border-primary/50 active:scale-95",
-                  (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5",
-                  isBroody && "border-primary/30"
+                  isUserAdmin && "cursor-pointer hover:border-primary/50",
+                  (hasVibe && isRecentlyUpdated) && "border-secondary/40 bg-secondary/5"
                 )}>
                   <div className="flex items-center gap-4">
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border group-hover:border-primary transition-colors">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border">
                       {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
-                        {isBroody && <span className="text-lg">🪺</span>}
-                      </div>
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm">{bird.name}</h3>
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         {bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right flex flex-col items-end gap-1 shrink-0">
-                    <Badge variant="outline" className={cn(
-                      "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 border-border whitespace-nowrap min-w-[120px] justify-center",
-                      (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
-                    )}>
-                      {bird.liveStatus || 'DAILY ROUTINE'}
-                    </Badge>
-                  </div>
+                  <Badge variant="outline" className={cn(
+                    "text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 min-w-[120px] justify-center",
+                    (hasVibe && isRecentlyUpdated) ? "bg-secondary text-secondary-foreground border-none" : "text-primary border-primary/30"
+                  )}>
+                    {bird.liveStatus || 'DAILY ROUTINE'}
+                  </Badge>
                 </Card>
               );
             })}
           </div>
         </section>
 
-        {/* 4. RESIDENT DIRECTORY */}
+        {/* RESIDENT DIRECTORY */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -405,12 +343,8 @@ export default function AdminDashboard() {
                   <div className="flex gap-2">
                     {isUserAdmin ? (
                       <>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>
-                          <ClipboardList className="h-3 w-3 mr-1" /> LOG
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>
-                          <Settings className="h-3 w-3 mr-1" /> EDIT
-                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase text-secondary hover:bg-secondary/10" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
                       </>
                     ) : (
                       <StoryModal resident={bird} trigger={
@@ -430,29 +364,6 @@ export default function AdminDashboard() {
             ))}
           </div>
         </section>
-
-        {/* 5. 30-DAY HISTORY (Admin Only) */}
-        {isUserAdmin && eggHistory && eggHistory.length > 0 && (
-          <section className="space-y-4 animate-in fade-in duration-500">
-            <div className="flex items-center gap-3">
-              <History className="h-4 w-4 text-primary" />
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">30-DAY HISTORY</h2>
-            </div>
-            <Card className="bg-card border-border rounded-3xl p-6 overflow-hidden shadow-xl">
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex gap-4 pb-4">
-                  {eggHistory.map((entry) => (
-                    <div key={entry.id} className="flex flex-col items-center gap-2 min-w-[80px] p-3 bg-background/50 rounded-2xl border border-border">
-                      <div className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{format(parseISO(entry.id), 'MMM dd')}</div>
-                      <div className="text-xl font-headline font-black text-primary">{entry.count}</div>
-                    </div>
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </Card>
-          </section>
-        )}
       </main>
 
       {/* MODALS */}
@@ -472,21 +383,30 @@ export default function AdminDashboard() {
                 ))}
               </div>
               <div className="px-6 pb-8 space-y-3">
-                <Button variant="outline" className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}>
-                  <RotateCcw className="h-3.5 w-3.5 mr-2" /> Reset to Daily Routine
-                </Button>
+                <Button variant="outline" className="w-full h-12 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}>RESET</Button>
                 <Button variant="ghost" onClick={() => setVibeBird(null)} className="w-full text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Cancel</Button>
               </div>
             </DialogContent>
           </Dialog>
 
-          <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
+          <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={(data) => {
+            if (!firestore) return;
+            if (editingResident) {
+              setDoc(doc(firestore, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+              toast({ title: "Updated" });
+            } else {
+              const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+              setDoc(doc(firestore, 'birds', newId), { ...data, id: newId, createdAt: new Date().toISOString() }, { merge: true });
+              toast({ title: "Added" });
+            }
+            setIsDialogOpen(false);
+          }} resident={editingResident} />
           <HealthLogDialog 
             open={isHealthLogOpen} onOpenChange={setIsHealthLogOpen} 
             onSave={async (notes) => {
               if (!firestore || !loggingResident) return;
               await addDoc(collection(firestore, 'birds', loggingResident.id, 'healthLogs'), { birdId: loggingResident.id, logDate: new Date().toISOString(), notes });
-              toast({ title: "Care Log Saved" });
+              toast({ title: "Log Saved" });
               setIsHealthLogOpen(false);
             }} 
             residentName={loggingResident?.name || ''} 
@@ -497,7 +417,7 @@ export default function AdminDashboard() {
             onConfirm={async () => {
               if (!firestore || !deletingResident) return;
               await deleteDoc(doc(firestore, 'birds', deletingResident.id));
-              toast({ title: "Resident Removed" });
+              toast({ title: "Removed" });
             }}
           />
         </>
