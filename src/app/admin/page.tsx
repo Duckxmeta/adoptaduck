@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,15 +9,16 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Plus, Minus, Settings, Loader2, ChevronRight, ClipboardList, RotateCcw,
-  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle
+  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry } from '@/lib/types';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction } from 'firebase/firestore';
+import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
@@ -288,8 +290,15 @@ function ManagerPortal({ user }: { user: any }) {
 
 function MemberPulseView({ user }: { user: any }) {
   const firestore = useFirestore();
+  const { toast } = useToast();
   const todayDate = format(new Date(), 'yyyy-MM-dd');
   const isGuest = user.isAnonymous;
+
+  const [alphaCode, setAlphaCode] = useState('');
+  const [isUnlocking, setIsUnlocking] = useState(false);
+
+  const userProfileRef = useMemoFirebase(() => doc(firestore!, 'users', user.uid), [firestore, user.uid]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
@@ -302,6 +311,47 @@ function MemberPulseView({ user }: { user: any }) {
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
+  const handleAlphaUnlock = async () => {
+    const code = alphaCode.trim();
+    if (code !== 'SpringDucks-JDI-G0') {
+      toast({ variant: "destructive", title: "Invalid Code", description: "Alpha access code not recognized." });
+      return;
+    }
+    
+    setIsUnlocking(true);
+    try {
+      await runTransaction(firestore!, async (transaction) => {
+        const promoRef = doc(firestore!, 'promo_codes', code);
+        const userRef = doc(firestore!, 'users', user.uid);
+        
+        const promoSnap = await transaction.get(promoRef);
+        let currentCount = 0;
+        if (promoSnap.exists()) {
+          currentCount = promoSnap.data().usageCount || 0;
+        }
+        
+        if (currentCount >= 2) {
+          throw new Error('Expired');
+        }
+        
+        transaction.set(promoRef, { usageCount: currentCount + 1 }, { merge: true });
+        transaction.set(userRef, { role: 'guardian', updatedAt: new Date().toISOString() }, { merge: true });
+      });
+      toast({ title: "Guardian Status Unlocked!", description: "You now have full alpha access features." });
+      setAlphaCode('');
+    } catch (e: any) {
+      toast({ 
+        variant: "destructive", 
+        title: e.message === 'Expired' ? "Code Expired" : "Access Denied",
+        description: e.message === 'Expired' ? "This alpha code has reached its 2-use limit." : "Failed to process alpha access."
+      });
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const isGuardian = userProfile?.role === 'guardian';
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
       <Navbar />
@@ -311,12 +361,59 @@ function MemberPulseView({ user }: { user: any }) {
             <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
               <LayoutDashboard className="h-6 w-6 text-primary" /> SANCTUARY <span className="text-primary">PULSE</span>
             </h1>
-            <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border-secondary text-secondary">
-              {isGuest ? "GUEST" : "MEMBER"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              {isGuardian && (
+                <Badge className="bg-secondary text-secondary-foreground text-[8px] font-black tracking-widest px-2 py-0.5 flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3" /> GUARDIAN
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 border-secondary text-secondary">
+                {isGuest ? "GUEST" : "FLOCK MEMBER"}
+              </Badge>
+            </div>
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Live Sanctuary Feed</p>
         </div>
+
+        {/* ALPHA ACCESS FEATURE */}
+        {!isGuardian && (
+          <section className="animate-in slide-in-from-top-4 duration-500">
+            <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 shadow-lg">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 space-y-1 text-center md:text-left">
+                  <h3 className="font-headline font-black text-sm uppercase tracking-tight text-secondary">Alpha Tester Access</h3>
+                  <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Enter code to unlock Guardian features</p>
+                </div>
+                <div className="flex w-full md:w-auto gap-3">
+                  <Input 
+                    value={alphaCode}
+                    onChange={(e) => setAlphaCode(e.target.value)}
+                    placeholder="ENTER ALPHA CODE"
+                    className="bg-background border-secondary/20 h-12 rounded-xl text-xs font-black tracking-widest uppercase flex-1 md:w-64"
+                    disabled={isUnlocking}
+                  />
+                  <Button 
+                    onClick={handleAlphaUnlock}
+                    disabled={isUnlocking || !alphaCode.trim()}
+                    className="bg-secondary text-secondary-foreground font-black h-12 px-6 rounded-xl shadow-lg hover:scale-105 transition-transform text-xs tracking-widest"
+                  >
+                    {isUnlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : 'UNLOCK'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </section>
+        )}
+
+        {isGuardian && (
+          <section className="animate-in zoom-in-95 duration-500">
+            <div className="flex justify-center">
+              <Badge className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-6 py-2 rounded-full font-black tracking-[0.3em] text-[10px] shadow-glow-green">
+                <ShieldCheck className="h-4 w-4 mr-2" /> GUARDIAN STATUS VERIFIED
+              </Badge>
+            </div>
+          </section>
+        )}
 
         {isGuest && (
           <Card className="bg-primary/10 border-2 border-dashed border-primary/30 rounded-[2.5rem] p-8 text-center space-y-4">

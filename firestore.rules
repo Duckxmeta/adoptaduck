@@ -5,13 +5,11 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.0.4 (Forced Redeploy)
-     * Last Updated: 2026-03-13
+     * Version: 1.0.5 (Alpha Access Support)
+     * Last Updated: 2026-03-17
      */
 
     // --- MASTER OVERRIDE ---
-    // Explicit master key for the primary administrator UID and official emails.
-    // This allows absolute access to bypass specific collection rules.
     match /{allPaths=**} {
       allow read, write: if request.auth != null && (
         request.auth.uid == 'cgQheQMuxqZd4N825PppPl72GtE2' ||
@@ -86,6 +84,11 @@ service cloud.firestore {
     match /nameSuggestions/{id} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    match /promo_codes/{codeId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }
