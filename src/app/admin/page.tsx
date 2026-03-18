@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -13,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Plus, Minus, Settings, Loader2, ChevronRight, ClipboardList, RotateCcw,
-  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck
+  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck, GitBranch
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -507,7 +506,14 @@ function MemberPulseView({ user }: { user: any }) {
                 </div>
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
                   <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
-                  <StoryModal resident={bird} trigger={<Button variant="outline" size="sm" className="w-full h-10 mt-3 text-[9px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5 rounded-lg">VIEW PROFILE <ChevronRight className="ml-1 h-3 w-3" /></Button>} />
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    <StoryModal resident={bird} trigger={<Button variant="outline" size="sm" className="h-10 text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5 rounded-lg">PROFILE</Button>} />
+                    <Button asChild variant="outline" size="sm" className="h-10 text-[8px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 rounded-lg">
+                      <Link href={`/residents/${bird.id}/tree`}>
+                        <GitBranch className="mr-1 h-3 w-3" /> TREE
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

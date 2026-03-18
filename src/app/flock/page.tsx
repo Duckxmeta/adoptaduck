@@ -8,7 +8,7 @@ import { Resident } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bird, Heart, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy } from 'lucide-react';
+import { Bird, Heart, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy, GitBranch } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
@@ -137,6 +137,13 @@ export default function BrowseFlock() {
                 }
               />
             )}
+            
+            <Button asChild variant="outline" className="w-full text-[10px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 h-12 rounded-xl">
+              <Link href={`/residents/${bird.id}/tree`}>
+                <GitBranch className="mr-2 h-4 w-4" /> VIEW HERITAGE TREE
+              </Link>
+            </Button>
+
             <StoryModal 
               resident={bird}
               trigger={
