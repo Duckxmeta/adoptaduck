@@ -158,9 +158,12 @@ export default function Home() {
           <div className="container mx-auto px-4 text-center space-y-8">
             <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From emergency rescues to daily layers, your contributions keep the sanctuary running.</p>
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-4">
               <Button asChild size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform">
                 <Link href="/support#donate">SUPPORT THE FLOCK <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
+              </Button>
+              <Button asChild variant="outline" className="border-primary text-primary font-black h-8 px-6 text-xs rounded-xl hover:bg-primary/10">
+                <Link href="/our-story">OUR STORY</Link>
               </Button>
             </div>
           </div>
