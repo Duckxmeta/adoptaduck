@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -232,7 +232,12 @@ function ManagerPortal({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
-            <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary/10 text-primary border border-primary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"><Plus className="h-4 w-4 mr-1" /> ADD BIRD</Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="bg-secondary/10 text-secondary border border-secondary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest">
+                <Link href="/flock">VIEW ALL</Link>
+              </Button>
+              <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary/10 text-primary border border-primary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"><Plus className="h-4 w-4 mr-1" /> ADD BIRD</Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
@@ -257,7 +262,7 @@ function ManagerPortal({ user }: { user: any }) {
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0"><DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle></DialogHeader>
-          <div className="p-6 grid grid-cols-2 gap-3 overflow-y-auto flex-1">
+          <div className="p-6 grid grid-cols-2 gap-3 overflow-y-auto flex-1 text-center">
             {PRESET_VIBES.map((vibe) => (
               <Button key={vibe.label} variant="outline" className="h-[90px] rounded-[1.5rem] flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground group" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}>
                 <span className="text-3xl group-hover:scale-110 transition-transform">{vibe.emoji}</span><span className="text-[10px] font-black uppercase tracking-widest">{vibe.label}</span>
@@ -343,8 +348,15 @@ function MemberPulseView({ user }: { user: any }) {
           throw new Error('Expired');
         }
         
-        transaction.set(promoRef, { usageCount: currentCount + 1 }, { merge: true });
-        transaction.set(userRef, { role: 'guardian', updatedAt: new Date().toISOString() }, { merge: true });
+        transaction.set(promoRef, { 
+          usageCount: currentCount + 1,
+          lastUsedAt: serverTimestamp() 
+        }, { merge: true });
+        
+        transaction.set(userRef, { 
+          role: 'guardian', 
+          updatedAt: serverTimestamp() 
+        }, { merge: true });
       });
       toast({ title: "Guardian Status Unlocked!", description: "You now have full alpha access features." });
       setAlphaCode('');
@@ -365,8 +377,8 @@ function MemberPulseView({ user }: { user: any }) {
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
       <Navbar />
       <main className="container mx-auto p-4 space-y-10 mt-4 md:mt-8 animate-in fade-in duration-700">
-        <div className="flex flex-col gap-2 pb-6 border-b border-border">
-          <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 pb-6 border-b border-border text-center">
+          <div className="flex flex-col items-center justify-center gap-2">
             <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
               <LayoutDashboard className="h-6 w-6 text-primary" /> SANCTUARY <span className="text-primary">PULSE</span>
             </h1>
@@ -385,20 +397,20 @@ function MemberPulseView({ user }: { user: any }) {
         </div>
 
         {/* ALPHA ACCESS FEATURE */}
-        {!isGuardian && (
+        {!isGuardian && !isGuest && (
           <section className="animate-in slide-in-from-top-4 duration-500">
             <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 shadow-lg">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex flex-col md:flex-row items-center gap-6 text-center">
                 <div className="flex-1 space-y-1 text-center md:text-left">
                   <h3 className="font-headline font-black text-sm uppercase tracking-tight text-secondary">Alpha Tester Access</h3>
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Enter code to unlock Guardian features</p>
                 </div>
                 <div className="flex w-full md:w-auto gap-3">
-                  <Input 
+                  <input 
                     value={alphaCode}
                     onChange={(e) => setAlphaCode(e.target.value)}
                     placeholder="ENTER ALPHA CODE"
-                    className="bg-background border-secondary/20 h-12 rounded-xl text-xs font-black tracking-widest uppercase flex-1 md:w-64"
+                    className="bg-background border border-secondary/20 h-12 px-4 rounded-xl text-xs font-black tracking-widest uppercase flex-1 md:w-64 focus:outline-none focus:ring-2 focus:ring-secondary/50"
                     disabled={isUnlocking}
                   />
                   <Button 
@@ -476,7 +488,7 @@ function MemberPulseView({ user }: { user: any }) {
                 )}>
                   <div className="flex items-center gap-4 md:flex-col md:gap-2">
                     <span className="text-2xl">{task.icon}</span>
-                    <Label className="text-[10px] font-black uppercase tracking-widest">{task.label}</Label>
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-center">{task.label}</Label>
                   </div>
                   <Switch checked={!!dailyStatus?.[task.key as keyof DailyStatus]} disabled className="scale-125 opacity-100" />
                 </div>
@@ -520,7 +532,7 @@ function MemberPulseView({ user }: { user: any }) {
         {/* RESIDENT DIRECTORY */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative min-h-[100px]">
                 <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">

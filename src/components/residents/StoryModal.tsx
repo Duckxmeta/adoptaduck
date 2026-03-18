@@ -94,7 +94,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
 
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Heritage</p>
-               <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+               <p className="text-sm text-muted-foreground leading-relaxed font-medium text-center">
                  {resident.breed} • {resident.sex === 'female' ? 'Hen' : 'Drake'} • {resident.source || 'Rescue'}
                </p>
             </div>
@@ -103,12 +103,12 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
 
         {/* FIXED FOOTER - STICKY FOR CONVERSION */}
         <div className="sticky bottom-0 z-[70] p-6 bg-gradient-to-t from-background via-background/95 to-transparent shrink-0 space-y-4 pt-10 border-t border-white/5">
-          <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform">
+          <Button asChild size="lg" className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform text-center">
             <Link href="/support#membership">BECOME A GUARDIAN <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
           </Button>
           
           <DialogClose asChild>
-            <Button variant="ghost" className="w-full h-12 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2">
+            <Button variant="ghost" className="w-full h-12 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2 text-center">
               <ArrowLeft className="h-4 w-4" /> BACK TO FLOCK
             </Button>
           </DialogClose>

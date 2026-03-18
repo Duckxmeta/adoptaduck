@@ -231,13 +231,13 @@ function SupportContent() {
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">$0</div>
                 <ul className="flex-1 space-y-3">
-                  {['Virtual Sanctuary Portal', 'Live Daily Care Logs', 'Real-Time Egg Counter', 'Live Vibe Board'].map((p, i) => (
+                  {['Virtual Sanctuary Portal', 'Live Daily Care Logs', 'Real-Time Cog Counter', 'Live Vibe Board'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-muted-foreground/40" /> {p}
                     </li>
                   ))}
                 </ul>
-                <Button asChild variant="outline" className="w-full h-14 rounded-xl border-border font-black uppercase text-xs tracking-widest">
+                <Button asChild variant="outline" className="w-full h-14 rounded-xl border-border font-black uppercase text-xs tracking-widest text-center">
                   <Link href="/signup">JOIN FREE</Link>
                 </Button>
               </Card>
@@ -322,8 +322,8 @@ function SupportContent() {
               <div className="space-y-10 relative z-10 text-center">
                 <div className="space-y-4">
                   <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Sponsored Access</Badge>
-                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
-                  <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
+                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none text-center">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
+                  <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium text-center">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
@@ -369,7 +369,7 @@ function SupportContent() {
                 </div>
 
                 <div className="pt-8">
-                  <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                  <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform text-center">
                     <a href="mailto:decentducksorg@gmail.com?subject=Community Access Request&body=Name: %0AOrganization: %0AMission: ">
                       REQUEST SPONSORED ACCESS <ArrowRight className="ml-2 h-5 w-5" />
                     </a>
