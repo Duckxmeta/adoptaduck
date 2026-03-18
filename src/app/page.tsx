@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -55,42 +54,47 @@ export default function Home() {
 
   const featuredDuck = featuredBirds && featuredBirds.length > 0 ? featuredBirds[0] : null;
 
-  useEffect(() => {
-    if (!auth || !firestore || !mounted) return;
+  const checkRedirect = useCallback(async () => {
+    if (!auth || !firestore) return;
 
-    configureAuthPersistence(auth);
-
-    const checkRedirect = async () => {
-      try {
-        setIsVerifying(true);
-        const result = await handleGoogleRedirectResult(auth);
-        
-        if (result && result.user) {
-          if (!result.user.isAnonymous) {
-            const userRef = doc(firestore, 'users', result.user.uid);
-            await setDoc(userRef, {
-              uid: result.user.uid,
-              email: result.user.email,
-              updatedAt: serverTimestamp()
-            }, { merge: true });
-          }
-
-          toast({
-            title: "Access Verified",
-            description: `Welcome back!`,
-          });
-          
-          router.push('/admin'); 
+    try {
+      setIsVerifying(true);
+      const result = await handleGoogleRedirectResult(auth);
+      
+      if (result && result.user) {
+        if (!result.user.isAnonymous) {
+          const userRef = doc(firestore, 'users', result.user.uid);
+          await setDoc(userRef, {
+            uid: result.user.uid,
+            email: result.user.email,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
         }
-      } catch (error: any) {
-        console.error("Auth Error:", error);
-      } finally {
-        setIsVerifying(false);
-      }
-    };
 
+        toast({
+          title: "Access Verified",
+          description: `Welcome back!`,
+        });
+        
+        router.push('/admin'); 
+      }
+    } catch (error: any) {
+      // Gracefully handle "Unexpected end of JSON input" or interrupted redirects
+      if (error.message?.includes('JSON')) {
+        console.warn("Auth redirect state was empty or malformed. Redirecting to login.");
+      } else {
+        console.error("Auth Error:", error);
+      }
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [auth, firestore, router, toast]);
+
+  useEffect(() => {
+    if (!auth || !mounted) return;
+    configureAuthPersistence(auth);
     checkRedirect();
-  }, [auth, firestore, toast, router, mounted]);
+  }, [auth, mounted, checkRedirect]);
 
   const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
@@ -149,7 +153,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Support Section - The Middle Fix */}
+        {/* Support Section */}
         <section className="py-24 bg-card/50 border-y border-border">
           <div className="container mx-auto px-4 text-center space-y-8">
             <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>

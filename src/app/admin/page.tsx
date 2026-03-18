@@ -25,7 +25,7 @@ import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { Navbar } from '@/components/layout/Navbar';
-import { format } from 'date-fns';
+import { format, isValid as isDateValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -130,7 +130,6 @@ function ManagerPortal({ user }: { user: any }) {
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
       <Navbar />
       <main className="container mx-auto p-4 space-y-10 mt-4 md:mt-8">
-        {/* MOBILE OPTIMIZED HEADER */}
         <div className="flex flex-col gap-2 pb-6 border-b border-border">
           <div className="flex items-center justify-between">
             <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
@@ -141,7 +140,7 @@ function ManagerPortal({ user }: { user: any }) {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
-        {/* EGG COUNTER - Large Touch Targets */}
+        {/* EGG COUNTER */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Egg className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY HARVEST</h2></div>
           <Card className="bg-card border-border rounded-[2rem] p-6 md:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
@@ -162,7 +161,7 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* DAILY ROUTINE - Large Cards for Mobile */}
+        {/* DAILY ROUTINE */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><ClipboardList className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2></div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl space-y-8">
@@ -201,19 +200,31 @@ function ManagerPortal({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {foundingFour.map((bird) => (
-              <Card key={bird.id} onClick={() => setVibeBird(bird)} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all min-h-[80px]">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
-                    {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+            {foundingFour.map((bird) => {
+              const lastUpdatedDate = bird.statusLastUpdated ? new Date(bird.statusLastUpdated) : null;
+              const formattedTime = lastUpdatedDate && isDateValid(lastUpdatedDate) 
+                ? format(lastUpdatedDate, 'h:mm a') 
+                : 'Routine';
+
+              return (
+                <Card key={bird.id} onClick={() => setVibeBird(bird)} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all min-h-[80px]">
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
+                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase truncate">
+                        {bird.statusLastUpdated ? `Updated ${formattedTime}` : 'Sanctuary Routine'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0"><h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3><p className="text-[8px] font-bold text-muted-foreground uppercase truncate">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
-                </div>
-                <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
-                  {bird.liveStatus || 'DAILY ROUTINE'}
-                </Badge>
-              </Card>
-            ))}
+                  <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
+                    {bird.liveStatus || 'DAILY ROUTINE'}
+                  </Badge>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
@@ -243,7 +254,6 @@ function ManagerPortal({ user }: { user: any }) {
         </section>
       </main>
 
-      {/* MODALS - Full Height on Mobile */}
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0"><DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle></DialogHeader>
@@ -407,7 +417,7 @@ function MemberPulseView({ user }: { user: any }) {
         {isGuardian && (
           <section className="animate-in zoom-in-95 duration-500">
             <div className="flex justify-center">
-              <Badge className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-6 py-2 rounded-full font-black tracking-[0.3em] text-[10px] shadow-glow-green">
+              <Badge className="bg-[#14F195]/10 text-[#14F195] border-[#14F195]/30 px-6 py-2 rounded-full font-black tracking-[0.3em] text-[10px]">
                 <ShieldCheck className="h-4 w-4 mr-2" /> GUARDIAN STATUS VERIFIED
               </Badge>
             </div>
@@ -444,7 +454,7 @@ function MemberPulseView({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* DAILY ROUTINE - Large Cards */}
+        {/* DAILY ROUTINE */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><ClipboardList className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">DAILY ROUTINE</h2></div>
           <Card className="bg-card border-border rounded-[2.5rem] p-6 shadow-xl space-y-8">
@@ -479,19 +489,31 @@ function MemberPulseView({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {foundingFour.map((bird) => (
-              <Card key={bird.id} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl min-h-[80px]">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
-                    {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+            {foundingFour.map((bird) => {
+              const lastUpdatedDate = bird.statusLastUpdated ? new Date(bird.statusLastUpdated) : null;
+              const formattedTime = lastUpdatedDate && isDateValid(lastUpdatedDate) 
+                ? format(lastUpdatedDate, 'h:mm a') 
+                : 'Routine';
+
+              return (
+                <Card key={bird.id} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl min-h-[80px]">
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
+                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase truncate">
+                        {bird.statusLastUpdated ? `Updated ${formattedTime}` : 'Sanctuary Routine'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0"><h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3><p className="text-[8px] font-bold text-muted-foreground uppercase truncate">{bird.statusLastUpdated ? `Updated ${format(new Date(bird.statusLastUpdated), 'h:mm a')}` : 'Sanctuary Routine'}</p></div>
-                </div>
-                <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
-                  {bird.liveStatus || 'DAILY ROUTINE'}
-                </Badge>
-              </Card>
-            ))}
+                  <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest px-3 py-2 min-w-[100px] justify-center text-primary border-primary/30 ml-2">
+                    {bird.liveStatus || 'DAILY ROUTINE'}
+                  </Badge>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
