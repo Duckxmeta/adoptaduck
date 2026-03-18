@@ -126,10 +126,10 @@ export default function Home() {
               Virtual Sanctuary
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter uppercase text-center">
-              THE <span className="text-primary">FLOCK</span> PULSE
+              VIRTUAL <span className="text-primary">SANCTUARY</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed px-4">
-              Step inside the world's most transparent duck sanctuary. Follow every rescue, every egg, and every heartbeat in real-time.
+              A modern, high-transparency home for domestic ducks. Providing a quiet, high-quality home for our flock.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:w-auto px-12 text-lg rounded-2xl shadow-2xl" asChild>
