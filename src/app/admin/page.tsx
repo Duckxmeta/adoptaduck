@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
 import { 
   Plus, Minus, Loader2, ClipboardList, 
-  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, 
-  ShieldCheck, Bell, CheckCheck, Inbox, GitBranch 
+  LayoutDashboard, Trash2, Bird, Zap, Sanitize, 
+  ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
+  Sparkles, Activity, ChevronRight, Egg, Save
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -25,6 +26,7 @@ import { StoryModal } from '@/components/residents/StoryModal';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from 'next/link';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
@@ -330,7 +332,9 @@ function ManagerPortal({ user }: { user: any }) {
 
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
-          <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0"><DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle></DialogHeader>
+          <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0">
+            <DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle>
+          </DialogHeader>
           <div className="p-6 grid grid-cols-2 gap-3 overflow-y-auto flex-1 text-center">
             {PRESET_VIBES.map((vibe) => (
               <Button key={vibe.label} variant="outline" className="h-[90px] rounded-[1.5rem] flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground group" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}>
@@ -363,7 +367,7 @@ function ManagerPortal({ user }: { user: any }) {
         setIsHealthLogOpen(false);
       }} residentName={loggingResident?.name || ''} />
 
-      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
+      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
         await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
         toast({ title: "Removed" });
       }} />
