@@ -3,12 +3,9 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { 
-  Dna, 
-  ShieldCheck, 
-  ArrowLeft, 
-  Heart, 
-  Info, 
-  X 
+  Sparkles, 
+  X,
+  Heart
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -23,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Resident } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface HeritageTreeProps {
   rootResident: Resident;
@@ -44,17 +42,17 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
   const TreeCard = ({ bird, label, genLabel, className }: { bird: Resident | null, label: string, genLabel?: string, className?: string }) => {
     if (!bird) return null;
 
-    const isG0 = !bird.motherId && !bird.fatherId;
+    const isG0 = bird.source === 'Founding' || bird.source === 'Rehomed';
     const imagePath = bird.primaryImageUrl || '/images/placeholder-duck.png';
 
     return (
       <div 
         onClick={() => setSelectedBird(bird)}
-        className={cn("w-[220px] h-[300px] cursor-pointer group relative shrink-0", className)}
+        className={cn("w-[220px] h-[280px] cursor-pointer group relative shrink-0", className)}
       >
         <div className={cn(
           "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-lg transition-all duration-300 group-hover:scale-105 flex flex-col",
-          isG0 ? "border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)]" : "border-border group-hover:border-primary"
+          isG0 ? "border-primary shadow-[0_0_15px_rgba(255,215,0,0.2)]" : "border-secondary/40 group-hover:border-secondary"
         )}>
           <div className="relative h-full w-full bg-muted">
             <Image 
@@ -82,7 +80,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
 
           {isG0 && (
             <div className="absolute top-2 left-2">
-              <Badge className="bg-[#D4AF37] text-black border-none text-[7px] font-black px-1.5 py-0.5 rounded-sm shadow-md">
+              <Badge className="bg-primary text-black border-none text-[7px] font-black px-1.5 py-0.5 rounded-sm shadow-md">
                 ROOT
               </Badge>
             </div>
@@ -92,40 +90,41 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
     );
   };
 
+  const isRootHatched = rootResident.source === 'Hatched';
+
   return (
     <div className="w-full">
       <ScrollArea className="w-full whitespace-nowrap pb-12">
         <div className="relative min-w-fit mx-auto py-12 px-24 flex flex-col items-center">
-          {/* SVG Connector Layer */}
-          <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            {/* Logic for connectors would go here - simplified for brevity */}
-          </svg>
+          {isRootHatched && (
+            <>
+              {/* Generation 0: Grandparents */}
+              <div className="flex justify-center gap-8 mb-24">
+                <div className="flex gap-4">
+                  <TreeCard bird={mGrandma || null} label="M-Grandmother" genLabel="G0" />
+                  <TreeCard bird={mGrandpa || null} label="M-Grandfather" genLabel="G0" />
+                </div>
+                <div className="flex gap-4">
+                  <TreeCard bird={fGrandma || null} label="P-Grandmother" genLabel="G0" />
+                  <TreeCard bird={fGrandpa || null} label="P-Grandfather" genLabel="G0" />
+                </div>
+              </div>
 
-          {/* Generation 0: Grandparents */}
-          <div className="flex justify-center gap-8 mb-24">
-            <div className="flex gap-4">
-              <TreeCard bird={mGrandma || null} label="M-Grandmother" genLabel="G0" />
-              <TreeCard bird={mGrandpa || null} label="M-Grandfather" genLabel="G0" />
-            </div>
-            <div className="flex gap-4">
-              <TreeCard bird={fGrandma || null} label="P-Grandmother" genLabel="G0" />
-              <TreeCard bird={fGrandpa || null} label="P-Grandfather" genLabel="G0" />
-            </div>
-          </div>
+              {/* Generation 1: Parents */}
+              <div className="flex justify-center gap-32 mb-24">
+                <TreeCard bird={mother || null} label="Mother" genLabel="G1" />
+                <TreeCard bird={father || null} label="Father" genLabel="G1" />
+              </div>
+            </>
+          )}
 
-          {/* Generation 1: Parents */}
-          <div className="flex justify-center gap-32 mb-24">
-            <TreeCard bird={mother || null} label="Mother" genLabel="G1" />
-            <TreeCard bird={father || null} label="Father" genLabel="G1" />
-          </div>
-
-          {/* Generation 2: Target */}
+          {/* Current Bird - The focus node */}
           <div className="relative">
             <div className="absolute -inset-10 bg-primary/10 blur-[80px] rounded-full opacity-40" />
             <TreeCard 
               bird={rootResident} 
-              label="Selected Resident" 
-              genLabel={`G${rootResident.generation || 2}`}
+              label={isRootHatched ? "Subject" : "Founder"} 
+              genLabel={`G${rootResident.generation || 0}`}
               className="w-[260px] h-[340px] scale-110" 
             />
           </div>
@@ -138,7 +137,6 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
         <DialogContent className="max-w-2xl p-0 overflow-hidden rounded-[2rem] bg-card border-border border-2">
           {selectedBird && (
             <div className="flex flex-col h-[85vh] md:h-auto">
-              {/* Sticky Header */}
               <div className="sticky top-0 z-50 w-full bg-card/95 backdrop-blur-md border-b border-border p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -178,7 +176,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-muted/20 rounded-2xl border border-border">
                       <p className="text-[9px] font-black uppercase text-muted-foreground">Generation</p>
-                      <p className="font-bold">G{selectedBird.generation || 0}</p>
+                      <p className="font-bold">G{selectedBird.generation ?? 0}</p>
                     </div>
                     <div className="p-4 bg-muted/20 rounded-2xl border border-border">
                       <p className="text-[9px] font-black uppercase text-muted-foreground">Source</p>
@@ -188,11 +186,10 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
                 </div>
               </div>
 
-              {/* Sticky Footer */}
               <div className="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border p-6 flex flex-col gap-3">
                 <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
                   <Link href={`/support?bird=${encodeURIComponent(selectedBird.name)}#membership`}>
-                    BECOME A GUARDIAN
+                    BECOME A GUARDIAN <Heart className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
                 <p className="text-[9px] text-center font-black uppercase tracking-widest text-muted-foreground">

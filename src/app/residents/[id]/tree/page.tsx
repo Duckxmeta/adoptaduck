@@ -1,8 +1,8 @@
 "use client";
 
+import { React, use } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
@@ -11,19 +11,21 @@ import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
   ArrowLeft, 
   Dna,
-  Loader2,
-  ShieldCheck
+  Loader2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-export default function LineageTreePage() {
-  const { id } = useParams() as { id: string };
+export default function LineageTreePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const firestore = useFirestore();
   const router = useRouter();
 
+  // Fetch the main resident by ID
   const { data: resident, isLoading: residentLoading } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id])
   );
 
+  // Fetch Parents
   const { data: mother } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && resident?.motherId ? doc(firestore, 'birds', resident.motherId) : null), [firestore, resident?.motherId])
   );
@@ -31,6 +33,7 @@ export default function LineageTreePage() {
     useMemoFirebase(() => (firestore && resident?.fatherId ? doc(firestore, 'birds', resident.fatherId) : null), [firestore, resident?.fatherId])
   );
 
+  // Fetch Grandparents (Maternal)
   const { data: mGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && mother?.motherId ? doc(firestore, 'birds', mother.motherId) : null), [firestore, mother?.motherId])
   );
@@ -38,6 +41,7 @@ export default function LineageTreePage() {
     useMemoFirebase(() => (firestore && mother?.fatherId ? doc(firestore, 'birds', mother.fatherId) : null), [firestore, mother?.fatherId])
   );
 
+  // Fetch Grandparents (Paternal)
   const { data: fGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && father?.motherId ? doc(firestore, 'birds', father.motherId) : null), [firestore, father?.motherId])
   );
@@ -57,8 +61,8 @@ export default function LineageTreePage() {
   if (!resident) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <p>Resident not found.</p>
-        <Button onClick={() => router.push('/flock')}>Back to Flock</Button>
+        <p className="text-muted-foreground font-black uppercase tracking-widest mb-4">Resident not found.</p>
+        <Button onClick={() => router.push('/flock')} className="bg-primary text-primary-foreground font-black px-8 rounded-xl">Back to Flock</Button>
       </div>
     );
   }
@@ -78,7 +82,7 @@ export default function LineageTreePage() {
 
       <main className="flex-1 container mx-auto px-4 py-12 flex flex-col">
         <div className="flex flex-col items-center text-center space-y-6 mb-16">
-          <Button variant="ghost" onClick={() => router.push(`/residents/${id}`)} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+          <Button variant="ghost" onClick={() => router.push(`/residents/${id}`)} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary p-0 h-auto">
             <ArrowLeft className="h-3 w-3 mr-2" /> Back to Profile
           </Button>
           <div className="space-y-2">
@@ -97,22 +101,22 @@ export default function LineageTreePage() {
            <div className="bg-card border border-border p-10 rounded-[2.5rem] text-center space-y-6 shadow-2xl relative overflow-hidden group">
               <div className="flex justify-center gap-10 items-center">
                 <div className="flex items-center gap-3">
-                  <div className="w-3.5 h-3.5 rounded-full bg-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Root Ancestor (G0)</span>
+                  <div className="w-3.5 h-3.5 rounded-full bg-primary shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Founder / Rehomed</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-3.5 h-3.5 rounded-full bg-border" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Direct Lineage</span>
+                  <div className="w-3.5 h-3.5 rounded-full bg-secondary" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sanctuary Born</span>
                 </div>
               </div>
               
               <div className="space-y-3">
                 <h3 className="text-xl font-headline font-black uppercase flex items-center justify-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-[#D4AF37]" /> GENETIC VERIFICATION
+                  <ShieldCheck className="h-5 w-5 text-primary" /> DATA INTEGRITY
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed font-medium max-w-lg mx-auto">
-                  Generations are calculated relative to the founding residents. 
-                  G0 residents represent the original rescues whose prior history is not available in the sanctuary records.
+                  Heritage tracking allows us to monitor the genetic health of our flock. 
+                  "Rehomed" or "Founding" residents serve as the root of their respective lineages within our sanctuary records.
                 </p>
               </div>
            </div>
