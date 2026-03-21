@@ -8,16 +8,18 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Plus, Minus, Loader2, ClipboardList, 
-  LayoutDashboard, Trash2, Bird, Zap, Sanitize, 
+  LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save
+  Sparkles, Activity, ChevronRight, Egg, Save, Info
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, runTransaction, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
 import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
+import { ColumnDef } from "@tanstack/react-table";
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -26,7 +28,7 @@ import { StoryModal } from '@/components/residents/StoryModal';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Link from 'next/link';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
@@ -103,17 +105,17 @@ function ManagerPortal({ user }: { user: any }) {
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email)) return;
 
+    // Note: If this fails due to missing index, we filter/sort client-side
     const q = query(
       collection(firestore!, 'notifications'),
-      where('status', '==', 'unread'),
-      orderBy('createdAt', 'desc')
+      where('status', '==', 'unread')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })).sort((a: any, b: any) => b.createdAt?.seconds - a.createdAt?.seconds);
       setNotifications(docs);
     }, (error) => {
       console.error("Notification listener error:", error);
@@ -169,47 +171,95 @@ function ManagerPortal({ user }: { user: any }) {
             <h1 className="font-headline font-black text-2xl md:text-3xl uppercase tracking-tighter flex items-center gap-3">
               <LayoutDashboard className="h-6 w-6 text-primary" /> MANAGER <span className="text-primary">PORTAL</span>
             </h1>
-            <Badge className="bg-primary text-primary-foreground text-[8px] font-black tracking-widest px-2 py-0.5">ADMIN</Badge>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Bell className="h-6 w-6 text-muted-foreground" />
+                {notifications.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-destructive text-white h-5 w-5 flex items-center justify-center p-0 text-[10px] border-2 border-background">
+                    {notifications.length}
+                  </Badge>
+                )}
+              </div>
+              <Badge className="bg-primary text-primary-foreground text-[8px] font-black tracking-widest px-2 py-0.5">ADMIN</Badge>
+            </div>
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
-        {/* NOTIFICATION FEED */}
-        {notifications.length > 0 && (
-          <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <div className="flex items-center gap-3">
-                <Bell className="h-4 w-4 text-secondary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">NOTIFICATION FEED</h2>
-                <Badge className="bg-secondary text-secondary-foreground text-[10px] px-2">{notifications.length}</Badge>
+        {/* NOTIFICATION CENTER */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Bell className="h-4 w-4 text-secondary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RECENT SUGGESTIONS</h2>
+          </div>
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl min-w-[300px]">
+            {notifications.length > 0 ? (
+              <ScrollArea className="h-[200px] pr-4">
+                <div className="space-y-3">
+                  {notifications.map((note) => (
+                    <div key={note.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-secondary/10 rounded-full">
+                          <Inbox className="h-4 w-4 text-secondary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">{note.suggestedName}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase font-black">For: {note.birdId}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                              Details
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="bg-card text-card-foreground border-border rounded-2xl">
+                            <DialogHeader>
+                              <DialogTitle className="font-headline font-black uppercase tracking-tight">Suggestion Details</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
+                                <div className="p-2 bg-primary/10 rounded-full"><Info className="h-4 w-4 text-primary" /></div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Proposed Name</p>
+                                  <p className="font-bold text-lg">{note.suggestedName}</p>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">User Email</p>
+                                  <p className="text-xs break-all">{note.userEmail}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Bird ID</p>
+                                  <p className="text-xs">{note.birdId}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => markNotificationRead(note.id)}
+                          className="text-secondary hover:bg-secondary/10 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                        >
+                          <CheckCheck className="h-3.5 w-3.5 mr-1" /> Mark Read
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
+                <CheckCheck className="h-8 w-8 text-muted-foreground" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Inbox Zero - All caught up!</p>
               </div>
-            </div>
-            <div className="space-y-2">
-              {notifications.map((note) => (
-                <Card key={note.id} className="bg-secondary/5 border-secondary/20 p-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-secondary/10 rounded-full">
-                      <Inbox className="h-4 w-4 text-secondary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold">New Name Suggestion</p>
-                      <p className="text-xs text-muted-foreground">"{note.suggestedName}" for {note.birdId}</p>
-                      <p className="text-[9px] text-muted-foreground/60 uppercase font-black">{note.userEmail}</p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => markNotificationRead(note.id)}
-                    className="text-secondary hover:bg-secondary/10 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <CheckCheck className="h-3.5 w-3.5 mr-1" /> Mark Read
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+            )}
+          </Card>
+        </section>
 
         {/* EGG COUNTER */}
         <section className="space-y-4">
@@ -318,9 +368,16 @@ function ManagerPortal({ user }: { user: any }) {
                 </div>
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
                   <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
-                  <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" size="sm" className="h-10 px-3 text-[10px] font-black uppercase text-secondary bg-secondary/5 rounded-lg" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
-                    <Button variant="ghost" size="sm" className="h-10 px-3 text-[10px] font-black uppercase text-muted-foreground bg-muted/5 rounded-lg" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
+                  <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" className="h-10 flex-1 px-3 text-[10px] font-black uppercase text-secondary bg-secondary/5 rounded-lg" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
+                      <Button variant="ghost" size="sm" className="h-10 flex-1 px-3 text-[10px] font-black uppercase text-muted-foreground bg-muted/5 rounded-lg" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 rounded-lg">
+                      <Link href={`/residents/${bird.id}/tree`}>
+                        <GitBranch className="mr-1 h-3 w-3" /> TREE
+                      </Link>
+                    </Button>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => { setDeletingResident(bird); setIsDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
