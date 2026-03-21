@@ -3,23 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { reinforcement } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
-  Plus, Minus, Settings, Loader2, ChevronRight, ClipboardList, RotateCcw,
-  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck, GitBranch, Bell, CheckCheck, Inbox
+  Plus, Minus, Loader2, ClipboardList, 
+  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, 
+  ShieldCheck, Bell, CheckCheck, Inbox, GitBranch 
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, runTransaction, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
 import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -104,22 +101,17 @@ function ManagerPortal({ user }: { user: any }) {
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email)) return;
 
-    // Simplified query to avoid composite index requirement
     const q = query(
       collection(firestore!, 'notifications'),
-      where('status', '==', 'unread')
+      where('status', '==', 'unread'),
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).sort((a: any, b: any) => {
-        // Manual sort by createdAt descending
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
-      });
+      }));
       setNotifications(docs);
     }, (error) => {
       console.error("Notification listener error:", error);
@@ -180,13 +172,13 @@ function ManagerPortal({ user }: { user: any }) {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
-        {/* NOTIFICATION CENTER */}
+        {/* NOTIFICATION FEED */}
         {notifications.length > 0 && (
           <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-border pb-2">
               <div className="flex items-center gap-3">
                 <Bell className="h-4 w-4 text-secondary" />
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">NOTIFICATIONS</h2>
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">NOTIFICATION FEED</h2>
                 <Badge className="bg-secondary text-secondary-foreground text-[10px] px-2">{notifications.length}</Badge>
               </div>
             </div>
@@ -200,6 +192,7 @@ function ManagerPortal({ user }: { user: any }) {
                     <div>
                       <p className="text-sm font-bold">New Name Suggestion</p>
                       <p className="text-xs text-muted-foreground">"{note.suggestedName}" for {note.birdId}</p>
+                      <p className="text-[9px] text-muted-foreground/60 uppercase font-black">{note.userEmail}</p>
                     </div>
                   </div>
                   <Button 
@@ -328,7 +321,7 @@ function ManagerPortal({ user }: { user: any }) {
                     <Button variant="ghost" size="sm" className="h-10 px-3 text-[10px] font-black uppercase text-muted-foreground bg-muted/5 rounded-lg" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => { setDeletingResident(bird); setIsDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => { setDeletingResident(bird); setIsDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
               </Card>
             ))}
           </div>
@@ -606,9 +599,9 @@ function MemberPulseView({ user }: { user: any }) {
         </section>
 
         {/* RESIDENT DIRECTORY */}
-        <section className="space-y-4">
+        <section className="space-y-4 text-center">
           <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative min-h-[100px]">
                 <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">

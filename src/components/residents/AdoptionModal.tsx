@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart, ShieldCheck,傳 Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Resident } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -38,21 +38,24 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
     setIsSubmitting(true);
     try {
       if (suggestedName.trim() && firestore) {
-        // Log the suggestion
+        // 1. Log the suggestion in nameSuggestions collection
         await addDoc(collection(firestore, 'nameSuggestions'), {
           birdId: resident.id,
           birdOriginalName: resident.name,
           suggestedName: suggestedName.trim(),
-          donorEmail: user?.email || 'anonymous',
+          userId: user?.uid || 'anonymous',
+          userEmail: user?.email || 'anonymous',
           status: 'pending',
           createdAt: serverTimestamp()
         });
 
-        // Trigger Admin Notification
+        // 2. Create an entry in the notifications collection for Admins
         await addDoc(collection(firestore, 'notifications'), {
-          type: 'name_suggestion',
+          type: 'adoption_suggestion',
           birdId: resident.id,
           suggestedName: suggestedName.trim(),
+          userId: user?.uid || 'anonymous',
+          userEmail: user?.email || 'anonymous',
           status: 'unread',
           createdAt: serverTimestamp()
         });
