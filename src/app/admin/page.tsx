@@ -13,13 +13,12 @@ import {
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch } from 'firebase/firestore';
 import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
-import { ColumnDef } from "@tanstack/react-table";
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -105,7 +104,6 @@ function ManagerPortal({ user }: { user: any }) {
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email)) return;
 
-    // Note: If this fails due to missing index, we filter/sort client-side
     const q = query(
       collection(firestore!, 'notifications'),
       where('status', '==', 'unread')
@@ -115,7 +113,11 @@ function ManagerPortal({ user }: { user: any }) {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).sort((a: any, b: any) => b.createdAt?.seconds - a.createdAt?.seconds);
+      })).sort((a: any, b: any) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
       setNotifications(docs);
     }, (error) => {
       console.error("Notification listener error:", error);
@@ -159,6 +161,22 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
+  const handleVerifyAndApprove = async (note: any) => {
+    try {
+      const batch = writeBatch(firestore!);
+      const birdRef = doc(firestore!, 'birds', note.birdId);
+      const noteRef = doc(firestore!, 'notifications', note.id);
+
+      batch.update(birdRef, { name: note.suggestedName });
+      batch.update(noteRef, { status: 'read' });
+
+      await batch.commit();
+      toast({ title: "Approved!", description: `Name changed to ${note.suggestedName}` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Could not approve suggestion." });
+    }
+  };
+
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
@@ -175,9 +193,9 @@ function ManagerPortal({ user }: { user: any }) {
               <div className="relative">
                 <Bell className="h-6 w-6 text-muted-foreground" />
                 {notifications.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-destructive text-white h-5 w-5 flex items-center justify-center p-0 text-[10px] border-2 border-background">
+                  <div className="absolute -top-2 -right-2 bg-destructive text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] border-2 border-background font-bold animate-pulse">
                     {notifications.length}
-                  </Badge>
+                  </div>
                 )}
               </div>
               <Badge className="bg-primary text-primary-foreground text-[8px] font-black tracking-widest px-2 py-0.5">ADMIN</Badge>
@@ -192,26 +210,28 @@ function ManagerPortal({ user }: { user: any }) {
             <Bell className="h-4 w-4 text-secondary" />
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RECENT SUGGESTIONS</h2>
           </div>
-          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl min-w-[300px]">
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
             {notifications.length > 0 ? (
-              <ScrollArea className="h-[200px] pr-4">
+              <ScrollArea className="h-[250px] pr-4">
                 <div className="space-y-3">
                   {notifications.map((note) => (
-                    <div key={note.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
+                    <div key={note.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl gap-4">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary/10 rounded-full">
                           <Inbox className="h-4 w-4 text-secondary" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold">{note.suggestedName}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase font-black">For: {note.birdId}</p>
+                          <p className="text-sm font-bold text-foreground">
+                            <span className="text-secondary">{note.userIdentity}</span> suggested <span className="text-primary">'{note.suggestedName}'</span> for {note.birdName}
+                          </p>
+                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Status: {note.userStatus}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              Details
+                              View Details
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="bg-card text-card-foreground border-border rounded-2xl">
@@ -228,24 +248,31 @@ function ManagerPortal({ user }: { user: any }) {
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground">User Email</p>
-                                  <p className="text-xs break-all">{note.userEmail}</p>
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Requester</p>
+                                  <p className="text-xs break-all">{note.userIdentity}</p>
+                                  <Badge className="mt-1 text-[8px]">{note.userStatus}</Badge>
                                 </div>
                                 <div>
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Bird ID</p>
-                                  <p className="text-xs">{note.birdId}</p>
+                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Target Bird</p>
+                                  <p className="text-xs">{note.birdName} (ID: {note.birdId})</p>
                                 </div>
                               </div>
                             </div>
                           </DialogContent>
                         </Dialog>
                         <Button 
+                          onClick={() => handleVerifyAndApprove(note)}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                        >
+                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Verify &amp; Approve
+                        </Button>
+                        <Button 
                           variant="ghost" 
                           size="sm" 
                           onClick={() => markNotificationRead(note.id)}
-                          className="text-secondary hover:bg-secondary/10 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                          className="text-muted-foreground hover:bg-muted/10 h-8 px-2"
                         >
-                          <CheckCheck className="h-3.5 w-3.5 mr-1" /> Mark Read
+                          <CheckCheck className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
@@ -255,7 +282,7 @@ function ManagerPortal({ user }: { user: any }) {
             ) : (
               <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
                 <CheckCheck className="h-8 w-8 text-muted-foreground" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Inbox Zero - All caught up!</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">No unread suggestions.</p>
               </div>
             )}
           </Card>
@@ -408,11 +435,11 @@ function ManagerPortal({ user }: { user: any }) {
 
       <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={(data) => {
         if (editingResident) {
-          setDoc(doc(firestore!, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+          updateDoc(doc(firestore!, 'birds', editingResident.id), { ...data, updatedAt: new Date().toISOString() });
           toast({ title: "Updated" });
         } else {
           const newId = (data.name || 'bird').toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-          setDoc(doc(firestore!, 'birds', newId), { ...data, id: newId, createdAt: new Date().toISOString() }, { merge: true });
+          setDoc(doc(firestore!, 'birds', newId), { ...data, id: newId, createdAt: new Date().toISOString() });
           toast({ title: "Added" });
         }
         setIsDialogOpen(false);
@@ -464,30 +491,31 @@ function MemberPulseView({ user }: { user: any }) {
     
     setIsUnlocking(true);
     try {
-      await runTransaction(firestore!, async (transaction) => {
-        const promoRef = doc(firestore!, 'promo_codes', code);
-        const userRef = doc(firestore!, 'users', user.uid);
-        
-        const promoSnap = await transaction.get(promoRef);
-        let currentCount = 0;
-        if (promoSnap.exists()) {
-          currentCount = promoSnap.data().usageCount || 0;
-        }
-        
-        if (currentCount >= 2) {
-          throw new Error('Expired');
-        }
-        
-        transaction.set(promoRef, { 
-          usageCount: currentCount + 1,
-          lastUsedAt: serverTimestamp() 
-        }, { merge: true });
-        
-        transaction.set(userRef, { 
-          role: 'guardian', 
-          updatedAt: serverTimestamp() 
-        }, { merge: true });
-      });
+      const batch = writeBatch(firestore!);
+      const promoRef = doc(firestore!, 'promo_codes', code);
+      const userRef = doc(firestore!, 'users', user.uid);
+      
+      const promoSnap = await getDoc(promoRef);
+      let currentCount = 0;
+      if (promoSnap.exists()) {
+        currentCount = promoSnap.data().usageCount || 0;
+      }
+      
+      if (currentCount >= 2) {
+        throw new Error('Expired');
+      }
+      
+      batch.set(promoRef, { 
+        usageCount: currentCount + 1,
+        lastUsedAt: serverTimestamp() 
+      }, { merge: true });
+      
+      batch.set(userRef, { 
+        role: 'guardian', 
+        updatedAt: serverTimestamp() 
+      }, { merge: true });
+
+      await batch.commit();
       toast({ title: "Guardian Status Unlocked!", description: "You now have full alpha access features." });
       setAlphaCode('');
     } catch (e: any) {
@@ -668,7 +696,7 @@ function MemberPulseView({ user }: { user: any }) {
                 <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">
                   {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
-                <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                <div className="flex-1 p-4 flex flex-col justify-between min-w-0 text-left">
                   <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
                   <div className="grid grid-cols-2 gap-2 mt-3">
                     <StoryModal resident={bird} trigger={<Button variant="outline" size="sm" className="h-10 text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5 rounded-lg">PROFILE</Button>} />

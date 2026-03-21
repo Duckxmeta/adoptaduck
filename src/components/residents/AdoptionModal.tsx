@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Resident } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -37,28 +38,25 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);
     try {
-      if (suggestedName.trim() && firestore) {
-        // 1. Log the suggestion in nameSuggestions collection
-        await addDoc(collection(firestore, 'nameSuggestions'), {
-          birdId: resident.id,
-          birdOriginalName: resident.name,
-          suggestedName: suggestedName.trim(),
-          userId: user?.uid || 'anonymous',
-          userEmail: user?.email || 'anonymous',
-          status: 'pending',
-          createdAt: serverTimestamp()
-        });
+      if (suggestedName.trim() && firestore && user) {
+        // Fetch user role for the notification
+        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+        const role = userDoc.exists() ? userDoc.data().role : 'Member';
 
-        // 2. Create an entry in the notifications collection for Admins
-        await addDoc(collection(firestore, 'notifications'), {
-          type: 'adoption_suggestion',
+        const notificationData = {
+          type: 'name_suggestion',
           birdId: resident.id,
+          birdName: resident.name,
           suggestedName: suggestedName.trim(),
-          userId: user?.uid || 'anonymous',
-          userEmail: user?.email || 'anonymous',
+          userIdentity: user.email,
+          userStatus: role,
+          userId: user.uid,
           status: 'unread',
           createdAt: serverTimestamp()
-        });
+        };
+
+        // 1. Log the suggestion in notifications collection
+        await addDoc(collection(firestore, 'notifications'), notificationData);
         
         toast({
           title: "Suggestion Recorded!",
@@ -102,7 +100,7 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
           <>
             <div className="bg-secondary/10 p-8 text-center space-y-4 border-b border-border">
               <div className="mx-auto w-20 h-20 bg-secondary/20 rounded-full flex items-center justify-center border-2 border-secondary/30">
-                <Sparkles className="h-10 w-10 text-secondary" />
+                <SmarterIcon icon="Sparkles" className="h-10 w-10 text-secondary" />
               </div>
               <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">Community Resident</DialogTitle>
               <DialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed">
@@ -166,6 +164,11 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
       </DialogContent>
     </Dialog>
   );
+}
+
+const SmarterIcon = ({ icon, className }: { icon: string, className: string }) => {
+  if (icon === 'Sparkles') return <Sparkles className={className} />;
+  return null;
 }
 
 interface AdoptionModalProps {
