@@ -1,12 +1,11 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.0.5 (Alpha Access Support)
-     * Last Updated: 2026-03-17
+     * Version: 1.0.6 (Notification Support)
+     * Last Updated: 2026-03-21
      */
 
     // --- MASTER OVERRIDE ---
@@ -86,9 +85,14 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /notifications/{id} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /promo_codes/{codeId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read: if true;
+      allow write: if true;
     }
   }
 }

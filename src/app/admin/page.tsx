@@ -24,9 +24,10 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { StoryModal } from '@/components/residents/StoryModal';
+import { Persona } from '@/components/layout/Navbar';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
-import { cn } from '@/lib/utils';
+import {展现 as cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
@@ -103,18 +104,25 @@ function ManagerPortal({ user }: { user: any }) {
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email)) return;
 
+    // Simplified query to avoid composite index requirement
     const q = query(
       collection(firestore!, 'notifications'),
-      where('status', '==', 'unread'),
-      orderBy('createdAt', 'desc')
+      where('status', '==', 'unread')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })).sort((a: any, b: any) => {
+        // Manual sort by createdAt descending
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
       setNotifications(docs);
+    }, (error) => {
+      console.error("Notification listener error:", error);
     });
 
     return () => unsubscribe();
@@ -122,7 +130,7 @@ function ManagerPortal({ user }: { user: any }) {
 
   const handleUpdateStatus = (birdId: string, status: string) => {
     const birdRef = doc(firestore!, 'birds', birdId);
-    updateDocumentNonBlocking(birdRef, {
+    updateDocumentIdempotent(birdRef, {
       liveStatus: status || "",
       statusLastUpdated: status ? new Date().toISOString() : null
     });
