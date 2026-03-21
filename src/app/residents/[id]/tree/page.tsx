@@ -9,7 +9,6 @@ import { Resident } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
-  ArrowLeft, 
   Dna,
   Loader2,
   ShieldCheck
@@ -83,9 +82,6 @@ export default function LineageTreePage({ params }: { params: Promise<{ id: stri
 
       <main className="flex-1 container mx-auto px-4 py-12 flex flex-col">
         <div className="flex flex-col items-center text-center space-y-6 mb-16">
-          <Button variant="ghost" onClick={() => router.push(`/residents/${id}`)} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary p-0 h-auto">
-            <ArrowLeft className="h-3 w-3 mr-2" /> Back to Profile
-          </Button>
           <div className="space-y-2">
             <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">
               PEDIGREE <span className="text-primary">EXPLORER</span>
