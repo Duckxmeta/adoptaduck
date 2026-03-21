@@ -11,7 +11,8 @@ import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
   ArrowLeft, 
   Dna,
-  Loader2
+  Loader2,
+  ShieldCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
