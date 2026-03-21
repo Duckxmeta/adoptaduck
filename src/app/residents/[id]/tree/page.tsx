@@ -2,24 +2,18 @@
 
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
   ArrowLeft, 
-  TreePine, 
-  Sparkles, 
-  Loader2, 
   Dna,
+  Loader2,
   ShieldCheck
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export default function LineageTreePage() {
   const { id } = useParams() as { id: string };
@@ -60,83 +54,31 @@ export default function LineageTreePage() {
     );
   }
 
-  const hasGrandparents = mGrandma || mGrandpa || fGrandma || fGrandpa;
-  const hasParents = mother || father;
-
-  let grandparentTierLabel = "G0";
-  let parentTierLabel = "G1";
-  let residentTierLabel = "G2";
-
-  if (!hasGrandparents) {
-    grandparentTierLabel = "";
-    parentTierLabel = "G0";
-    residentTierLabel = "G1";
-  }
-
-  if (!hasParents && !hasGrandparents) {
-    parentTierLabel = "";
-    residentTierLabel = "G0";
-  }
-
-  const TreeCard = ({ bird, label, genLabel, className }: { bird: Resident | null, label: string, genLabel?: string, className?: string }) => {
-    if (!bird) return null;
-
-    const isG0 = !bird.motherId && !bird.fatherId;
-    const hasImage = !!bird.primaryImageUrl && 
-                     bird.primaryImageUrl.startsWith('http') && 
-                     !bird.primaryImageUrl.includes('placeholder') &&
-                     !bird.primaryImageUrl.includes('picsum.photos');
-
+  if (!resident) {
     return (
-      <Link href={`/residents/${bird.id}`} className={cn("w-[260px] h-[350px] group relative shrink-0", className)}>
-        <div className={cn(
-          "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-xl transition-all duration-300 group-hover:scale-105 flex flex-col",
-          isG0 ? "border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.2)]" : "border-border group-hover:border-primary"
-        )}>
-          {hasImage ? (
-            <div className="relative h-full w-full">
-              <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            </div>
-          ) : (
-            <div className="h-full w-full bg-[#1a1a1a] flex flex-col items-center justify-center p-6 text-center">
-              <span className="text-6xl mb-4 group-hover:scale-125 transition-transform duration-500">🦆</span>
-              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
-            </div>
-          )}
-          
-          {genLabel && (
-            <div className="absolute top-2 right-2">
-              <Badge className="bg-background/80 backdrop-blur-sm text-foreground border-none text-[7px] font-black px-1.5 py-0.5">
-                {genLabel}
-              </Badge>
-            </div>
-          )}
-
-          <div className="absolute bottom-3 left-3 right-3 text-white">
-            <span className="text-[7px] font-black uppercase tracking-widest text-primary/80 mb-0.5 block">{label}</span>
-            <p className="font-headline font-black text-sm md:text-base uppercase tracking-tight truncate">{bird.name}</p>
-          </div>
-
-          {isG0 && (
-            <div className="absolute top-2 left-2">
-              <Badge className="bg-[#D4AF37] text-black border-none text-[6px] font-black px-1.5 py-0.5 rounded-sm shadow-lg animate-pulse">
-                ROOT ANCESTOR
-              </Badge>
-            </div>
-          )}
-        </div>
-      </Link>
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <p>Resident not found.</p>
+        <Button onClick={() => router.push('/flock')}>Back to Flock</Button>
+      </div>
     );
+  }
+
+  const familyData = {
+    mother,
+    father,
+    mGrandma,
+    mGrandpa,
+    fGrandma,
+    fGrandpa
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-body overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-12 flex flex-col">
         <div className="flex flex-col items-center text-center space-y-6 mb-16">
-          <Button variant="ghost" onClick={() => router.back()} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+          <Button variant="ghost" onClick={() => router.push(`/residents/${id}`)} className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-3 w-3 mr-2" /> Back to Profile
           </Button>
           <div className="space-y-2">
@@ -149,107 +91,7 @@ export default function LineageTreePage() {
           </div>
         </div>
 
-        <ScrollArea className="w-full whitespace-nowrap pb-12">
-          <div className="relative min-w-fit mx-auto py-12 px-24 space-y-[150px]">
-            {/* SVG Connector Layer */}
-            <div className="absolute inset-0 pointer-events-none z-0">
-               <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                  {/* G1 to G2 (Resident) Connector */}
-                  {hasParents && (
-                    <g>
-                      {/* Vertical line up from child */}
-                      <line x1="50%" y1="1100" x2="50%" y2="1000" stroke="#D4AF37" strokeWidth="2" strokeDasharray="5,5" className="opacity-40" />
-                      
-                      {/* Horizontal bar connecting parents */}
-                      {mother && father && (
-                        <line x1="35%" y1="1000" x2="65%" y2="1000" stroke="#D4AF37" strokeWidth="2" />
-                      )}
-                      
-                      {/* Vertical drop from parents to meeting bar */}
-                      {mother && (
-                        <line x1={father ? "35%" : "50%"} y1="850" x2={father ? "35%" : "50%"} y2="1000" stroke="#D4AF37" strokeWidth="2" />
-                      )}
-                      {father && (
-                        <line x1={mother ? "65%" : "50%"} y1="850" x2={mother ? "65%" : "50%"} y2="1000" stroke="#D4AF37" strokeWidth="2" />
-                      )}
-                    </g>
-                  )}
-
-                  {/* G0 to G1 (Parents) Connectors */}
-                  {hasGrandparents && hasParents && (
-                    <g>
-                      {/* Mother's Parents to Mother */}
-                      {(mGrandma || mGrandpa) && (
-                        <g>
-                          <line x1="35%" y1="500" x2="35%" y2="600" stroke="#D4AF37" strokeWidth="1.5" strokeDasharray="4,4" className="opacity-30" />
-                          {mGrandma && mGrandpa && <line x1="25%" y1="500" x2="45%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                          {mGrandma && <line x1="25%" y1="350" x2="25%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                          {mGrandpa && <line x1="45%" y1="350" x2="45%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                        </g>
-                      )}
-                      
-                      {/* Father's Parents to Father */}
-                      {(fGrandma || fGrandpa) && (
-                        <g>
-                          <line x1="65%" y1="500" x2="65%" y2="600" stroke="#D4AF37" strokeWidth="1.5" strokeDasharray="4,4" className="opacity-30" />
-                          {fGrandma && fGrandpa && <line x1="55%" y1="500" x2="75%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                          {fGrandma && <line x1="55%" y1="350" x2="55%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                          {fGrandpa && <line x1="75%" y1="350" x2="75%" y2="500" stroke="#D4AF37" strokeWidth="1.5" className="opacity-50" />}
-                        </g>
-                      )}
-                    </g>
-                  )}
-               </svg>
-            </div>
-
-            {hasGrandparents && (
-              <div className="relative flex flex-col items-center">
-                <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
-                   <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text">{grandparentTierLabel}</span>
-                </div>
-                <div className="flex justify-center gap-12 md:gap-24">
-                  <div className="flex gap-4">
-                    <TreeCard bird={mGrandma} label="M-Grandmother" genLabel={grandparentTierLabel} />
-                    <TreeCard bird={mGrandpa} label="M-Grandfather" genLabel={grandparentTierLabel} />
-                  </div>
-                  <div className="flex gap-4">
-                    <TreeCard bird={fGrandma} label="P-Grandmother" genLabel={grandparentTierLabel} />
-                    <TreeCard bird={fGrandpa} label="P-Grandfather" genLabel={grandparentTierLabel} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {hasParents && (
-              <div className="relative flex flex-col items-center">
-                <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-40">
-                   <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text">{parentTierLabel}</span>
-                </div>
-                <div className="flex justify-center gap-24 md:gap-48">
-                  <TreeCard bird={mother} label="Mother" genLabel={parentTierLabel} />
-                  <TreeCard bird={father} label="Father" genLabel={parentTierLabel} />
-                </div>
-              </div>
-            )}
-
-            <div className="relative flex flex-col items-center">
-              <div className="absolute left-[-150px] top-1/2 -translate-y-1/2 hidden xl:flex flex-col items-center gap-2 opacity-60">
-                 <span className="text-[12px] font-black uppercase tracking-[0.5em] vertical-text text-primary">{residentTierLabel}</span>
-              </div>
-              <div className="relative">
-                <div className="absolute -inset-10 bg-primary/10 blur-[80px] rounded-full opacity-40 animate-pulse" />
-                <TreeCard 
-                  bird={resident} 
-                  label="Current Resident" 
-                  genLabel={residentTierLabel}
-                  className="w-[300px] h-[350px] flex-shrink-0 scale-105 shadow-2xl" 
-                />
-              </div>
-            </div>
-
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        <HeritageTree rootResident={resident} familyData={familyData} />
 
         <section className="mt-24 max-w-2xl mx-auto w-full">
            <div className="bg-card border border-border p-10 rounded-[2.5rem] text-center space-y-6 shadow-2xl relative overflow-hidden group">
@@ -278,13 +120,6 @@ export default function LineageTreePage() {
       </main>
 
       <Footer />
-
-      <style jsx>{`
-        .vertical-text {
-          writing-mode: vertical-rl;
-          text-orientation: mixed;
-        }
-      `}</style>
     </div>
   );
 }
