@@ -18,7 +18,7 @@ import {
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
+import { Resident, DailyStatus, BookEntry, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -94,7 +94,7 @@ function ManagerPortal({ user }: { user: any }) {
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: todayEggData } = useDoc<EggHistoryEntry>(todayEggRef);
+  const { data: todayEggData } = useDoc<any>(todayEggRef);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   useEffect(() => {
@@ -163,16 +163,18 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleVerifyAndApprove = async (note: any) => {
+    if (!ADMIN_EMAILS.includes(user.email)) return;
+
     try {
       const batch = writeBatch(firestore!);
       const birdRef = doc(firestore!, 'birds', note.birdId);
       const noteRef = doc(firestore!, 'notifications', note.id);
 
       batch.update(birdRef, { name: note.suggestedName });
-      batch.update(noteRef, { status: 'read' });
+      batch.update(noteRef, { status: 'approved' });
 
       await batch.commit();
-      toast({ title: "Approved!", description: `Name changed to ${note.suggestedName}` });
+      toast({ title: "Success!", description: `Resident renamed to ${note.suggestedName} successfully.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Could not approve suggestion." });
     }
@@ -196,7 +198,7 @@ function ManagerPortal({ user }: { user: any }) {
         toast({ title: "Success!", description: `${data.name} added to the flock.` });
         
         // Redirect to the new resident's page
-        router.push(`/residents/${docRef.id}`);
+        router.push('/residents/' + docRef.id);
       }
       setIsDialogOpen(false);
     } catch (error) {
@@ -273,6 +275,7 @@ function ManagerPortal({ user }: { user: any }) {
                             <div className="space-y-4 py-4">
                               <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
                                 <div className="p-2 bg-primary/10 rounded-full"><Info className="h-4 w-4 text-primary" /></div>
+                                size={size}
                                 <div>
                                   <p className="text-[10px] font-black uppercase text-muted-foreground">Proposed Name</p>
                                   <p className="font-bold text-lg">{note.suggestedName}</p>
@@ -296,7 +299,7 @@ function ManagerPortal({ user }: { user: any }) {
                           onClick={() => handleVerifyAndApprove(note)}
                           className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
                         >
-                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Verify &amp; Approve
+                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Verify & Approve
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -473,7 +476,7 @@ function ManagerPortal({ user }: { user: any }) {
         setIsHealthLogOpen(false);
       }} residentName={loggingResident?.name || ''} />
 
-      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
+      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} speculativeOffspringCount={0} onConfirm={async () => {
         await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
         toast({ title: "Removed" });
       }} />
@@ -498,7 +501,7 @@ function MemberPulseView({ user }: { user: any }) {
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: todayEggData } = useDoc<EggHistoryEntry>(todayEggRef);
+  const { data: todayEggData } = useDoc<any>(todayEggRef);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
@@ -714,10 +717,9 @@ function MemberPulseView({ user }: { user: any }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3"><Bird className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RESIDENT DIRECTORY</h2></div>
             <div className="flex gap-2">
-              <Button asChild variant="outline" className="bg-secondary/10 text-secondary border border-secondary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest">
+              <Button asChild variant="outline" size="sm" className="bg-secondary/10 text-secondary border border-secondary/20 h-8 rounded-lg px-3 text-[10px] font-black uppercase tracking-widest">
                 <Link href="/flock">VIEW ALL</Link>
               </Button>
-              <Button onClick={() => { setEditingResident(null); setIsDialogOpen(true); }} className="bg-primary/10 text-primary border border-primary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"><Plus className="h-4 w-4 mr-1" /> ADD BIRD</Button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -729,10 +731,6 @@ function MemberPulseView({ user }: { user: any }) {
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
                   <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
                   <div className="flex flex-col gap-2 mt-2">
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" className="h-10 flex-1 px-3 text-[10px] font-black uppercase text-secondary bg-secondary/5 rounded-lg" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>
-                      <Button variant="ghost" size="sm" className="h-10 flex-1 px-3 text-[10px] font-black uppercase text-muted-foreground bg-muted/5 rounded-lg" onClick={() => { setEditingResident(bird); setIsDialogOpen(true); }}>EDIT</Button>
-                    </div>
                     <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 rounded-lg">
                       <Link href={`/residents/${bird.id}/tree`}>
                         <GitBranch className="mr-1 h-3 w-3" /> TREE
@@ -740,44 +738,11 @@ function MemberPulseView({ user }: { user: any }) {
                     </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8 text-destructive md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => { setDeletingResident(bird); setIsDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
               </Card>
             ))}
           </div>
         </section>
       </main>
-
-      <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
-        <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
-          <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0">
-            <DialogTitle className="font-headline font-black text-2xl uppercase tracking-tighter">SET <span className="text-primary">VIBE</span></DialogTitle>
-          </DialogHeader>
-          <div className="p-6 grid grid-cols-2 gap-3 overflow-y-auto flex-1 text-center">
-            {PRESET_VIBES.map((vibe) => (
-              <Button key={vibe.label} variant="outline" className="h-[90px] rounded-[1.5rem] flex flex-col items-center justify-center gap-1 hover:bg-primary hover:text-primary-foreground group" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, `${vibe.emoji} ${vibe.label.toUpperCase()}`)}>
-                <span className="text-3xl group-hover:scale-110 transition-transform">{vibe.emoji}</span><span className="text-[10px] font-black uppercase tracking-widest">{vibe.label}</span>
-              </Button>
-            ))}
-          </div>
-          <div className="p-6 space-y-3 bg-card border-t border-border shrink-0">
-            <Button variant="outline" className="w-full h-14 rounded-xl text-[10px] font-black uppercase tracking-widest text-muted-foreground" onClick={() => vibeBird && handleUpdateStatus(vibeBird.id, "")}>RESET STATUS</Button>
-            <Button variant="ghost" onClick={() => setVibeBird(null)} className="w-full h-12 text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Dismiss</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
-      
-      <HealthLogDialog open={isHealthLogOpen} onOpenChange={setIsHealthLogOpen} onSave={async (notes) => {
-        await addDoc(collection(firestore!, 'birds', loggingResident!.id, 'healthLogs'), { birdId: loggingResident!.id, logDate: new Date().toISOString(), notes });
-        toast({ title: "Log Saved" });
-        setIsHealthLogOpen(false);
-      }} residentName={loggingResident?.name || ''} />
-
-      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
-        await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
-        toast({ title: "Removed" });
-      }} />
     </div>
   );
 }
