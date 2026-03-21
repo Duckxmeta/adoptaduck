@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -27,7 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 interface ResidentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Partial<Resident>) => void;
+  onSave: (data: Partial<Resident>) => Promise<void>;
   resident?: Resident | null;
 }
 
@@ -155,7 +154,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         updatedAt: new Date().toISOString()
       };
 
-      onSave(submissionData);
+      await onSave(submissionData);
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -377,7 +376,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               className="flex-1 bg-primary text-primary-foreground font-black h-12 text-xs tracking-widest rounded-xl shadow-lg"
               disabled={uploading}
             >
-              {uploading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {resident ? 'SAVE CHANGES' : 'CREATE RESIDENT'}
             </Button>
           </DialogFooter>
