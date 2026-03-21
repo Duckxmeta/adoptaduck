@@ -12,11 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Plus, Minus, Settings, Loader2, ChevronRight, ClipboardList, RotateCcw,
-  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck, GitBranch
+  LayoutDashboard, Trash2, Bird, Zap, Egg, Save, History, User, Activity, Sparkles, AlertTriangle, ShieldCheck, GitBranch, Bell, CheckCheck, Inbox
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, limit, runTransaction, serverTimestamp, onSnapshot, where, updateDoc } from 'firebase/firestore';
 import { Resident, DailyStatus, EggHistoryEntry, UserProfile } from '@/lib/types';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useToast } from '@/hooks/use-toast';
@@ -85,6 +85,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [vibeBird, setVibeBird] = useState<Resident | null>(null);
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
@@ -97,6 +98,27 @@ function ManagerPortal({ user }: { user: any }) {
   useEffect(() => {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
+
+  // Admin Notification Listener
+  useEffect(() => {
+    if (!user || !ADMIN_EMAILS.includes(user.email)) return;
+
+    const q = query(
+      collection(firestore!, 'notifications'),
+      where('status', '==', 'unread'),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setNotifications(docs);
+    });
+
+    return () => unsubscribe();
+  }, [user, firestore]);
 
   const handleUpdateStatus = (birdId: string, status: string) => {
     const birdRef = doc(firestore!, 'birds', birdId);
@@ -123,6 +145,16 @@ function ManagerPortal({ user }: { user: any }) {
     setDoc(dailyStatusRef!, { [taskKey]: newValue }, { merge: true });
   };
 
+  const markNotificationRead = async (id: string) => {
+    try {
+      await updateDoc(doc(firestore!, 'notifications', id), {
+        status: 'read'
+      });
+    } catch (e) {
+      console.error("Error marking notification as read:", e);
+    }
+  };
+
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
   const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
@@ -139,6 +171,42 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
+
+        {/* NOTIFICATION CENTER */}
+        {notifications.length > 0 && (
+          <section className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-4 w-4 text-secondary" />
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">NOTIFICATIONS</h2>
+                <Badge className="bg-secondary text-secondary-foreground text-[10px] px-2">{notifications.length}</Badge>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {notifications.map((note) => (
+                <Card key={note.id} className="bg-secondary/5 border-secondary/20 p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-secondary/10 rounded-full">
+                      <Inbox className="h-4 w-4 text-secondary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">New Name Suggestion</p>
+                      <p className="text-xs text-muted-foreground">"{note.suggestedName}" for {note.birdId}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => markNotificationRead(note.id)}
+                    className="text-secondary hover:bg-secondary/10 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5 mr-1" /> Mark Read
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* EGG COUNTER */}
         <section className="space-y-4">

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -13,10 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Heart, ShieldCheck,傳 Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Resident } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,13 +38,23 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
     setIsSubmitting(true);
     try {
       if (suggestedName.trim() && firestore) {
+        // Log the suggestion
         await addDoc(collection(firestore, 'nameSuggestions'), {
           birdId: resident.id,
           birdOriginalName: resident.name,
           suggestedName: suggestedName.trim(),
           donorEmail: user?.email || 'anonymous',
           status: 'pending',
-          createdAt: new Date().toISOString()
+          createdAt: serverTimestamp()
+        });
+
+        // Trigger Admin Notification
+        await addDoc(collection(firestore, 'notifications'), {
+          type: 'name_suggestion',
+          birdId: resident.id,
+          suggestedName: suggestedName.trim(),
+          status: 'unread',
+          createdAt: serverTimestamp()
         });
         
         toast({
