@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -18,7 +17,8 @@ import {
   setDoc, 
   arrayUnion,
   or,
-  collectionGroup
+  collectionGroup,
+  onSnapshot
 } from 'firebase/firestore';
 import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense, Donation } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -79,12 +79,27 @@ export default function MemberDashboard() {
 
   const [referralCode, setReferralCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
+  const [bulletins, setBulletins] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  // Real-time Bulletin Listener
+  useEffect(() => {
+    if (!firestore) return;
+    const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(5));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setBulletins(docs);
+    });
+    return () => unsubscribe();
+  }, [firestore]);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
@@ -276,6 +291,29 @@ export default function MemberDashboard() {
                 </div>
              </Card>
            </div>
+        </section>
+
+        {/* Minimalist Bulletin Board */}
+        <section className="animate-in fade-in duration-700 space-y-4">
+          <div className="flex items-center gap-3 text-primary">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Bulletin</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {bulletins.map((b) => (
+              <Card key={b.id} className="bg-card border-border p-6 rounded-2xl shadow-sm border-l-4 border-l-primary">
+                <h3 className="font-headline font-black text-sm uppercase tracking-tight text-foreground">{b.title}</h3>
+                <p className="text-muted-foreground text-sm mt-2 leading-relaxed">{b.content}</p>
+                {b.timestamp && (
+                  <p className="text-[8px] font-black uppercase text-primary/60 mt-3 tracking-widest">
+                    {b.timestamp.toDate ? format(b.timestamp.toDate(), 'MMMM dd, yyyy') : 'Recently Posted'}
+                  </p>
+                )}
+              </Card>
+            ))}
+            {bulletins.length === 0 && (
+              <p className="text-xs text-muted-foreground italic ml-1">No recent sanctuary updates.</p>
+            )}
+          </div>
         </section>
 
         {/* Duck of the Month Spotlight */}

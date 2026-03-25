@@ -4,7 +4,7 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.0.6 (Notification Support)
+     * Version: 1.0.7 (Bulletin Board Support)
      * Last Updated: 2026-03-21
      */
 
@@ -30,6 +30,11 @@ service cloud.firestore {
     }
 
     // --- Collection Rules ---
+
+    match /bulletin/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
 
     match /birds/{birdId} {
       allow read: if true;

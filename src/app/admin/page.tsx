@@ -9,11 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
@@ -77,7 +79,6 @@ function ManagerPortal({ user }: { user: any }) {
   const { toast } = useToast();
   const todayDate = format(new Date(), 'yyyy-MM-dd');
 
-  const [isAnimate, setIsAnimate] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [isHealthLogOpen, setIsHealthLogOpen] = useState(false);
@@ -88,6 +89,11 @@ function ManagerPortal({ user }: { user: any }) {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // Bulletin Board State
+  const [bullTitle, setBullTitle] = useState('');
+  const [bullContent, setBullContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
@@ -180,6 +186,26 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
+  const handlePostBulletin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bullTitle.trim() || !bullContent.trim()) return;
+    setIsPosting(true);
+    try {
+      await addDoc(collection(firestore!, 'bulletin'), {
+        title: bullTitle,
+        content: bullContent,
+        timestamp: serverTimestamp()
+      });
+      setBullTitle('');
+      setBullContent('');
+      toast({ title: "Bulletin Published" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error posting update" });
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   const handleSaveResident = async (data: Partial<Resident>) => {
     try {
       if (editingResident) {
@@ -193,11 +219,8 @@ function ManagerPortal({ user }: { user: any }) {
           ...data, 
           createdAt: new Date().toISOString() 
         });
-        // Ensure ID is stored in the document
         await updateDoc(docRef, { id: docRef.id });
         toast({ title: "Success!", description: `${data.name} added to the flock.` });
-        
-        // Redirect to the new resident's page
         router.push('/residents/' + docRef.id);
       }
       setIsDialogOpen(false);
@@ -275,7 +298,6 @@ function ManagerPortal({ user }: { user: any }) {
                             <div className="space-y-4 py-4">
                               <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
                                 <div className="p-2 bg-primary/10 rounded-full"><Info className="h-4 w-4 text-primary" /></div>
-                                size={size}
                                 <div>
                                   <p className="text-[10px] font-black uppercase text-muted-foreground">Proposed Name</p>
                                   <p className="font-bold text-lg">{note.suggestedName}</p>
@@ -320,6 +342,42 @@ function ManagerPortal({ user }: { user: any }) {
                 <p className="text-[10px] font-black uppercase tracking-widest">No unread suggestions.</p>
               </div>
             )}
+          </Card>
+        </section>
+
+        {/* BULLETIN BOARD ADMIN */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Megaphone className="h-4 w-4 text-primary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">POST SANCTUARY UPDATE</h2>
+          </div>
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
+            <form onSubmit={handlePostBulletin} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Update Title</Label>
+                  <Input 
+                    value={bullTitle} 
+                    onChange={e => setBullTitle(e.target.value)}
+                    placeholder="e.g. Morning Routine Completed"
+                    className="bg-background border-border h-12 rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Content</Label>
+                  <Textarea 
+                    value={bullContent} 
+                    onChange={e => setBullContent(e.target.value)}
+                    placeholder="What's happening at the sanctuary?"
+                    className="bg-background border-border min-h-[100px] rounded-xl"
+                  />
+                </div>
+                <Button type="submit" disabled={isPosting || !bullTitle.trim() || !bullContent.trim()} className="w-full h-12 bg-primary text-primary-foreground font-black rounded-xl shadow-lg">
+                  {isPosting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Megaphone className="h-4 w-4 mr-2" />}
+                  PUBLISH TO BULLETIN
+                </Button>
+              </div>
+            </form>
           </Card>
         </section>
 
