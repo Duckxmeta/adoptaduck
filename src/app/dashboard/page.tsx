@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -20,7 +21,7 @@ import {
   collectionGroup,
   onSnapshot
 } from 'firebase/firestore';
-import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense, Donation } from '@/lib/types';
+import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense, Donation, BulletinEntry } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
+import { BulletinBoard } from '@/components/members/BulletinBoard';
 
 const GOALS = {
   feed: 300,
@@ -79,7 +81,7 @@ export default function MemberDashboard() {
 
   const [referralCode, setReferralCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [bulletins, setBulletins] = useState<any[]>([]);
+  const [bulletins, setBulletins] = useState<BulletinEntry[]>([]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -95,7 +97,7 @@ export default function MemberDashboard() {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as BulletinEntry[];
       setBulletins(docs);
     });
     return () => unsubscribe();
@@ -293,27 +295,9 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* Minimalist Bulletin Board */}
-        <section className="animate-in fade-in duration-700 space-y-4">
-          <div className="flex items-center gap-3 text-primary">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em]">Sanctuary Bulletin</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bulletins.map((b) => (
-              <Card key={b.id} className="bg-card border-border p-6 rounded-2xl shadow-sm border-l-4 border-l-primary">
-                <h3 className="font-headline font-black text-sm uppercase tracking-tight text-foreground">{b.title}</h3>
-                <p className="text-muted-foreground text-sm mt-2 leading-relaxed">{b.content}</p>
-                {b.timestamp && (
-                  <p className="text-[8px] font-black uppercase text-primary/60 mt-3 tracking-widest">
-                    {b.timestamp.toDate ? format(b.timestamp.toDate(), 'MMMM dd, yyyy') : 'Recently Posted'}
-                  </p>
-                )}
-              </Card>
-            ))}
-            {bulletins.length === 0 && (
-              <p className="text-xs text-muted-foreground italic ml-1">No recent sanctuary updates.</p>
-            )}
-          </div>
+        {/* Enhanced Visual Bulletin Board */}
+        <section className="animate-in fade-in duration-700">
+          <BulletinBoard bulletins={bulletins} />
         </section>
 
         {/* Duck of the Month Spotlight */}

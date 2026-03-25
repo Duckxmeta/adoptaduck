@@ -94,3 +94,11 @@ export type DuckOfTheMonthSettings = {
   monthlyMission: string;
   updatedAt: string;
 };
+
+export type BulletinEntry = {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  timestamp: any;
+};

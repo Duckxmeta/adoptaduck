@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -15,11 +16,12 @@ import {
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Upload
 } from 'lucide-react';
 import Image from 'next/image';
-import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Resident, DailyStatus, BookEntry, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
@@ -75,9 +77,11 @@ export default function AdminDashboard() {
 
 function ManagerPortal({ user }: { user: any }) {
   const firestore = useFirestore();
+  const storage = useStorage();
   const router = useRouter();
   const { toast } = useToast();
   const todayDate = format(new Date(), 'yyyy-MM-dd');
+  const bullFileRef = useRef<HTMLInputElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
@@ -93,6 +97,8 @@ function ManagerPortal({ user }: { user: any }) {
   // Bulletin Board State
   const [bullTitle, setBullTitle] = useState('');
   const [bullContent, setBullContent] = useState('');
+  const [bullImage, setBullImage] = useState<File | null>(null);
+  const [bullPreview, setBullPreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
@@ -191,13 +197,24 @@ function ManagerPortal({ user }: { user: any }) {
     if (!bullTitle.trim() || !bullContent.trim()) return;
     setIsPosting(true);
     try {
+      let imageUrl = null;
+      if (bullImage && storage) {
+        const fileName = `bulletin-${Date.now()}`;
+        const fileRef = storageRef(storage, `bulletin-images/${fileName}`);
+        const snapshot = await uploadBytes(fileRef, bullImage);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+
       await addDoc(collection(firestore!, 'bulletin'), {
         title: bullTitle,
         content: bullContent,
+        imageUrl,
         timestamp: serverTimestamp()
       });
       setBullTitle('');
       setBullContent('');
+      setBullImage(null);
+      setBullPreview(null);
       toast({ title: "Bulletin Published" });
     } catch (e) {
       toast({ variant: "destructive", title: "Error posting update" });
@@ -352,7 +369,7 @@ function ManagerPortal({ user }: { user: any }) {
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">POST SANCTUARY UPDATE</h2>
           </div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
-            <form onSubmit={handlePostBulletin} className="space-y-4">
+            <form onSubmit={handlePostBulletin} className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Update Title</Label>
@@ -370,6 +387,35 @@ function ManagerPortal({ user }: { user: any }) {
                     onChange={e => setBullContent(e.target.value)}
                     placeholder="What's happening at the sanctuary?"
                     className="bg-background border-border min-h-[100px] rounded-xl"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Attach Photo (Optional)</Label>
+                  <div 
+                    onClick={() => bullFileRef.current?.click()}
+                    className="relative w-full aspect-video rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-background overflow-hidden"
+                  >
+                    {bullPreview ? (
+                      <Image src={bullPreview} alt="Preview" fill className="object-cover" />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 opacity-40">
+                        <Camera className="h-8 w-8" />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Tap to Snap or Select</span>
+                      </div>
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={bullFileRef} 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setBullImage(file);
+                        setBullPreview(URL.createObjectURL(file));
+                      }
+                    }} 
+                    className="hidden" 
+                    accept="image/*" 
                   />
                 </div>
                 <Button type="submit" disabled={isPosting || !bullTitle.trim() || !bullContent.trim()} className="w-full h-12 bg-primary text-primary-foreground font-black rounded-xl shadow-lg">
@@ -507,6 +553,20 @@ function ManagerPortal({ user }: { user: any }) {
         </section>
       </main>
 
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--primary);
+          border-radius: 10px;
+          opacity: 0.2;
+        }
+      `}</style>
+
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0">
@@ -534,7 +594,7 @@ function ManagerPortal({ user }: { user: any }) {
         setIsHealthLogOpen(false);
       }} residentName={loggingResident?.name || ''} />
 
-      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} speculativeOffspringCount={0} onConfirm={async () => {
+      <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
         await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
         toast({ title: "Removed" });
       }} />
