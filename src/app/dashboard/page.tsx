@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -295,7 +294,7 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* Enhanced Visual Bulletin Board */}
+        {/* Universal Bulletin Board Feed */}
         <section className="animate-in fade-in duration-700">
           <BulletinBoard bulletins={bulletins} />
         </section>
