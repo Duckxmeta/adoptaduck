@@ -17,12 +17,14 @@ import {
   Trophy,
   BookOpen,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
-import { Resident, HealthLogEntry, Expense } from '@/lib/types';
+import { Resident, Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { cn, getResidentName } from '@/lib/utils';
 import {
@@ -40,7 +42,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { user } = useUser();
   const router = useRouter();
 
-  // Fetch the main resident by direct UID
+  // Fetch the main resident by direct UID from the BIRDS collection
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
@@ -76,9 +78,10 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   }, [expenses, allBirds, id]);
 
   const galleryImages = useMemo(() => {
+    if (!bird) return [];
     const images = Array.from(new Set([
-      bird?.primaryImageUrl,
-      ...(bird?.galleryImageUrls || [])
+      bird.primaryImageUrl,
+      ...(bird.galleryImageUrls || [])
     ])).filter(Boolean) as string[];
     return images;
   }, [bird]);
@@ -86,22 +89,41 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="font-black uppercase tracking-[0.3em] text-xs text-muted-foreground">Checking Sanctuary Records...</p>
       </div>
     );
   }
 
+  // Security Gate: Handle Not Found state gracefully
   if (!bird && !isLoading) {
-    notFound();
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navbar />
+        <main className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="max-w-md w-full bg-card border-border border-2 rounded-[2.5rem] p-10 text-center space-y-6 shadow-2xl">
+            <div className="mx-auto w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center border-2 border-destructive/20">
+              <AlertCircle className="h-10 w-10 text-destructive" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-headline font-black uppercase tracking-tight">RESIDENT NOT FOUND</h1>
+              <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located in our sanctuary logs.</p>
+            </div>
+            <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
+              <Link href="/flock">RETURN TO THE FLOCK</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
-  const displayBackstory = bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
   const displayName = getResidentName(bird);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
       
       <main className="flex-1 pb-32 animate-in fade-in duration-1000">
@@ -119,7 +141,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             
-            {/* Left: Visuals - Image Carousel */}
+            {/* Left: Visuals - Image Carousel (Hero) */}
             <div className="space-y-6">
               <div className={cn(
                 "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
@@ -201,7 +223,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   asChild
                   className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
                 >
-                  <Link href={`/residents/${bird?.id}/tree`}>
+                  <Link href={`/residents/${id}/tree`}>
                     <GitBranch className="mr-2 h-4 w-4" /> VIEW LINEAGE
                   </Link>
                 </Button>
@@ -230,26 +252,28 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
+              {/* Personality Profile Mapping */}
               <div className="space-y-4 bg-muted/5 p-8 rounded-3xl border border-border/50">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
                   <Sparkles className="h-4 w-4" /> Personality Profile
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg italic">
-                  "{bird?.personalityTraits}"
+                  "{bird?.personalityTraits || "A curious and friendly sanctuary resident."}"
                 </p>
               </div>
 
+              {/* Rescue Story Mapping */}
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
                   <BookOpen className="h-4 w-4" /> Rescue Story & Heritage
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  {displayBackstory}
+                  {bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary."}
                 </p>
               </div>
 
               <div className="pt-6">
-                {bird && <AdoptionModal resident={bird as any} />}
+                {bird && <AdoptionModal resident={bird} />}
               </div>
             </div>
           </div>
