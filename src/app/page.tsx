@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -137,7 +136,7 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
               <Sparkles className="h-3.5 w-3.5" />
-              Virtual Sanctuary
+              Adopt a Duck
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter uppercase text-center">
               VIRTUAL <span className="text-primary">SANCTUARY</span>
