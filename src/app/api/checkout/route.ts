@@ -1,8 +1,7 @@
-
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-01-27.acacia',
 });
 
@@ -14,6 +13,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export async function POST(request: Request) {
   try {
     const { priceId, userId, userEmail } = await request.json();
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('Stripe API key is missing');
+    }
 
     // Mapping logic for Guardian vs. Splash
     const isGuardian = priceId === 'prod_UFfyopJ1UUtWvC';

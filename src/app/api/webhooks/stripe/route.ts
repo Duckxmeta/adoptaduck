@@ -1,10 +1,9 @@
-
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { initializeFirebase } from '@/firebase';
 import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-01-27.acacia',
 });
 
@@ -19,10 +18,15 @@ export async function POST(request: Request) {
   const payload = await request.text();
   const sig = request.headers.get('stripe-signature')!;
 
+  if (!process.env.STRIPE_SECRET_KEY || !endpointSecret) {
+    console.error('Stripe credentials missing in webhook');
+    return NextResponse.json({ error: 'Config error' }, { status: 500 });
+  }
+
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(payload, sig, endpointSecret!);
+    event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
   } catch (err: any) {
     console.error(`Webhook Signature Verification Failed: ${err.message}`);
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
