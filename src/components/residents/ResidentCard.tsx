@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Resident } from '@/lib/types';
-import { ChevronRight, GitBranch } from 'lucide-react';
+import { ChevronRight, GitBranch, Trophy } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { getResidentName } from '@/lib/utils';
 
@@ -18,6 +18,7 @@ interface ResidentCardProps {
 export function ResidentCard({ resident }: ResidentCardProps) {
   const { user } = useUser();
   const displayName = getResidentName(resident);
+  const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
   
   // Strict image validation
   const hasImage = !!resident.primaryImageUrl && 
@@ -46,10 +47,24 @@ export function ResidentCard({ resident }: ResidentCardProps) {
           </div>
         )}
         
+        {/* Breed Badge - Top Left */}
         <div className="absolute top-4 left-4">
           <Badge className="bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
             {resident.breed}
           </Badge>
+        </div>
+
+        {/* Dynamic Generation Badge - Top Right */}
+        <div className="absolute top-4 right-4">
+          {resident.generation === 0 || (resident.generation === undefined && isFounder) ? (
+            <Badge className="bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg flex items-center gap-1.5">
+              <Trophy className="h-3 w-3" /> G0 FOUNDER
+            </Badge>
+          ) : resident.generation && resident.generation > 0 ? (
+            <Badge className="bg-secondary text-secondary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg">
+              G{resident.generation}
+            </Badge>
+          ) : null}
         </div>
         
         <div className="absolute bottom-4 left-4 right-4 text-white">

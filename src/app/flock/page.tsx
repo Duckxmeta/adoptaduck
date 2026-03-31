@@ -58,21 +58,32 @@ export default function BrowseFlock() {
             <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">🦆</div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
+          
+          {/* Identity Badges - Top Left */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             <Badge className="w-fit bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
               {bird.breed}
             </Badge>
-            {isFounder && (
-              <Badge className="w-fit bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
-                <Trophy className="h-3 w-3" /> G0 FOUNDER
-              </Badge>
-            )}
             {isCommunity && !isFounder && (
               <Badge className="w-fit bg-secondary text-secondary-foreground border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
                 <ShieldCheck className="h-3 w-3" /> COMMUNITY RESIDENT
               </Badge>
             )}
           </div>
+
+          {/* Dynamic Generation Badge - Top Right */}
+          <div className="absolute top-4 right-4">
+            {bird.generation === 0 || (bird.generation === undefined && isFounder) ? (
+              <Badge className="bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg flex items-center gap-1.5">
+                <Trophy className="h-3 w-3" /> G0 FOUNDER
+              </Badge>
+            ) : bird.generation && bird.generation > 0 ? (
+              <Badge className="bg-secondary text-secondary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg">
+                G{bird.generation}
+              </Badge>
+            ) : null}
+          </div>
+
           <div className="absolute bottom-6 left-6 right-6">
             <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter leading-none mb-2">{displayName}</h3>
             <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.sex === 'female' ? 'Hen' : 'Drake'}</p>
@@ -110,7 +121,7 @@ export default function BrowseFlock() {
             <StoryModal 
               resident={bird}
               trigger={
-                <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary">
+                <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
                   View Full Rescue Story <ArrowRight className="ml-2 h-3 w-3" />
                 </Button>
               }
@@ -131,7 +142,7 @@ export default function BrowseFlock() {
             The Sanctuary Flock
           </Badge>
           <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">
-            MEET THE <span className="text-primary">G0 FOUNDERS</span>
+            MEET THE <span className="text-primary">FLOCK</span>
           </h1>
           <p className="text-muted-foreground text-lg md:text-xl font-medium">
             Browse our residents and find a friend to support. G0 Founders represent the root of our sanctuary lineage.
