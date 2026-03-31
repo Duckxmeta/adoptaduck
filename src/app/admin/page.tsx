@@ -252,7 +252,7 @@ function ManagerPortal({ user }: { user: any }) {
         const docRef = doc(collection(firestore!, 'birds'));
         const newId = docRef.id;
         
-        // Execute batch for featured reset then add new
+        // Execute featured reset then add new
         await batch.commit();
         
         await setDoc(docRef, { 
@@ -719,6 +719,25 @@ function ManagerPortal({ user }: { user: any }) {
 }
 
 function MemberPulseView({ user }: { user: any }) {
-  // ... (rest of the file content same as before) ...
-  return <div>Member View</div>; // Placeholder for brevity
+  const firestore = useFirestore();
+  const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
+  const { data: birds } = useCollection<Resident>(birdsQuery);
+  const foundingResidents = birds?.filter(b => b.isFoundingResident) || [];
+
+  return (
+    <div className="min-h-screen bg-background p-4">
+      <Navbar />
+      <div className="max-w-4xl mx-auto py-12 space-y-8">
+        <h1 className="text-2xl font-headline font-black uppercase">Member Sanctuary Feed</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {foundingResidents.map(bird => (
+            <Card key={bird.id} className="p-6 bg-card border-border rounded-2xl">
+              <h2 className="text-lg font-headline font-black uppercase">{getResidentName(bird)}</h2>
+              <p className="text-sm text-muted-foreground">{bird.liveStatus || 'At Routine'}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

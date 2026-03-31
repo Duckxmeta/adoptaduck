@@ -8,16 +8,20 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Utility to resolve resident identities, transitioning from TBD placeholders
- * to finalized G0 Founder names.
+ * to finalized G0 Founder names. This serves as a robust fallback for the
+ * mobile-uploaded birds (Cocoa and Puff).
  */
 export function getResidentName(bird?: { name: string; breed: string } | null) {
   if (!bird) return 'New Resident';
   
-  const isPlaceholder = !bird.name || bird.name.toUpperCase().includes('TBD');
+  // Check for TBD placeholders or empty names
+  const nameUpper = bird.name?.toUpperCase() || '';
+  const isPlaceholder = !bird.name || nameUpper.includes('TBD') || nameUpper === 'NEW RESIDENT';
   
   if (isPlaceholder) {
-    if (bird.breed === 'Swedish Blue') return 'Cocoa';
-    if (bird.breed === 'Silver Appleyard') return 'Puff';
+    // Exact mapping for the G0 Swedish Blue and Silver Appleyard
+    if (bird.breed === 'Swedish Blue' || bird.breed?.toLowerCase().includes('swedish')) return 'Cocoa';
+    if (bird.breed === 'Silver Appleyard' || bird.breed?.toLowerCase().includes('appleyard')) return 'Puff';
     return bird.name || 'Awaiting Name';
   }
   
