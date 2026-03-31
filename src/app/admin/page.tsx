@@ -287,8 +287,8 @@ function ManagerPortal({ user }: { user: any }) {
         const breedUpper = bird.breed.toUpperCase();
         
         // Finalize Cocoa & Puff identities, reaffirm IDs, and purge legacy slugs
-        if (nameUpper === '' || nameUpper.includes('TBD') || !bird.id) {
-          const birdRef = doc(firestore, 'birds', bird.id);
+        const birdRef = doc(firestore, 'birds', bird.id);
+        if (nameUpper === '' || nameUpper.includes('TBD') || !bird.id || bird.id === 'tbd') {
           if (breedUpper === 'SWEDISH BLUE') {
             batch.update(birdRef, { 
               name: 'Cocoa', 
@@ -310,7 +310,6 @@ function ManagerPortal({ user }: { user: any }) {
           }
         } else {
           // Reaffirm ID for all birds and purge slugs
-          const birdRef = doc(firestore, 'birds', bird.id);
           batch.update(birdRef, {
             id: bird.id,
             slug: deleteField()
@@ -377,7 +376,6 @@ function ManagerPortal({ user }: { user: any }) {
         </section>
 
         {/* NOTIFICATION CENTER */}
-        {/* ... (rest of the file content same as before) ... */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Bell className="h-4 w-4 text-secondary" />

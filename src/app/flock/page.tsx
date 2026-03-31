@@ -81,7 +81,7 @@ export default function BrowseFlock() {
         <CardContent className="p-8 flex-1 flex flex-col space-y-6">
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 text-secondary" /> Personality Profile
+              <Sparkles className="h-3.5 w-3.5" text-secondary /> Personality Profile
             </h4>
             <p className="text-sm text-muted-foreground italic leading-relaxed line-clamp-3">
               "{bird.personalityTraits}"
