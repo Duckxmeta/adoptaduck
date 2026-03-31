@@ -8,6 +8,7 @@ import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
   Dna,
