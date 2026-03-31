@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -74,8 +75,10 @@ export default function MemberDashboard() {
   const { toast } = useToast();
 
   const [bulletins, setBulletins] = useState<BulletinEntry[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (!isUserLoading && !user) {
       router.push('/login');
     }
@@ -191,7 +194,7 @@ export default function MemberDashboard() {
     { label: "Nightly Pen Up", key: "nightlyPenUp", icon: <Clock className="h-4 w-4" /> },
   ];
 
-  if (isUserLoading || flockLoading) {
+  if (isUserLoading || flockLoading || !isMounted) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-primary"><Loader2 className="h-10 w-10 animate-spin" /></div>;
   }
 

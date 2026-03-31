@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-01-27.acacia',
 });
 
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
   try {
     const { priceId, userId, userEmail } = await request.json();
 
-    if (!process.env.STRIPE_SECRET_KEY) {
+    if (!stripeSecretKey) {
       throw new Error('Stripe API key is missing');
     }
 

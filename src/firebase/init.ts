@@ -10,16 +10,20 @@ import { getStorage } from 'firebase/storage';
  * Decoupled from client-side hooks to allow usage in Next.js Route Handlers.
  */
 export function initializeFirebase() {
+  let app: FirebaseApp;
+  
   if (!getApps().length) {
-    let firebaseApp;
-    try {
-      firebaseApp = initializeApp();
-    } catch (e) {
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-    return getSdks(firebaseApp);
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
   }
-  return getSdks(getApp());
+
+  return {
+    firebaseApp: app,
+    auth: getAuth(app),
+    firestore: getFirestore(app),
+    storage: getStorage(app)
+  };
 }
 
 export function getSdks(firebaseApp: FirebaseApp) {

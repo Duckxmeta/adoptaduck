@@ -4,7 +4,8 @@ import Stripe from 'stripe';
 import { initializeFirebase } from '@/firebase/init';
 import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-01-27.acacia',
 });
 
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   const payload = await request.text();
   const sig = request.headers.get('stripe-signature')!;
 
-  if (!process.env.STRIPE_SECRET_KEY || !endpointSecret) {
+  if (!stripeSecretKey || !endpointSecret) {
     console.error('Stripe credentials missing in webhook');
     return NextResponse.json({ error: 'Config error' }, { status: 500 });
   }

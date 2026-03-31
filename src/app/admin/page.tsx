@@ -81,7 +81,6 @@ function ManagerPortal({ user }: { user: any }) {
   const storage = useStorage();
   const router = useRouter();
   const { toast } = useToast();
-  const todayDate = format(new Date(), 'yyyy-MM-dd');
   const bullFileRef = useRef<HTMLInputElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,6 +93,11 @@ function ManagerPortal({ user }: { user: any }) {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [todayDate, setTodayDate] = useState<string>('');
+
+  useEffect(() => {
+    setTodayDate(format(new Date(), 'yyyy-MM-dd'));
+  }, []);
 
   // Bulletin Board State
   const [bullTitle, setBullTitle] = useState('');
@@ -103,7 +107,10 @@ function ManagerPortal({ user }: { user: any }) {
   const [isPosting, setIsPosting] = useState(false);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
-  const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
+  const todayEggRef = useMemoFirebase(() => {
+    if (!firestore || !todayDate) return null;
+    return doc(firestore, 'egg_history', todayDate);
+  }, [firestore, todayDate]);
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
@@ -116,10 +123,10 @@ function ManagerPortal({ user }: { user: any }) {
 
   // Admin Notification Listener
   useEffect(() => {
-    if (!user || !ADMIN_EMAILS.includes(user.email)) return;
+    if (!user || !ADMIN_EMAILS.includes(user.email) || !firestore) return;
 
     const q = query(
-      collection(firestore!, 'notifications'),
+      collection(firestore, 'notifications'),
       where('status', '==', 'unread')
     );
 
@@ -151,9 +158,10 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleSyncEggs = async () => {
+    if (!todayEggRef) return;
     setIsSavingEggs(true);
     try {
-      await setDoc(todayEggRef!, { count: localEggCount, updatedAt: new Date().toISOString() }, { merge: true });
+      await setDoc(todayEggRef, { count: localEggCount, updatedAt: new Date().toISOString() }, { merge: true });
       toast({ title: "Eggs Synced!", description: `${localEggCount} recorded.` });
     } catch (e) {
       toast({ variant: "destructive", title: "Sync Error" });
@@ -161,8 +169,9 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const toggleDailyTask = (taskKey: keyof Omit<DailyStatus, 'id' | 'lastReset'>) => {
+    if (!dailyStatusRef) return;
     const newValue = dailyStatus ? !dailyStatus[taskKey] : true;
-    setDoc(dailyStatusRef!, { [taskKey]: newValue }, { merge: true });
+    setDoc(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
   const markNotificationRead = async (id: string) => {
@@ -447,14 +456,14 @@ function ManagerPortal({ user }: { user: any }) {
             <div className="text-center md:text-left space-y-1">
               <h2 className="font-headline font-black text-[10px] uppercase tracking-[0.4em] text-primary">TODAY'S TOTAL</h2>
               <h3 className="text-7xl md:text-8xl font-headline font-black text-primary tracking-tighter leading-none">{localEggCount}</h3>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{format(new Date(), 'MMMM dd, yyyy')}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{todayDate ? format(new Date(), 'MMMM dd, yyyy') : 'Loading...'}</p>
             </div>
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <div className="flex gap-4">
                 <Button onClick={() => setLocalEggCount(Math.max(0, localEggCount - 1))} variant="outline" className="flex-1 h-[80px] rounded-2xl border-2 border-border"><Minus className="h-6 w-6" /></Button>
                 <Button onClick={() => setLocalEggCount(localEggCount + 1)} className="flex-1 h-[80px] rounded-2xl bg-primary text-primary-foreground shadow-lg"><Plus className="h-6 w-6" /></Button>
               </div>
-              <Button onClick={handleSyncEggs} disabled={isSavingEggs} className="w-full h-14 bg-secondary text-secondary-foreground font-black rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm tracking-widest">
+              <Button onClick={handleSyncEggs} disabled={isSavingEggs || !todayEggRef} className="w-full h-14 bg-secondary text-secondary-foreground font-black rounded-xl shadow-lg flex items-center justify-center gap-2 text-sm tracking-widest">
                 {isSavingEggs ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />} SAVE FOR TODAY
               </Button>
             </div>
