@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -31,7 +32,9 @@ import {
   Star,
   BookOpen,
   MapPin,
-  Baby
+  Baby,
+  ShoppingBag,
+  ExternalLink
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -40,6 +43,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { doc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const PAYPAL_CLIENT_ID = "AZDfsAZRZTJKjHjNx3LPEpyoRRoBrAJZSooSH3t_bDVU7KdZz09XQZn5BQUYwdI-zWdTtSui-qLMht_e";
 const PLAN_MONTHLY = "P-70H86074FR874700TNGZW23I";
@@ -57,6 +61,27 @@ function SupportContent() {
   const [amount, setAmount] = useState<string>('10');
   const [designation, setDesignation] = useState<string>('feed');
   const [donorDisplayName, setDonorDisplayName] = useState('');
+
+  // Merch State
+  const [merch, setMerch] = useState<any[]>([]);
+  const [merchLoading, setMerchLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchMerch() {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setMerch(data);
+        }
+      } catch (e) {
+        console.error("Failed to load merch", e);
+      } finally {
+        setMerchLoading(false);
+      }
+    }
+    fetchMerch();
+  }, []);
 
   const handlePaymentSuccess = async (paypalDetails: any, amountValue: number, isOneTime: boolean) => {
     if (!firestore) return;
@@ -312,7 +337,72 @@ function SupportContent() {
             </div>
           </section>
 
-          {/* 4. CLASSROOM & COMMUNITY ACCESS */}
+          {/* 4. SANCTUARY MERCH SECTION */}
+          <section id="merch" className="container mx-auto px-4 scroll-mt-24">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="h-px bg-border flex-1" />
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4" /> Decent Ducks Merch
+              </h2>
+              <div className="h-px bg-border flex-1" />
+            </div>
+
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Wear the Mission</h3>
+              <p className="text-muted-foreground max-w-xl mx-auto font-medium">Proceeds from every order go directly to the sanctuary feed and medical fund.</p>
+            </div>
+
+            {merchLoading ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Merch Catalog...</p>
+              </div>
+            ) : merch.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {merch.map((product) => (
+                  <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
+                    <div className="relative aspect-square bg-muted">
+                      {product.thumbnail_url ? (
+                        <Image 
+                          src={product.thumbnail_url} 
+                          alt={product.name} 
+                          fill 
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center opacity-20">
+                          <ShoppingBag className="h-12 w-12" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <Button asChild variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+                            <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">
+                               <ExternalLink className="h-5 w-5" />
+                            </a>
+                         </Button>
+                      </div>
+                    </div>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="space-y-1">
+                        <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
+                        <p className="text-lg font-headline font-black text-primary">${(product.variants?.[0]?.retail_price || "24.99")}</p>
+                      </div>
+                      <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
+                        <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">VIEW PRODUCT</a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-muted/10 rounded-[2rem] border-2 border-dashed border-border">
+                <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground opacity-20 mb-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">New Gear Arriving Soon...</p>
+              </div>
+            )}
+          </section>
+
+          {/* 5. CLASSROOM & COMMUNITY ACCESS */}
           <section id="community" className="container mx-auto px-4 scroll-mt-24">
             <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
