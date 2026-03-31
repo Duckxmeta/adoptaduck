@@ -16,7 +16,7 @@ import {
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -405,7 +405,7 @@ function ManagerPortal({ user }: { user: any }) {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Content</Label>
                   <Textarea 
-                    value={bullContent} 
+                    value={bullTitle} 
                     onChange={e => setBullContent(e.target.value)}
                     placeholder="What's happening at the sanctuary?"
                     className="bg-background border-border min-h-[100px] rounded-xl"
@@ -656,7 +656,7 @@ function MemberPulseView({ user }: { user: any }) {
   const handleAlphaUnlock = async () => {
     const code = alphaCode.trim();
     if (code !== 'SpringDucks-JDI-G0') {
-      toast({ variant: "destructive", title: "Invalid Code", description: "Alpha access code not recognized." });
+      toast({ variant: "destructive", title: "Invalid Code", description: "Promo code not recognized." });
       return;
     }
     
@@ -687,13 +687,13 @@ function MemberPulseView({ user }: { user: any }) {
       }, { merge: true });
 
       await batch.commit();
-      toast({ title: "Guardian Status Unlocked!", description: "You now have full alpha access features." });
+      toast({ title: "Promo Code Applied!", description: "Welcome to the flock." });
       setAlphaCode('');
     } catch (e: any) {
       toast({ 
         variant: "destructive", 
         title: e.message === 'Expired' ? "Code Expired" : "Access Denied",
-        description: e.message === 'Expired' ? "This alpha code has reached its 2-use limit." : "Failed to process alpha access."
+        description: e.message === 'Expired' ? "This promo code is invalid or has reached its limit." : "Failed to process promo access."
       });
     } finally {
       setIsUnlocking(false);
@@ -725,20 +725,20 @@ function MemberPulseView({ user }: { user: any }) {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Live Sanctuary Feed</p>
         </div>
 
-        {/* ALPHA ACCESS FEATURE */}
+        {/* PROMO CODE FEATURE */}
         {!isGuardian && !isGuest && (
           <section className="animate-in slide-in-from-top-4 duration-500">
             <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 shadow-lg">
               <div className="flex flex-col md:flex-row items-center gap-6 text-center">
                 <div className="flex-1 space-y-1 text-center md:text-left">
-                  <h3 className="font-headline font-black text-sm uppercase tracking-tight text-secondary">Alpha Tester Access</h3>
+                  <h3 className="font-headline font-black text-sm uppercase tracking-tight text-secondary">Promo Code</h3>
                   <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Enter code to unlock Guardian features</p>
                 </div>
                 <div className="flex w-full md:w-auto gap-3">
                   <input 
                     value={alphaCode}
                     onChange={(e) => setAlphaCode(e.target.value)}
-                    placeholder="ENTER ALPHA CODE"
+                    placeholder="ENTER PROMO CODE"
                     className="bg-background border border-secondary/20 h-12 px-4 rounded-xl text-xs font-black tracking-widest uppercase flex-1 md:w-64 focus:outline-none focus:ring-2 focus:ring-secondary/50"
                     disabled={isUnlocking}
                   />

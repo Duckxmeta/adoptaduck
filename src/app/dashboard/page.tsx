@@ -188,8 +188,8 @@ export default function MemberDashboard() {
     const code = referralCode.trim().toUpperCase();
     if (!code || !firestore || !user) return;
     
-    // Referral Map has been purged. Community codes are now managed by admins.
-    toast({ variant: "destructive", title: "Invalid Code", description: "Referral system updated. Contact admin for new codes." });
+    // Promo Code Map has been purged. Master codes are now managed by admins.
+    toast({ variant: "destructive", title: "Invalid Code", description: "Promo system updated. Contact admin for new codes." });
   };
 
   const routineTasks = [
@@ -238,7 +238,7 @@ export default function MemberDashboard() {
                 <div className="space-y-4">
                    <div className="flex items-center gap-2 text-secondary">
                       <Ticket className="h-4 w-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Community Code</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Promo Code</span>
                    </div>
                    <div className="flex gap-2">
                       <Input 

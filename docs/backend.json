@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "ResidentBird": {
@@ -84,7 +85,7 @@
     },
     "/promo_codes/{codeId}": {
       "schema": "#/backend/entities/PromoCode",
-      "description": "Tracking for alpha access codes."
+      "description": "Tracking for promo code usage."
     }
   }
 }
