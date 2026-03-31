@@ -59,6 +59,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import { BulletinBoard } from '@/components/members/BulletinBoard';
+import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 
 const GOALS = {
   feed: 300,
@@ -72,8 +73,6 @@ export default function MemberDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [referralCode, setReferralCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const [bulletins, setBulletins] = useState<BulletinEntry[]>([]);
 
   useEffect(() => {
@@ -184,14 +183,6 @@ export default function MemberDashboard() {
     return (completed / tasks.length) * 100;
   };
 
-  const handleReferralCode = async () => {
-    const code = referralCode.trim().toUpperCase();
-    if (!code || !firestore || !user) return;
-    
-    // Promo Code Map has been purged. Master codes are now managed by admins.
-    toast({ variant: "destructive", title: "Invalid Code", description: "Promo system updated. Contact admin for new codes." });
-  };
-
   const routineTasks = [
     { label: "Morning Feeding", key: "morningFeeding", icon: <ForkKnife className="h-4 w-4" /> },
     { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
@@ -205,7 +196,6 @@ export default function MemberDashboard() {
   }
 
   const globalHealth = calculateProgress();
-  // Fixed potentially crashing chaining by using optional chaining before sort
   const liveStatusBirds = allBirds?.filter(b => b.liveStatus)?.sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
 
   return (
@@ -235,26 +225,9 @@ export default function MemberDashboard() {
                 </div>
              </Card>
 
-             <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-80 shadow-lg">
-                <div className="space-y-4">
-                   <div className="flex items-center gap-2 text-secondary">
-                      <Ticket className="h-4 w-4" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Promo Code</span>
-                   </div>
-                   <div className="flex gap-2">
-                      <Input 
-                        placeholder="ENTER CODE" 
-                        value={referralCode}
-                        onChange={(e) => setReferralCode(e.target.value)}
-                        className="bg-background border-secondary/20 h-10 text-xs font-black tracking-widest uppercase"
-                        disabled={isVerifying}
-                      />
-                      <Button size="sm" onClick={handleReferralCode} disabled={isVerifying} className="bg-secondary text-secondary-foreground font-black px-4">
-                        {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      </Button>
-                   </div>
-                </div>
-             </Card>
+             <div className="md:w-80">
+                <PromoCodeInput />
+             </div>
            </div>
         </section>
 

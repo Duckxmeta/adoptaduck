@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -39,9 +38,11 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, serverTimestamp, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
+import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
+import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -61,6 +62,11 @@ function SupportContent() {
   const [amount, setAmount] = useState<string>('10');
   const [designation, setDesignation] = useState<string>('feed');
   const [donorDisplayName, setDonorDisplayName] = useState('');
+
+  // Real-time user profile check for status reflection
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+  const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
   // Merch State
   const [merch, setMerch] = useState<any[]>([]);
@@ -247,6 +253,11 @@ function SupportContent() {
               <div className="h-px bg-border flex-1" />
             </div>
 
+            {/* Promo Code Universal Gate */}
+            <div className="max-w-md mx-auto mb-12">
+              <PromoCodeInput />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {/* Flock Member */}
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl opacity-90 border-t-4 border-t-muted">
@@ -295,11 +306,18 @@ function SupportContent() {
                 </ul>
                 
                 <div className="pt-4">
-                  <PayPalButtons 
-                    style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "gold" }}
-                    createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_MONTHLY })}
-                    onApprove={async (data, actions) => handlePaymentSuccess(data, 8.33, false)}
-                  />
+                  {isGuardian ? (
+                    <div className="bg-primary/10 border-2 border-primary/20 rounded-xl p-4 text-center space-y-2">
+                      <p className="text-[10px] font-black text-primary uppercase tracking-widest">Benefit Unlocked</p>
+                      <p className="font-headline font-black text-lg text-primary uppercase">Active Guardian</p>
+                    </div>
+                  ) : (
+                    <PayPalButtons 
+                      style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "gold" }}
+                      createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_MONTHLY })}
+                      onApprove={async (data, actions) => handlePaymentSuccess(data, 8.33, false)}
+                    />
+                  )}
                 </div>
               </Card>
 
@@ -327,11 +345,18 @@ function SupportContent() {
                   ))}
                 </ul>
                 <div className="pt-4">
-                  <PayPalButtons 
-                    style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "blue" }}
-                    createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_YEARLY })}
-                    onApprove={async (data, actions) => handlePaymentSuccess(data, 75, false)}
-                  />
+                  {isGuardian ? (
+                    <div className="bg-secondary/10 border-2 border-secondary/20 rounded-xl p-4 text-center space-y-2">
+                      <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Benefit Unlocked</p>
+                      <p className="font-headline font-black text-lg text-secondary uppercase">Founding Access</p>
+                    </div>
+                  ) : (
+                    <PayPalButtons 
+                      style={{ layout: "vertical", shape: "rect", label: "subscribe", color: "blue" }}
+                      createSubscription={(data, actions) => actions.subscription.create({ plan_id: PLAN_YEARLY })}
+                      onApprove={async (data, actions) => handlePaymentSuccess(data, 75, false)}
+                    />
+                  )}
                 </div>
               </Card>
             </div>
