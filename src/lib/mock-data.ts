@@ -2,7 +2,7 @@
 import { Resident } from './types';
 
 /**
- * Legacy Residents (Joey, Huey, Jordie, Cutie Pie) have been removed.
- * Data is now managed dynamically via Firestore.
+ * Data is now managed dynamically via Firestore. 
+ * This file serves as a fallback type reference only.
  */
 export const MOCK_RESIDENTS: Resident[] = [];

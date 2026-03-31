@@ -44,7 +44,7 @@ export default function TermsPage() {
               </div>
               <h3 className="text-xl font-headline font-black uppercase tracking-tight">Digital Assets & History</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Images of the birds (including Jasmine, Jordie, etc.) and their rescue histories/lineage data are the intellectual property of Decent Ducks Sanctuary. Sharing is encouraged for advocacy, but commercial sale is prohibited.
+                Images of the birds (including Jasmine and the G0 Founders) and their rescue histories/lineage data are the intellectual property of Decent Ducks Sanctuary. Sharing is encouraged for advocacy, but commercial sale is prohibited.
               </p>
             </div>
           </div>

@@ -16,7 +16,7 @@ import {
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Upload
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -252,7 +252,7 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
-  const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
+  const foundingResidents = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
@@ -487,7 +487,7 @@ function ManagerPortal({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {foundingFour.map((bird) => {
+            {foundingResidents.map((bird) => {
               const lastUpdatedDate = bird.statusLastUpdated ? new Date(bird.statusLastUpdated) : null;
               const formattedTime = lastUpdatedDate && isDateValid(lastUpdatedDate) 
                 ? format(lastUpdatedDate, 'h:mm a') 
@@ -623,7 +623,7 @@ function MemberPulseView({ user }: { user: any }) {
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
-  const foundingFour = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
+  const foundingResidents = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
   const handleAlphaUnlock = async () => {
     const code = alphaCode.trim();
@@ -802,7 +802,7 @@ function MemberPulseView({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {foundingFour.map((bird) => {
+            {foundingResidents.map((bird) => {
               const lastUpdatedDate = bird.statusLastUpdated ? new Date(bird.statusLastUpdated) : null;
               const formattedTime = lastUpdatedDate && isDateValid(lastUpdatedDate) 
                 ? format(lastUpdatedDate, 'h:mm a') 
