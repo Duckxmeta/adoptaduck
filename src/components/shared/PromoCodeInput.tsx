@@ -70,11 +70,11 @@ export function PromoCodeInput() {
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-secondary">
           <Ticket className="h-4 w-4" />
-          <span className="text-[10px] font-black uppercase tracking-widest">Sanctuary Access Code</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Promo Code</span>
         </div>
         <div className="flex gap-2">
           <Input 
-            placeholder="ENTER CODE" 
+            placeholder="Enter code..." 
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="bg-background border-secondary/20 h-12 text-sm font-black tracking-widest uppercase rounded-xl"
@@ -90,7 +90,7 @@ export function PromoCodeInput() {
           </Button>
         </div>
         <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tight">
-          Enter a verified partner code to unlock Guardian benefits. (Atomic usage enforced)
+          Enter a Promo Code to unlock Guardian benefits.
         </p>
       </div>
     </Card>
