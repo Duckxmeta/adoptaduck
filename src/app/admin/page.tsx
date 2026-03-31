@@ -264,7 +264,8 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
-  const foundingResidents = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
+  // Fixed potentially crashing chaining by using optional chaining before sort
+  const foundingResidents = birds?.filter(b => b.isFoundingResident)?.sort((a,b) => a.name.localeCompare(b.name)) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">

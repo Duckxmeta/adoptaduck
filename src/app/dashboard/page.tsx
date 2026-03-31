@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -39,6 +38,7 @@ import {
   ShieldCheck,
   Stethoscope,
   Utensils,
+  Utensils as ForkKnife,
   Droplets,
   LayoutDashboard,
   Ticket,
@@ -193,7 +193,7 @@ export default function MemberDashboard() {
   };
 
   const routineTasks = [
-    { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
+    { label: "Morning Feeding", key: "morningFeeding", icon: <ForkKnife className="h-4 w-4" /> },
     { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
     { label: "Egg Counter", key: "eggCounter", icon: <Egg className="h-4 w-4" /> },
     { label: "Health Check", key: "healthCheck", icon: <Stethoscope className="h-4 w-4" /> },
@@ -205,7 +205,8 @@ export default function MemberDashboard() {
   }
 
   const globalHealth = calculateProgress();
-  const liveStatusBirds = allBirds?.filter(b => b.liveStatus).sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
+  // Fixed potentially crashing chaining by using optional chaining before sort
+  const liveStatusBirds = allBirds?.filter(b => b.liveStatus)?.sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body">
@@ -283,7 +284,7 @@ export default function MemberDashboard() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {liveStatusBirds.slice(0, 4).map((bird) => (
-                  <div key={bird.id} className="flex items-center gap-3 p-3 bg-background/50 rounded-2xl border border-primary/10 hover:border-primary/30 transition-colors">
+                  <div key={bird.id} className="flex items-center justify-between p-3 bg-background/50 rounded-2xl border border-primary/10 hover:border-primary/30 transition-colors gap-3">
                     <div className="w-10 h-10 rounded-xl overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
                       {bird.primaryImageUrl ? (
                         <Image src={bird.primaryImageUrl} alt={bird.name} width={40} height={40} className="object-cover h-full" />
@@ -291,7 +292,7 @@ export default function MemberDashboard() {
                         <span className="text-lg">🦆</span>
                       )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-black uppercase text-primary tracking-tight truncate">{bird.name}</p>
                       <p className="text-xs font-bold truncate">{bird.liveStatus}</p>
                       {bird.statusLastUpdated && (
