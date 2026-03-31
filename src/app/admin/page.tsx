@@ -280,47 +280,59 @@ function ManagerPortal({ user }: { user: any }) {
     setIsMaintenanceLoading(true);
     try {
       const batch = writeBatch(firestore);
-      let updatedCount = 0;
+      const LEGACY_NAMES = ['JOEY', 'CUTIE PIE', 'JORDIE', 'HUEY'];
+      
+      // 1. Lock Identities for the specific mobile-uploaded IDs
+      const puffID = 'tbd...-1773956852898';
+      const cocoaID = 'tbd...-1773956906926';
+      
+      const puffRef = doc(firestore, 'birds', puffID);
+      const cocoaRef = doc(firestore, 'birds', cocoaID);
+      
+      batch.set(puffRef, { 
+        name: 'Puff', 
+        breed: 'Silver Appleyard', 
+        color: 'Yellow', 
+        founder: true, 
+        isFoundingResident: true, 
+        id: puffID,
+        slug: deleteField(),
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
 
+      batch.set(cocoaRef, { 
+        name: 'Cocoa', 
+        breed: 'Swedish Blue', 
+        color: 'Grey', 
+        founder: true, 
+        isFoundingResident: true, 
+        id: cocoaID,
+        slug: deleteField(),
+        updatedAt: new Date().toISOString() 
+      }, { merge: true });
+
+      // 2. Scan all birds for legacy names or slugs to purge
       birds.forEach(bird => {
         const nameUpper = bird.name.toUpperCase();
-        const breedUpper = bird.breed.toUpperCase();
-        
-        // Finalize Cocoa & Puff identities, reaffirm IDs, and purge legacy slugs
         const birdRef = doc(firestore, 'birds', bird.id);
-        if (nameUpper === '' || nameUpper.includes('TBD') || !bird.id || bird.id === 'tbd') {
-          if (breedUpper === 'SWEDISH BLUE') {
-            batch.update(birdRef, { 
-              name: 'Cocoa', 
-              color: 'Grey', 
-              id: bird.id,
-              slug: deleteField(),
-              updatedAt: new Date().toISOString() 
-            });
-            updatedCount++;
-          } else if (breedUpper === 'SILVER APPLEYARD') {
-            batch.update(birdRef, { 
-              name: 'Puff', 
-              color: 'Yellow', 
-              id: bird.id,
-              slug: deleteField(),
-              updatedAt: new Date().toISOString() 
-            });
-            updatedCount++;
-          }
-        } else {
-          // Reaffirm ID for all birds and purge slugs
+        
+        // Delete legacy residents by name
+        if (LEGACY_NAMES.includes(nameUpper)) {
+          batch.delete(birdRef);
+        } else if (bird.id !== puffID && bird.id !== cocoaID) {
+          // Sanitization for all other birds: reaffirm ID and purge legacy fields
           batch.update(birdRef, {
             id: bird.id,
-            slug: deleteField()
+            slug: deleteField(),
+            updatedAt: new Date().toISOString()
           });
         }
       });
 
       await batch.commit();
-      toast({ title: "Maintenance Success", description: "Lineage records sanitized and finalized." });
+      toast({ title: "Sanitization Success", description: "Legacy purged. G0 Identities Locked." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Maintenance Error", description: "Failed to sanitize records." });
+      toast({ variant: "destructive", title: "Sanitization Error", description: "Failed to sanitize records." });
     } finally {
       setIsMaintenanceLoading(false);
     }
@@ -361,8 +373,8 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
           <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
             <div className="flex-1 space-y-1 text-center md:text-left">
-              <h3 className="font-headline font-black text-sm uppercase text-secondary">Sanitize Lineage Routing</h3>
-              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Reaffirm UID keys and purge legacy slugs for 2026 routing</p>
+              <h3 className="font-headline font-black text-sm uppercase text-secondary">Total Collection Sanitizer</h3>
+              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Purge Legacy, Finalize Cocoa/Puff Identities, and Force UID Logic</p>
             </div>
             <Button 
               onClick={handleFinalizeG0} 
