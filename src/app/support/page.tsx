@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, Suspense, useEffect } from 'react';
@@ -480,7 +481,15 @@ function SupportContent() {
                     <CardContent className="p-6 space-y-4">
                       <div className="space-y-1">
                         <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
-                        <p className="text-lg font-headline font-black text-primary">${(product.variants?.[0]?.retail_price || "24.99")}</p>
+                        <p className="text-lg font-headline font-black text-primary">
+                          {product.minPrice !== undefined && product.maxPrice !== undefined ? (
+                            product.minPrice === product.maxPrice 
+                              ? `$${product.minPrice.toFixed(2)}`
+                              : `$${product.minPrice.toFixed(2)} - $${product.maxPrice.toFixed(2)}`
+                          ) : (
+                            "$24.99"
+                          )}
+                        </p>
                       </div>
                       <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
                         <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">VIEW PRODUCT</a>
