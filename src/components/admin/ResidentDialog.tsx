@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -57,7 +58,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     fatherId: '',
     hatch_date: '',
     isFoundingResident: true,
-    generation: 0
+    generation: 0,
+    tier: 'G0',
+    founder: true
   });
 
   const [uploading, setUploading] = useState(false);
@@ -74,8 +77,10 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         motherId: resident.motherId || '',
         fatherId: resident.fatherId || '',
         hatch_date: resident.hatch_date || '',
-        isFoundingResident: resident.source !== 'Hatched',
-        generation: resident.generation ?? 0
+        isFoundingResident: resident.isFoundingResident ?? (resident.source !== 'Hatched'),
+        generation: resident.generation ?? 0,
+        tier: resident.tier || (resident.generation === 0 ? 'G0' : 'G1'),
+        founder: resident.founder ?? (resident.generation === 0)
       });
       setPreviewUrl(resident.primaryImageUrl || null);
     } else {
@@ -93,7 +98,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         fatherId: '',
         hatch_date: '',
         isFoundingResident: true,
-        generation: 0
+        generation: 0,
+        tier: 'G0',
+        founder: true
       });
       setPreviewUrl(null);
     }
@@ -151,6 +158,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         fatherId: isRehomed ? "" : (formData.fatherId || ""),
         isFoundingResident: isRehomed,
         generation: finalGeneration,
+        tier: `G${finalGeneration}` as any,
+        founder: isRehomed,
         updatedAt: new Date().toISOString()
       };
 
@@ -239,16 +248,16 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </Label>
             <RadioGroup 
               value={formData.source} 
-              onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', motherId: '', fatherId: ''})}
+              onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', founder: v !== 'Hatched', motherId: '', fatherId: ''})}
               className="grid grid-cols-2 gap-4"
             >
               <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
                 <RadioGroupItem value="Rehomed" id="type-rehomed" />
-                <Label htmlFor="type-rehomed" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Rehomed (G0)</Label>
+                <Label htmlFor="type-rehomed" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">G0 Founder</Label>
               </div>
               <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
                 <RadioGroupItem value="Hatched" id="type-hatched" />
-                <Label htmlFor="type-hatched" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Hatched (Lineage)</Label>
+                <Label htmlFor="type-hatched" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">Sanctuary Born</Label>
               </div>
             </RadioGroup>
           </div>
@@ -270,7 +279,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="unknown">Unknown / Original</SelectItem>
                     {birds?.filter(b => b.sex === 'female' && b.id !== resident?.id).map(b => (
-                      <SelectItem key={b.id} value={b.id}>{b.name} (G{b.generation ?? 0})</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>{b.name} ({b.tier || `G${b.generation || 0}`})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -289,7 +298,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="unknown">Unknown / Original</SelectItem>
                     {birds?.filter(b => b.sex === 'male' && b.id !== resident?.id).map(b => (
-                      <SelectItem key={b.id} value={b.id}>{b.name} (G{b.generation ?? 0})</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>{b.name} ({b.tier || `G${b.generation || 0}`})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -352,6 +361,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
           <div className="space-y-2">
             <Label htmlFor="story" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Story & Heritage Notes</Label>
+            <span className="text-[8px] text-muted-foreground block mb-1">G0 Founders should include rehoming context.</span>
             <Textarea 
               id="story" 
               value={formData.backstory} 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -63,13 +64,6 @@ const GOALS = {
   feed: 300,
   medical: 500,
   infrastructure: 1000
-};
-
-const REFERRAL_MAP: Record<string, string> = {
-  'STRAY-G0': 'Joey',
-  'QUAKK-G0': 'Jordie',
-  'QUAKEY-G0': 'Cutie Pie',
-  'GODS-G0': 'Huey'
 };
 
 export default function MemberDashboard() {
@@ -193,40 +187,9 @@ export default function MemberDashboard() {
   const handleReferralCode = async () => {
     const code = referralCode.trim().toUpperCase();
     if (!code || !firestore || !user) return;
-    if (!REFERRAL_MAP[code]) {
-      toast({ variant: "destructive", title: "Invalid Code", description: "Invalid Community Code." });
-      return;
-    }
-    const targetName = REFERRAL_MAP[code];
-    if (userProfile?.community_codes?.includes(code)) {
-      toast({ title: "Already Adopted", description: `You are already a community adopter for ${targetName}!` });
-      return;
-    }
-    setIsVerifying(true);
-    try {
-      const birdsRef = collection(firestore, 'birds');
-      const q = query(birdsRef, where('name', '==', targetName));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        toast({ variant: "destructive", title: "Resident Not Found" });
-      } else {
-        const birdId = querySnapshot.docs[0].id;
-        const userRef = doc(firestore, 'users', user.uid);
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          my_flock: arrayUnion(birdId),
-          community_codes: arrayUnion(code),
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
-        toast({ title: "Welcome to the flock!", description: `You are now a community adopter of ${targetName}.` });
-        setReferralCode('');
-      }
-    } catch (e: any) {
-      toast({ variant: "destructive", title: "Link Failed" });
-    } finally {
-      setIsVerifying(false);
-    }
+    
+    // Referral Map has been purged. Community codes are now managed by admins.
+    toast({ variant: "destructive", title: "Invalid Code", description: "Referral system updated. Contact admin for new codes." });
   };
 
   const routineTasks = [
@@ -294,17 +257,14 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* Universal Bulletin Board Feed */}
         <section className="animate-in fade-in duration-700">
           <BulletinBoard bulletins={bulletins} />
         </section>
 
-        {/* Duck of the Month Spotlight */}
         <section className="animate-in fade-in duration-1000">
           <DOTMSpotlight />
         </section>
 
-        {/* Live Status Ticker */}
         {liveStatusBirds.length > 0 && (
           <section className="animate-in fade-in slide-in-from-top-4 duration-1000">
             <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
@@ -347,7 +307,6 @@ export default function MemberDashboard() {
           </section>
         )}
 
-        {/* Global Impact Dashboard */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
            <Card className="lg:col-span-2 bg-card border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
               <div className="relative z-10 space-y-8">
@@ -412,7 +371,6 @@ export default function MemberDashboard() {
            </Card>
         </section>
 
-        {/* Public Support Feed Section */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
            <div className="lg:col-span-2">
               <SanctuaryCostCard expenses={expenses} />

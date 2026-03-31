@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -24,8 +25,6 @@ import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Resident, HealthLogEntry, Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-const FOREVER_NAMES = ['Joey', 'Huey', 'Jordie', 'Cutie Pie'];
 
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
@@ -84,21 +83,8 @@ export default function ResidentProfile() {
     notFound();
   }
 
-  const isForever = bird && FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === bird.name.toLowerCase().replace(/\s+/g, ''));
-  const isFounding = bird?.isFoundingResident || (!bird?.motherId && !bird?.fatherId);
-
-  const nameNorm = bird?.name?.trim();
-  const isFoundingGroup = FOREVER_NAMES.includes(nameNorm || '');
-  const sharedNarrative = "The story of the Founding Four began in 2022, when they were purchased as seasonal Easter ducklings. After a year of growth, it became clear their initial home wasn't equipped for their long-term needs. In 2023, they were officially rehomed to Decent Ducks Sanctuary. For years now, this bonded group has served as the heart of our mission, proving that with the right environment, every rescue can thrive long-term.";
-  const endings: Record<string, string> = {
-    'Joey': "Today, Joey has taken his second chance and turned it into a mission, serving as the flock's primary protector.",
-    'Huey': "Huey uses her loud, charismatic voice to make sure no one ever ignores the needs of the flock again.",
-    'Jordie': "Jordie celebrates her freedom by being the fastest runner to the snack bowl every single morning.",
-    'Cutie Pie': "Cutie Pie remains the silent guardian, staying by Jordie's side to ensure the family he arrived with stays safe."
-  };
-  const displayBackstory = isFoundingGroup 
-    ? `${sharedNarrative} ${endings[nameNorm!] || ''}`
-    : bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
+  const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
+  const displayBackstory = bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -121,7 +107,7 @@ export default function ResidentProfile() {
             <div className="space-y-6">
               <div className={cn(
                 "relative aspect-square rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
-                isForever ? "border-primary/50 glow-primary" : "border-border"
+                isFounder ? "border-primary/50 glow-primary" : "border-border"
               )}>
                 {bird?.primaryImageUrl ? (
                   <Image
@@ -140,9 +126,9 @@ export default function ResidentProfile() {
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
                      {bird?.breed}
                    </Badge>
-                   {isForever && (
+                   {isFounder && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-lg">
-                       <Trophy className="h-3 w-3" /> Forever Resident
+                       <Trophy className="h-3 w-3" /> G0 Founder
                      </Badge>
                    )}
                 </div>

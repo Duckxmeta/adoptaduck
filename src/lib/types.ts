@@ -19,6 +19,8 @@ export type Resident = {
   hatch_date?: string;
   isFoundingResident?: boolean;
   generation?: number;
+  tier?: 'G0' | 'G1' | 'G2'; // New dynamic tiering
+  founder?: boolean; // Explicit founder tag
   liveStatus?: string;
   statusLastUpdated?: string;
   isFeatured?: boolean;

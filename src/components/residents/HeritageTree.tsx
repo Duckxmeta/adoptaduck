@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -42,7 +43,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
   const TreeCard = ({ bird, label, genLabel, className }: { bird: Resident | null, label: string, genLabel?: string, className?: string }) => {
     if (!bird) return null;
 
-    const isG0 = bird.source === 'Founding' || bird.source === 'Rehomed';
+    const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder || bird.source === 'Rehomed';
     const imagePath = bird.primaryImageUrl || '/images/placeholder-duck.png';
 
     return (
@@ -52,7 +53,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
       >
         <div className={cn(
           "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-lg transition-all duration-300 group-hover:scale-105 flex flex-col",
-          isG0 ? "border-primary shadow-[0_0_15px_rgba(255,215,0,0.2)]" : "border-secondary/40 group-hover:border-secondary"
+          isFounder ? "border-primary shadow-[0_0_15px_rgba(255,215,0,0.2)]" : "border-secondary/40 group-hover:border-secondary"
         )}>
           <div className="relative h-full w-full bg-muted">
             <Image 
@@ -78,7 +79,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
             <p className="font-headline font-black text-sm uppercase tracking-tight truncate">{bird.name}</p>
           </div>
 
-          {isG0 && (
+          {isFounder && (
             <div className="absolute top-2 left-2">
               <Badge className="bg-primary text-black border-none text-[7px] font-black px-1.5 py-0.5 rounded-sm shadow-md">
                 ROOT

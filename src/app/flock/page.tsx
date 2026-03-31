@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -15,16 +16,6 @@ import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { cn } from '@/lib/utils';
 
-const FOREVER_NAMES = ['Joey', 'Huey', 'Jordie', 'Cutie Pie'];
-const COMMUNITY_NAMES = ['SolGods'];
-const PARTNER_MAP: Record<string, string> = {
-  'Joey': 'Solana Strays',
-  'Jordie': 'Quakk',
-  'Cutie Pie': 'Quakey',
-  'Huey': 'SolGods',
-  'SolGods': 'SolGods'
-};
-
 export default function BrowseFlock() {
   const firestore = useFirestore();
 
@@ -35,32 +26,15 @@ export default function BrowseFlock() {
 
   const { data: birds, isLoading } = useCollection<Resident>(birdsQuery);
 
-  const foreverBirds = birds?.filter(b => {
-    const name = b.name?.trim().toLowerCase().replace(/\s+/g, '');
-    return FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === name);
-  }) || [];
-
-  const communityBirds = birds?.filter(b => {
-    const name = b.name?.trim().toLowerCase().replace(/\s+/g, '');
-    const isForever = FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === name);
-    return !isForever && (COMMUNITY_NAMES.some(cn => cn.toLowerCase() === name) || !!b.isCommunityDuck);
-  }) || [];
-  
-  const individualBirds = birds?.filter(b => {
-    const name = b.name?.trim().toLowerCase().replace(/\s+/g, '');
-    const isForever = FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === name);
-    const isCommunity = (COMMUNITY_NAMES.some(cn => cn.toLowerCase() === name) || !!b.isCommunityDuck);
-    return !isForever && !isCommunity;
-  }) || [];
+  // Dynamic Filtering based on G0/Founder status
+  const foundingMembers = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder) || [];
+  const standardResidents = birds?.filter(b => !b.isFoundingResident && b.generation !== 0 && !b.founder) || [];
 
   const BirdCard = ({ bird }: { bird: Resident }) => {
-    const nameNorm = bird.name?.trim().toLowerCase().replace(/\s+/g, '');
-    const isForever = FOREVER_NAMES.some(fn => fn.toLowerCase().replace(/\s+/g, '') === nameNorm);
-    const isCommunity = COMMUNITY_NAMES.some(cn => cn.toLowerCase() === nameNorm) || !!bird.isCommunityDuck;
+    const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder;
+    const isCommunity = bird.isCommunityDuck;
     
     const displayName = bird.name;
-    const partnerKey = Object.keys(PARTNER_MAP).find(k => k.toLowerCase() === nameNorm);
-    const partnerName = partnerKey ? PARTNER_MAP[partnerKey] : null;
     const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.trim() !== "";
 
     return (
@@ -68,7 +42,7 @@ export default function BrowseFlock() {
         key={bird.id} 
         className={cn(
           "group bg-card border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-500",
-          isForever ? "border-primary/50 shadow-primary/10 glow-primary ring-1 ring-primary/20" : 
+          isFounder ? "border-primary/50 shadow-primary/10 glow-primary ring-1 ring-primary/20" : 
           isCommunity ? "border-secondary/50 shadow-secondary/20 glow-purple ring-1 ring-secondary/20" : "hover:glow-purple"
         )}
       >
@@ -88,14 +62,14 @@ export default function BrowseFlock() {
             <Badge className="w-fit bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
               {bird.breed}
             </Badge>
-            {isForever && (
+            {isFounder && (
               <Badge className="w-fit bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
-                <Trophy className="h-3 w-3" /> FOREVER RESIDENT
+                <Trophy className="h-3 w-3" /> G0 FOUNDER
               </Badge>
             )}
-            {isCommunity && !isForever && (
+            {isCommunity && !isFounder && (
               <Badge className="w-fit bg-secondary text-secondary-foreground border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3" /> {partnerName ? `ADOPTED BY ${partnerName.toUpperCase()}` : 'PARTNER ADOPTION'}
+                <ShieldCheck className="h-3 w-3" /> COMMUNITY RESIDENT
               </Badge>
             )}
           </div>
@@ -115,28 +89,17 @@ export default function BrowseFlock() {
           </div>
           
           <div className="pt-4 mt-auto flex flex-col gap-3">
-            {isForever || isCommunity ? (
-              <AdoptionModal 
-                resident={bird} 
-                trigger={
-                  <Button variant="outline" className={cn(
-                    "w-full font-black h-14 rounded-xl transition-all uppercase text-xs tracking-widest shadow-sm",
-                    isForever ? "border-primary/40 text-primary hover:bg-primary/10" : "border-secondary/40 text-secondary hover:bg-secondary/10"
-                  )}>
-                    <Sparkles className="mr-2 h-4 w-4" /> {isForever ? 'Sustain Forever Family' : 'Community Resident'}
-                  </Button>
-                }
-              />
-            ) : (
-              <AdoptionModal 
-                resident={bird} 
-                trigger={
-                  <Button className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg hover:scale-105 transition-transform uppercase text-xs tracking-widest">
-                    <Heart className="mr-2 h-4 w-4 fill-current" /> Adopt {displayName}
-                  </Button>
-                }
-              />
-            )}
+            <AdoptionModal 
+              resident={bird} 
+              trigger={
+                <Button className={cn(
+                  "w-full font-black h-14 rounded-xl shadow-lg hover:scale-105 transition-transform uppercase text-xs tracking-widest",
+                  isFounder ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                )}>
+                  <Heart className="mr-2 h-4 w-4 fill-current" /> {isFounder ? 'Sustain Founder' : `Adopt ${displayName}`}
+                </Button>
+              }
+            />
             
             <Button asChild variant="outline" className="w-full text-[10px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 h-12 rounded-xl">
               <Link href={`/residents/${bird.id}/tree`}>
@@ -165,13 +128,13 @@ export default function BrowseFlock() {
       <main className="flex-1 container mx-auto px-4 py-20 space-y-24">
         <section className="text-center space-y-4 max-w-3xl mx-auto">
           <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
-            Meet the Residents
+            The Sanctuary Flock
           </Badge>
           <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">
-            THE <span className="text-primary">SANCTUARY</span> FLOCK
+            MEET THE <span className="text-primary">G0 FOUNDERS</span>
           </h1>
           <p className="text-muted-foreground text-lg md:text-xl font-medium">
-            Every duck here has a story. Browse our residents and find a friend to support through our virtual adoption program.
+            Browse our residents and find a friend to support. G0 Founders represent the root of our sanctuary lineage.
           </p>
         </section>
 
@@ -181,55 +144,41 @@ export default function BrowseFlock() {
           </div>
         ) : (
           <div className="space-y-24">
-            {/* Forever Residents Section */}
-            {foreverBirds.length > 0 && (
+            {/* Founding Members Section */}
+            {foundingMembers.length > 0 && (
               <section className="space-y-12">
                 <div className="flex items-center gap-4">
                   <div className="h-px bg-border flex-1" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0">Forever Residents</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0">Founding Members</h2>
                   <div className="h-px bg-border flex-1" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  {foreverBirds.map((bird) => (
+                  {foundingMembers.map((bird) => (
                     <BirdCard key={bird.id} bird={bird} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Community Residents Section */}
-            {communityBirds.length > 0 && (
+            {/* Standard Residents Section */}
+            {standardResidents.length > 0 && (
               <section className="space-y-12">
                 <div className="flex items-center gap-4">
                   <div className="h-px bg-border flex-1" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-secondary shrink-0">Community Residents</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0">Sanctuary Residents</h2>
                   <div className="h-px bg-border flex-1" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  {communityBirds.map((bird) => (
+                  {standardResidents.map((bird) => (
                     <BirdCard key={bird.id} bird={bird} />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Individual Adoptions Section */}
-            <section className="space-y-12">
-              <div className="flex items-center gap-4">
-                <div className="h-px bg-border flex-1" />
-                <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0">Individual Adoptions</h2>
-                <div className="h-px bg-border flex-1" />
-              </div>
-              {individualBirds.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                  {individualBirds.map((bird) => (
-                    <BirdCard key={bird.id} bird={bird} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-12 italic">More residents arriving soon...</p>
-              )}
-            </section>
+            {birds?.length === 0 && (
+              <p className="text-center text-muted-foreground py-12 italic">More residents arriving soon...</p>
+            )}
           </div>
         )}
       </main>
