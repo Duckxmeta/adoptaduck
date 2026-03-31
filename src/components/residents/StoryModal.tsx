@@ -14,11 +14,12 @@ import { Heart, BookOpen, Sparkles, ArrowLeft, X } from "lucide-react";
 import { Resident } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, getResidentName } from "@/lib/utils";
 
 export function StoryModal({ resident, trigger }: StoryModalProps) {
   const fullStory = resident.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
   const hasImage = !!resident.primaryImageUrl && resident.primaryImageUrl.trim() !== "";
+  const displayName = getResidentName(resident);
 
   return (
     <Dialog>
@@ -31,7 +32,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
         <div className="sticky top-0 z-[70] w-full bg-background/95 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 h-16 shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-primary"><Sparkles className="h-4 w-4" /></span>
-            <span className="font-headline font-black uppercase text-sm tracking-widest truncate max-w-[150px]">{resident.name}</span>
+            <span className="font-headline font-black uppercase text-sm tracking-widest truncate max-w-[150px]">{displayName}</span>
           </div>
           <DialogClose asChild>
             <button className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors group">
@@ -46,7 +47,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
             {hasImage ? (
               <Image 
                 src={resident.primaryImageUrl} 
-                alt={resident.name} 
+                alt={displayName} 
                 fill 
                 className="object-cover"
                 priority
@@ -57,7 +58,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-8 right-8">
               <DialogTitle className="text-4xl md:text-5xl font-headline font-black text-white uppercase tracking-tighter leading-none">
-                {resident.name}
+                {displayName}
               </DialogTitle>
               <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2">
                 <Sparkles className="h-3 w-3" /> RESCUE NARRATIVE

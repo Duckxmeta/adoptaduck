@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -23,7 +24,7 @@ import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Resident, HealthLogEntry, Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, getResidentName } from '@/lib/utils';
 import {
   Carousel,
   CarouselContent,
@@ -99,6 +100,7 @@ export default function ResidentProfile() {
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const displayBackstory = bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
+  const displayName = getResidentName(bird);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -131,7 +133,7 @@ export default function ResidentProfile() {
                           <div className="relative aspect-square">
                             <Image
                               src={url}
-                              alt={`${bird?.name} - Photo ${index + 1}`}
+                              alt={`${displayName} - Photo ${index + 1}`}
                               fill
                               className="object-cover"
                               priority={index === 0}
@@ -155,6 +157,11 @@ export default function ResidentProfile() {
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
                      {bird?.breed}
                    </Badge>
+                   {bird?.color && (
+                     <Badge variant="outline" className="bg-background/80 backdrop-blur-md text-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
+                       {bird.color}
+                     </Badge>
+                   )}
                    {isFounder && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-lg">
                        <Trophy className="h-3 w-3" /> G0 Founder
@@ -183,7 +190,7 @@ export default function ResidentProfile() {
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                 <div className="space-y-4">
                   <h1 className="text-7xl font-headline font-black text-primary tracking-tighter leading-[0.8] uppercase animate-in slide-in-from-top-4 duration-700">
-                    {bird?.name}
+                    {displayName}
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>

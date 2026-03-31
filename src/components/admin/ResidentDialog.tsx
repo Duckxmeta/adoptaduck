@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info, Images, X, Star } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info, Images, X, Star, Palette } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -24,6 +24,7 @@ import { collection, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import { getResidentName } from '@/lib/utils';
 
 interface ResidentDialogProps {
   open: boolean;
@@ -49,6 +50,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   const [formData, setFormData] = useState<Partial<Resident>>({
     name: '',
     breed: '',
+    color: '',
     sex: 'unknown',
     personalityTraits: '',
     backstory: '',
@@ -94,6 +96,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       setFormData({
         name: '',
         breed: '',
+        color: '',
         sex: 'unknown',
         personalityTraits: '',
         backstory: '',
@@ -307,7 +310,25 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
           <div className="space-y-2">
             <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resident Name</Label>
-            <Input id="name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Captain Quack" className="bg-background border-border h-12 rounded-xl text-lg font-headline font-bold uppercase tracking-tight" required />
+            <Input 
+              id="name" 
+              value={formData.name} 
+              onChange={e => setFormData({...formData, name: e.target.value})} 
+              placeholder={getResidentName(formData as any)} 
+              className="bg-background border-border h-12 rounded-xl text-lg font-headline font-bold uppercase tracking-tight" 
+              required 
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="breed" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breed / Species</Label>
+              <Input id="breed" value={formData.breed} onChange={e => setFormData({...formData, breed: e.target.value})} placeholder="e.g. Pekin Duck" className="bg-background border-border h-11 rounded-xl" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="color" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Palette className="h-3 w-3" /> Primary Color</Label>
+              <Input id="color" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} placeholder="e.g. Grey" className="bg-background border-border h-11 rounded-xl" />
+            </div>
           </div>
 
           <div className="space-y-4 p-5 bg-muted/20 border border-border rounded-2xl">
@@ -337,7 +358,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="unknown">Unknown / Original</SelectItem>
                     {birds?.filter(b => b.sex === 'female' && b.id !== resident?.id).map(b => (
-                      <SelectItem key={b.id} value={b.id}>{b.name} ({b.tier || `G${b.generation || 0}`})</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>{getResidentName(b)} ({b.tier || `G${b.generation || 0}`})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -351,18 +372,13 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="unknown">Unknown / Original</SelectItem>
                     {birds?.filter(b => b.sex === 'male' && b.id !== resident?.id).map(b => (
-                      <SelectItem key={b.id} value={b.id}>{b.name} ({b.tier || `G${b.generation || 0}`})</SelectItem>
+                      <SelectItem key={b.id} value={b.id}>{getResidentName(b)} ({b.tier || `G${b.generation || 0}`})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="breed" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breed / Species</Label>
-            <Input id="breed" value={formData.breed} onChange={e => setFormData({...formData, breed: e.target.value})} placeholder="e.g. Pekin Duck" className="bg-background border-border h-11 rounded-xl" required />
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>

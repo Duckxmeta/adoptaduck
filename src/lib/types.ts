@@ -3,6 +3,7 @@ export type Resident = {
   id: string;
   name: string;
   breed: string;
+  color?: string; // Physical color marker
   sex: 'male' | 'female' | 'unknown';
   heritageTree?: string;
   personalityTraits: string;

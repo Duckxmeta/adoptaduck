@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { StoryModal } from '@/components/residents/StoryModal';
-import { cn } from '@/lib/utils';
+import { cn, getResidentName } from '@/lib/utils';
 
 export default function BrowseFlock() {
   const firestore = useFirestore();
@@ -34,7 +34,7 @@ export default function BrowseFlock() {
     const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder;
     const isCommunity = bird.isCommunityDuck;
     
-    const displayName = bird.name;
+    const displayName = getResidentName(bird);
     const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.trim() !== "";
 
     return (

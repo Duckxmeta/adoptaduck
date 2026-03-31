@@ -16,7 +16,8 @@ import {
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star
+  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
+  Wrench
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -29,7 +30,7 @@ import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, getResidentName } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Link from 'next/link';
 
@@ -93,6 +94,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(false);
 
   // Bulletin Board State
   const [bullTitle, setBullTitle] = useState('');
@@ -273,6 +275,39 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
+  const handleFinalizeG0 = async () => {
+    if (!birds || !firestore) return;
+    setIsMaintenanceLoading(true);
+    try {
+      const batch = writeBatch(firestore);
+      let updatedCount = 0;
+
+      birds.forEach(bird => {
+        const nameUpper = bird.name.toUpperCase();
+        if (nameUpper === '' || nameUpper.includes('TBD')) {
+          if (bird.breed === 'Swedish Blue') {
+            batch.update(doc(firestore, 'birds', bird.id), { name: 'Cocoa', color: 'Grey', updatedAt: new Date().toISOString() });
+            updatedCount++;
+          } else if (bird.breed === 'Silver Appleyard') {
+            batch.update(doc(firestore, 'birds', bird.id), { name: 'Puff', color: 'Yellow', updatedAt: new Date().toISOString() });
+            updatedCount++;
+          }
+        }
+      });
+
+      if (updatedCount > 0) {
+        await batch.commit();
+        toast({ title: "Maintenance Success", description: `${updatedCount} G0 identities finalized.` });
+      } else {
+        toast({ title: "No Actions Required", description: "All G0 founders are already identified." });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "Maintenance Error", description: "Failed to finalize identities." });
+    } finally {
+      setIsMaintenanceLoading(false);
+    }
+  };
+
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
   const foundingResidents = birds?.filter(b => b.isFoundingResident).sort((a,b) => a.name.localeCompare(b.name)) || [];
 
@@ -300,6 +335,28 @@ function ManagerPortal({ user }: { user: any }) {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
+        {/* SYSTEM MAINTENANCE */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Wrench className="h-4 w-4 text-secondary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SYSTEM MAINTENANCE</h2>
+          </div>
+          <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
+            <div className="flex-1 space-y-1 text-center md:text-left">
+              <h3 className="font-headline font-black text-sm uppercase text-secondary">Finalize G0 Identities</h3>
+              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Update Cocoa & Puff from TBD placeholders</p>
+            </div>
+            <Button 
+              onClick={handleFinalizeG0} 
+              disabled={isMaintenanceLoading}
+              className="bg-secondary text-secondary-foreground font-black px-8 h-12 rounded-xl text-xs tracking-widest uppercase shadow-lg hover:scale-105 transition-transform"
+            >
+              {isMaintenanceLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+              RUN FINALIZER
+            </Button>
+          </Card>
+        </section>
+
         {/* NOTIFICATION CENTER */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
@@ -318,7 +375,7 @@ function ManagerPortal({ user }: { user: any }) {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground">
-                            <span className="text-secondary">{note.userIdentity}</span> suggested <span className="text-primary">'{note.suggestedName}'</span> for {note.birdName}
+                            <span className="text-secondary">{note.userIdentity}</span> suggested <span className="text-primary">'{note.suggestedName}'</span> for {getResidentName({ name: note.birdName, breed: '' })}
                           </p>
                           <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Status: {note.userStatus}</p>
                         </div>
@@ -350,7 +407,7 @@ function ManagerPortal({ user }: { user: any }) {
                                 </div>
                                 <div>
                                   <p className="text-[10px] font-black uppercase text-muted-foreground">Target Bird</p>
-                                  <p className="text-xs">{note.birdName} (ID: {note.birdId})</p>
+                                  <p className="text-xs">{getResidentName({ name: note.birdName, breed: '' })} (ID: {note.birdId})</p>
                                 </div>
                               </div>
                             </div>
@@ -405,7 +462,7 @@ function ManagerPortal({ user }: { user: any }) {
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Content</Label>
                   <Textarea 
-                    value={bullTitle} 
+                    value={bullContent} 
                     onChange={e => setBullContent(e.target.value)}
                     placeholder="What's happening at the sanctuary?"
                     className="bg-background border-border min-h-[100px] rounded-xl"
@@ -519,10 +576,10 @@ function ManagerPortal({ user }: { user: any }) {
                 <Card key={bird.id} onClick={() => setVibeBird(bird)} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl cursor-pointer hover:border-primary/50 transition-all min-h-[80px]">
                   <div className="flex items-center gap-4">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
-                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={getResidentName(bird)} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3>
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{getResidentName(bird)}</h3>
                       <p className="text-[8px] font-bold text-muted-foreground uppercase truncate">
                         {bird.statusLastUpdated ? `Updated ${formattedTime}` : 'Sanctuary Routine'}
                       </p>
@@ -552,12 +609,12 @@ function ManagerPortal({ user }: { user: any }) {
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative">
                 <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">
-                  {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
+                  {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={getResidentName(bird)} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3>
+                      <h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{getResidentName(bird)}</h3>
                       {bird.isFeatured && <Star className="h-3 w-3 text-primary fill-primary" />}
                     </div>
                     <p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p>
@@ -620,7 +677,7 @@ function ManagerPortal({ user }: { user: any }) {
         await addDoc(collection(firestore!, 'birds', loggingResident!.id, 'healthLogs'), { birdId: loggingResident!.id, logDate: new Date().toISOString(), notes });
         toast({ title: "Log Saved" });
         setIsHealthLogOpen(false);
-      }} residentName={loggingResident?.name || ''} />
+      }} residentName={getResidentName(loggingResident)} />
 
       <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
         await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
@@ -840,10 +897,10 @@ function MemberPulseView({ user }: { user: any }) {
                 <Card key={bird.id} className="bg-card border-border rounded-2xl p-5 flex items-center justify-between shadow-xl min-h-[80px]">
                   <div className="flex items-center gap-4">
                     <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-border shrink-0">
-                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
+                      {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={getResidentName(bird)} fill className="object-cover" /> : <div className="w-full h-full bg-muted flex items-center justify-center text-xl">🦆</div>}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{bird.name}</h3>
+                      <h3 className="font-headline font-black uppercase tracking-tight text-sm truncate">{getResidentName(bird)}</h3>
                       <p className="text-[8px] font-bold text-muted-foreground uppercase truncate">
                         {bird.statusLastUpdated ? `Updated ${formattedTime}` : 'Sanctuary Routine'}
                       </p>
@@ -872,10 +929,10 @@ function MemberPulseView({ user }: { user: any }) {
             {birdsLoading ? [1,2,3].map(i => <div key={i} className="h-32 bg-card animate-pulse rounded-2xl" />) : birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border rounded-2xl overflow-hidden shadow-lg flex group relative">
                 <div className="relative w-24 md:w-32 aspect-square overflow-hidden shrink-0 border-r border-border">
-                  {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
+                  {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={getResidentName(bird)} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
-                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
+                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{getResidentName(bird)}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
                   <div className="flex flex-col gap-2 mt-2">
                     <Button asChild variant="outline" size="sm" className="h-8 w-full text-[8px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 rounded-lg">
                       <Link href={`/residents/${bird.id}/tree`}>

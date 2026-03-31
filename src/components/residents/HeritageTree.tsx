@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Resident } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, getResidentName } from '@/lib/utils';
 import Link from 'next/link';
 
 interface HeritageTreeProps {
@@ -44,7 +44,8 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
     if (!bird) return null;
 
     const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder || bird.source === 'Rehomed';
-    const imagePath = bird.primaryImageUrl || '/images/placeholder-duck.png';
+    const imagePath = bird.primaryImageUrl || 'https://picsum.photos/seed/duck-placeholder/400/400';
+    const displayName = getResidentName(bird);
 
     return (
       <div 
@@ -58,7 +59,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
           <div className="relative h-full w-full bg-muted">
             <Image 
               src={imagePath} 
-              alt={bird.name} 
+              alt={displayName} 
               fill 
               className="object-cover"
               sizes="220px"
@@ -76,7 +77,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
 
           <div className="absolute bottom-3 left-3 right-3 text-white">
             <span className="text-[8px] font-black uppercase tracking-widest text-primary/80 mb-0.5 block">{label}</span>
-            <p className="font-headline font-black text-sm uppercase tracking-tight truncate">{bird.name}</p>
+            <p className="font-headline font-black text-sm uppercase tracking-tight truncate">{displayName}</p>
           </div>
 
           {isFounder && (
@@ -143,7 +144,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <Sparkles className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="font-headline font-black uppercase text-sm tracking-widest">{selectedBird.name}</span>
+                  <span className="font-headline font-black uppercase text-sm tracking-widest">{getResidentName(selectedBird)}</span>
                 </div>
                 <DialogClose asChild>
                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted">
@@ -155,8 +156,8 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
               <div className="overflow-y-auto">
                 <div className="relative h-64 w-full">
                   <Image 
-                    src={selectedBird.primaryImageUrl || '/images/placeholder-duck.png'} 
-                    alt={selectedBird.name} 
+                    src={selectedBird.primaryImageUrl || 'https://picsum.photos/seed/duck-placeholder/800/600'} 
+                    alt={getResidentName(selectedBird)} 
                     fill 
                     className="object-cover"
                   />
@@ -165,7 +166,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
                 
                 <div className="p-8 space-y-6">
                   <div>
-                    <h2 className="text-3xl font-headline font-black uppercase text-primary">{selectedBird.name}</h2>
+                    <h2 className="text-3xl font-headline font-black uppercase text-primary">{getResidentName(selectedBird)}</h2>
                     <p className="text-sm font-black text-muted-foreground uppercase tracking-widest">{selectedBird.breed}</p>
                   </div>
 
@@ -189,7 +190,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
 
               <div className="sticky bottom-0 bg-card/95 backdrop-blur-md border-t border-border p-6 flex flex-col gap-3">
                 <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
-                  <Link href={`/support?bird=${encodeURIComponent(selectedBird.name)}#membership`}>
+                  <Link href={`/support?bird=${encodeURIComponent(getResidentName(selectedBird))}#membership`}>
                     BECOME A GUARDIAN <Heart className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

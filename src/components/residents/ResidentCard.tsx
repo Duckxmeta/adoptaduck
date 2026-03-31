@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Resident } from '@/lib/types';
 import { ChevronRight } from 'lucide-react';
 import { useUser } from '@/firebase';
+import { getResidentName } from '@/lib/utils';
 
 interface ResidentCardProps {
   resident: Resident;
@@ -15,6 +16,7 @@ interface ResidentCardProps {
 
 export function ResidentCard({ resident }: ResidentCardProps) {
   const { user } = useUser();
+  const displayName = getResidentName(resident);
   
   // Strict image validation
   const hasImage = !!resident.primaryImageUrl && 
@@ -30,7 +32,7 @@ export function ResidentCard({ resident }: ResidentCardProps) {
             <>
               <Image
                 src={resident.primaryImageUrl}
-                alt={resident.name}
+                alt={displayName}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-110"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -53,7 +55,7 @@ export function ResidentCard({ resident }: ResidentCardProps) {
           <div className="absolute bottom-4 left-4 right-4 text-white">
             <div className="flex justify-between items-end">
               <div>
-                <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{resident.name}</h3>
+                <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{displayName}</h3>
                 <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-2">{resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Unknown'}</p>
               </div>
             </div>
