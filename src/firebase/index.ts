@@ -1,3 +1,4 @@
+
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
@@ -7,6 +8,7 @@ import { getStorage } from 'firebase/storage';
 /**
  * Initializes or retrieves the Firebase app and its core services.
  * This function is usable in both client components and server-side route handlers.
+ * Directive 'use client' is omitted to allow server-side Route Handler usage.
  */
 export function initializeFirebase() {
   if (!getApps().length) {

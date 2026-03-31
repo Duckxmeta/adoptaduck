@@ -11,7 +11,7 @@ import Image from 'next/image';
 
 /**
  * @fileOverview High-contrast Stripe Success Page.
- * Celebrates new Guardians using the ArchitectUX 8-point grid and G0 Founders visual anchoring.
+ * Celebrates new Guardians using the ArchitectUX 8-point grid.
  */
 
 export default function StripeSuccessPage() {

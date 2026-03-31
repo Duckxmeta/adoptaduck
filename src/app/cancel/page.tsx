@@ -5,7 +5,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bird, ArrowLeft, Heart } from 'lucide-react';
+import { Bird, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 /**

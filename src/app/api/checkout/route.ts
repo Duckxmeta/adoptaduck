@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -8,6 +9,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 /**
  * @fileOverview Stripe Checkout Session Controller.
  * Handles the creation of payment and subscription sessions for sanctuary support.
+ * Guardian Price ID: prod_UFfyopJ1UUtWvC
+ * Splash Price ID: prod_UFg401BhNEqMsY
  */
 
 export async function POST(request: Request) {
@@ -19,6 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Mapping logic for Guardian vs. Splash
+    // We treat prod_UFfyopJ1UUtWvC as the subscription node
     const isGuardian = priceId === 'prod_UFfyopJ1UUtWvC';
 
     const session = await stripe.checkout.sessions.create({
