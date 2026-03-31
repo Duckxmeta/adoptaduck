@@ -1,6 +1,7 @@
+
 "use client";
 
-import { React, use } from 'react';
+import React, { use } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase';
