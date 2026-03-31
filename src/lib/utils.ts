@@ -11,8 +11,12 @@ export function cn(...inputs: ClassValue[]) {
  * to finalized G0 Founder names. This serves as a robust fallback for the
  * mobile-uploaded birds (Cocoa and Puff).
  */
-export function getResidentName(bird?: { name: string; breed: string } | null) {
+export function getResidentName(bird?: { name: string; breed: string; id?: string } | null) {
   if (!bird) return 'New Resident';
+  
+  // Hard-lock Production IDs
+  if (bird.id === 'G0-COCOA') return 'Cocoa';
+  if (bird.id === 'G0-PUFF') return 'Puff';
   
   // Check for TBD placeholders or empty names
   const nameUpper = bird.name?.toUpperCase() || '';

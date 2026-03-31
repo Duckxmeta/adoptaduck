@@ -276,53 +276,68 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleFinalizeG0 = async () => {
-    if (!birds || !firestore) return;
+    if (!firestore) return;
     setIsMaintenanceLoading(true);
     try {
+      const oldPuffID = 'tbd...-1773956852898';
+      const oldCocoaID = 'tbd...-1773956906926';
+      
+      const oldPuffRef = doc(firestore, 'birds', oldPuffID);
+      const oldCocoaRef = doc(firestore, 'birds', oldCocoaID);
+      
+      const puffSnap = await getDoc(oldPuffRef);
+      const cocoaSnap = await getDoc(oldCocoaRef);
+
       const batch = writeBatch(firestore);
+
+      // Migrate Puff to G0-PUFF
+      if (puffSnap.exists()) {
+        const data = puffSnap.data();
+        const newRef = doc(firestore, 'birds', 'G0-PUFF');
+        batch.set(newRef, { 
+          ...data, 
+          id: 'G0-PUFF', 
+          name: 'Puff', 
+          breed: 'Silver Appleyard', 
+          color: 'Yellow', 
+          founder: true, 
+          isFoundingResident: true,
+          slug: deleteField(),
+          updatedAt: new Date().toISOString() 
+        });
+        batch.delete(oldPuffRef);
+      }
+
+      // Migrate Cocoa to G0-COCOA
+      if (cocoaSnap.exists()) {
+        const data = cocoaSnap.data();
+        const newRef = doc(firestore, 'birds', 'G0-COCOA');
+        batch.set(newRef, { 
+          ...data, 
+          id: 'G0-COCOA', 
+          name: 'Cocoa', 
+          breed: 'Swedish Blue', 
+          color: 'Grey', 
+          founder: true, 
+          isFoundingResident: true,
+          slug: deleteField(),
+          updatedAt: new Date().toISOString() 
+        });
+        batch.delete(oldCocoaRef);
+      }
+
+      // Scan all birds for legacy names to purge
+      const birdsSnap = await getDocs(collection(firestore, 'birds'));
       const LEGACY_NAMES = ['JOEY', 'CUTIE PIE', 'JORDIE', 'HUEY'];
       
-      // 1. Lock Identities for the specific mobile-uploaded IDs
-      const puffID = 'tbd...-1773956852898';
-      const cocoaID = 'tbd...-1773956906926';
-      
-      const puffRef = doc(firestore, 'birds', puffID);
-      const cocoaRef = doc(firestore, 'birds', cocoaID);
-      
-      batch.set(puffRef, { 
-        name: 'Puff', 
-        breed: 'Silver Appleyard', 
-        color: 'Yellow', 
-        founder: true, 
-        isFoundingResident: true, 
-        id: puffID,
-        slug: deleteField(),
-        updatedAt: new Date().toISOString() 
-      }, { merge: true });
-
-      batch.set(cocoaRef, { 
-        name: 'Cocoa', 
-        breed: 'Swedish Blue', 
-        color: 'Grey', 
-        founder: true, 
-        isFoundingResident: true, 
-        id: cocoaID,
-        slug: deleteField(),
-        updatedAt: new Date().toISOString() 
-      }, { merge: true });
-
-      // 2. Scan all birds for legacy names or slugs to purge
-      birds.forEach(bird => {
-        const nameUpper = bird.name.toUpperCase();
-        const birdRef = doc(firestore, 'birds', bird.id);
-        
-        // Delete legacy residents by name
+      birdsSnap.forEach(birdDoc => {
+        const data = birdDoc.data();
+        const nameUpper = data.name?.toUpperCase();
         if (LEGACY_NAMES.includes(nameUpper)) {
-          batch.delete(birdRef);
-        } else if (bird.id !== puffID && bird.id !== cocoaID) {
-          // Sanitization for all other birds: reaffirm ID and purge legacy fields
-          batch.update(birdRef, {
-            id: bird.id,
+          batch.delete(birdDoc.ref);
+        } else if (birdDoc.id !== 'G0-PUFF' && birdDoc.id !== 'G0-COCOA') {
+          // Standard sanitization for other birds
+          batch.update(birdDoc.ref, {
             slug: deleteField(),
             updatedAt: new Date().toISOString()
           });
@@ -330,9 +345,10 @@ function ManagerPortal({ user }: { user: any }) {
       });
 
       await batch.commit();
-      toast({ title: "Sanitization Success", description: "Legacy purged. G0 Identities Locked." });
+      toast({ title: "Migration Success", description: "IDs updated to G0 format. Legacy purged." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Sanitization Error", description: "Failed to sanitize records." });
+      console.error("Migration Error:", e);
+      toast({ variant: "destructive", title: "Migration Error", description: "Failed to migrate records." });
     } finally {
       setIsMaintenanceLoading(false);
     }
@@ -374,7 +390,7 @@ function ManagerPortal({ user }: { user: any }) {
           <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
             <div className="flex-1 space-y-1 text-center md:text-left">
               <h3 className="font-headline font-black text-sm uppercase text-secondary">Total Collection Sanitizer</h3>
-              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Purge Legacy, Finalize Cocoa/Puff Identities, and Force UID Logic</p>
+              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Migrate to Production IDs (G0-COCOA/PUFF), Purge Legacy, & Reset Slugs</p>
             </div>
             <Button 
               onClick={handleFinalizeG0} 
@@ -382,7 +398,7 @@ function ManagerPortal({ user }: { user: any }) {
               className="bg-secondary text-secondary-foreground font-black px-8 h-12 rounded-xl text-xs tracking-widest uppercase shadow-lg hover:scale-105 transition-transform"
             >
               {isMaintenanceLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-              RUN SANITIZER
+              RUN MIGRATION
             </Button>
           </Card>
         </section>
@@ -682,7 +698,7 @@ function ManagerPortal({ user }: { user: any }) {
         }
       `}</style>
 
-      {/* Dialogs Omitted for brevity - Standard Component Logic */}
+      {/* Dialogs */}
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>
         <DialogContent className="bg-card text-card-foreground border-border max-w-sm rounded-[2.5rem] p-0 overflow-hidden shadow-2xl h-[90vh] md:h-auto flex flex-col">
           <DialogHeader className="p-8 bg-primary/5 border-b border-border shrink-0">
