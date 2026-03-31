@@ -33,7 +33,8 @@ import {
   MapPin,
   Baby,
   ShoppingBag,
-  ExternalLink
+  ExternalLink,
+  Ticket
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -136,11 +137,6 @@ function SupportContent() {
             <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Support Hub</Badge>
             <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">CHOOSE YOUR <span className="text-primary">IMPACT</span></h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Your contributions provide food, medicine, and a safe forever home for our residents.</p>
-          </section>
-
-          {/* Intro Context: Virtual Adoption (Keeping DOTM as the high-value intro) */}
-          <section id="adopt" className="container mx-auto px-4 scroll-mt-24 mb-20">
-            <DOTMSpotlight />
           </section>
 
           {/* 1. MAKE A SPLASH (One-time support) - BG: Subtle light-purple shift */}
