@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -21,7 +20,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs, deleteField } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Resident, DailyStatus, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -284,12 +283,26 @@ function ManagerPortal({ user }: { user: any }) {
 
       birds.forEach(bird => {
         const nameUpper = bird.name.toUpperCase();
+        const breedUpper = bird.breed.toUpperCase();
+        
+        // Finalize Cocoa & Puff identities and purge legacy slugs
         if (nameUpper === '' || nameUpper.includes('TBD')) {
-          if (bird.breed === 'Swedish Blue') {
-            batch.update(doc(firestore, 'birds', bird.id), { name: 'Cocoa', color: 'Grey', updatedAt: new Date().toISOString() });
+          const birdRef = doc(firestore, 'birds', bird.id);
+          if (breedUpper === 'SWEDISH BLUE') {
+            batch.update(birdRef, { 
+              name: 'Cocoa', 
+              color: 'Grey', 
+              slug: deleteField(),
+              updatedAt: new Date().toISOString() 
+            });
             updatedCount++;
-          } else if (bird.breed === 'Silver Appleyard') {
-            batch.update(doc(firestore, 'birds', bird.id), { name: 'Puff', color: 'Yellow', updatedAt: new Date().toISOString() });
+          } else if (breedUpper === 'SILVER APPLEYARD') {
+            batch.update(birdRef, { 
+              name: 'Puff', 
+              color: 'Yellow', 
+              slug: deleteField(),
+              updatedAt: new Date().toISOString() 
+            });
             updatedCount++;
           }
         }
@@ -297,7 +310,7 @@ function ManagerPortal({ user }: { user: any }) {
 
       if (updatedCount > 0) {
         await batch.commit();
-        toast({ title: "Maintenance Success", description: `${updatedCount} G0 identities finalized.` });
+        toast({ title: "Maintenance Success", description: `${updatedCount} G0 identities finalized & cleansed.` });
       } else {
         toast({ title: "No Actions Required", description: "All G0 founders are already identified." });
       }
@@ -344,7 +357,7 @@ function ManagerPortal({ user }: { user: any }) {
           <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
             <div className="flex-1 space-y-1 text-center md:text-left">
               <h3 className="font-headline font-black text-sm uppercase text-secondary">Finalize G0 Identities</h3>
-              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Update Cocoa & Puff from TBD placeholders</p>
+              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Update Cocoa & Puff and cleanse legacy slugs</p>
             </div>
             <Button 
               onClick={handleFinalizeG0} 

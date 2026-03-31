@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -196,8 +195,11 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         finalGalleryUrls.unshift(finalImageUrl);
       }
 
+      // Hard Routing: Ensure we never save or use a 'slug' property. Stripping it from legacy data.
+      const { slug, ...cleanFormData } = formData as any;
+
       const submissionData = {
-        ...formData,
+        ...cleanFormData,
         primaryImageUrl: finalImageUrl,
         galleryImageUrls: finalGalleryUrls,
         motherId: isRehomed ? "" : (formData.motherId || ""),
