@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -129,7 +130,7 @@ export default function Home() {
         <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-[30000ms] scale-110"
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-\[30000ms\] scale-110"
             style={{ backgroundImage: `url('${heroImageUrl}')` }}
           />
           

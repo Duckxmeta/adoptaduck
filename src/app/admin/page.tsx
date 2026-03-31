@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -264,8 +265,7 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
-  // Fixed potentially crashing chaining by using optional chaining before sort
-  const foundingResidents = birds?.filter(b => b.isFoundingResident)?.sort((a,b) => a.name.localeCompare(b.name)) || [];
+  const foundingResidents = birds?.filter(b => b.isFoundingResident)?.sort((a,b) => (a.name || '').localeCompare(b.name || '')) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
@@ -302,7 +302,7 @@ function ManagerPortal({ user }: { user: any }) {
               <ScrollArea className="h-[250px] pr-4">
                 <div className="space-y-3">
                   {notifications.map((note) => (
-                    <div key={note.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl gap-4">
+                    <div key={note.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary/10 rounded-full">
                           <Inbox className="h-4 w-4 text-secondary" />
