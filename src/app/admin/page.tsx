@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,7 +16,7 @@ import {
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
   Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench
+  Wrench, Settings
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -94,7 +93,6 @@ function ManagerPortal({ user }: { user: any }) {
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(false);
 
   // Bulletin Board State
   const [bullTitle, setBullTitle] = useState('');
@@ -103,7 +101,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [bullPreview, setBullPreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
 
-  const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('createdAt', 'desc')), [firestore]);
+  const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => doc(firestore!, 'egg_history', todayDate), [firestore, todayDate]);
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
 
@@ -229,7 +227,6 @@ function ManagerPortal({ user }: { user: any }) {
     try {
       const batch = writeBatch(firestore!);
 
-      // If this duck is set as featured, un-feature all others
       if (data.isFeatured) {
         const featuredQuery = query(collection(firestore!, 'birds'), where('isFeatured', '==', true));
         const featuredDocs = await getDocs(featuredQuery);
@@ -251,106 +248,18 @@ function ManagerPortal({ user }: { user: any }) {
       } else {
         const docRef = doc(collection(firestore!, 'birds'));
         const newId = docRef.id;
-        
-        // Execute featured reset then add new
         await batch.commit();
-        
         await setDoc(docRef, { 
           ...data,
           id: newId,
           createdAt: new Date().toISOString() 
         });
-        
         toast({ title: "Success!", description: `${data.name} added to the flock.` });
-        router.push('/residents/' + newId);
       }
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error saving resident:", error);
-      toast({ 
-        variant: "destructive", 
-        title: "Save Failed", 
-        description: "An error occurred while saving the resident." 
-      });
-    }
-  };
-
-  const handleFinalizeG0 = async () => {
-    if (!firestore) return;
-    setIsMaintenanceLoading(true);
-    try {
-      const oldPuffID = 'tbd...-1773956852898';
-      const oldCocoaID = 'tbd...-1773956906926';
-      
-      const oldPuffRef = doc(firestore, 'birds', oldPuffID);
-      const oldCocoaRef = doc(firestore, 'birds', oldCocoaID);
-      
-      const puffSnap = await getDoc(oldPuffRef);
-      const cocoaSnap = await getDoc(oldCocoaRef);
-
-      const batch = writeBatch(firestore);
-
-      // Migrate Puff to G0-PUFF
-      if (puffSnap.exists()) {
-        const data = puffSnap.data();
-        const newRef = doc(firestore, 'birds', 'G0-PUFF');
-        batch.set(newRef, { 
-          ...data, 
-          id: 'G0-PUFF', 
-          name: 'Puff', 
-          breed: 'Silver Appleyard', 
-          color: 'Yellow', 
-          founder: true, 
-          isFoundingResident: true,
-          slug: deleteField(),
-          updatedAt: new Date().toISOString() 
-        });
-        batch.delete(oldPuffRef);
-      }
-
-      // Migrate Cocoa to G0-COCOA
-      if (cocoaSnap.exists()) {
-        const data = cocoaSnap.data();
-        const newRef = doc(firestore, 'birds', 'G0-COCOA');
-        batch.set(newRef, { 
-          ...data, 
-          id: 'G0-COCOA', 
-          name: 'Cocoa', 
-          breed: 'Swedish Blue', 
-          color: 'Grey', 
-          founder: true, 
-          isFoundingResident: true,
-          slug: deleteField(),
-          updatedAt: new Date().toISOString() 
-        });
-        batch.delete(oldCocoaRef);
-      }
-
-      // Scan all birds for legacy names to purge
-      const birdsSnap = await getDocs(collection(firestore, 'birds'));
-      const LEGACY_NAMES = ['JOEY', 'CUTIE PIE', 'JORDIE', 'HUEY'];
-      
-      birdsSnap.forEach(birdDoc => {
-        const data = birdDoc.data();
-        const nameUpper = data.name?.toUpperCase();
-        if (LEGACY_NAMES.includes(nameUpper)) {
-          batch.delete(birdDoc.ref);
-        } else if (birdDoc.id !== 'G0-PUFF' && birdDoc.id !== 'G0-COCOA') {
-          // Standard sanitization for other birds
-          batch.update(birdDoc.ref, {
-            slug: deleteField(),
-            updatedAt: new Date().toISOString()
-          });
-        }
-      });
-
-      await batch.commit();
-      toast({ title: "Migration Success", description: "IDs updated to G0 format. Legacy purged." });
-    } catch (e) {
-      console.error("Migration Error:", e);
-      toast({ variant: "destructive", title: "Migration Error", description: "Failed to migrate records." });
-    } finally {
-      setIsMaintenanceLoading(false);
+      toast({ variant: "destructive", title: "Save Failed" });
     }
   };
 
@@ -380,28 +289,6 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
-
-        {/* SYSTEM MAINTENANCE */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Wrench className="h-4 w-4 text-secondary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SYSTEM MAINTENANCE</h2>
-          </div>
-          <Card className="bg-secondary/5 border border-secondary/20 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
-            <div className="flex-1 space-y-1 text-center md:text-left">
-              <h3 className="font-headline font-black text-sm uppercase text-secondary">Total Collection Sanitizer</h3>
-              <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Migrate to Production IDs (G0-COCOA/PUFF), Purge Legacy, & Reset Slugs</p>
-            </div>
-            <Button 
-              onClick={handleFinalizeG0} 
-              disabled={isMaintenanceLoading}
-              className="bg-secondary text-secondary-foreground font-black px-8 h-12 rounded-xl text-xs tracking-widest uppercase shadow-lg hover:scale-105 transition-transform"
-            >
-              {isMaintenanceLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-              RUN MIGRATION
-            </Button>
-          </Card>
-        </section>
 
         {/* NOTIFICATION CENTER */}
         <section className="space-y-4">
@@ -683,20 +570,6 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
       </main>
-
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--primary);
-          border-radius: 10px;
-          opacity: 0.2;
-        }
-      `}</style>
 
       {/* Dialogs */}
       <Dialog open={!!vibeBird} onOpenChange={(open) => !open && setVibeBird(null)}>

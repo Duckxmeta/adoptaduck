@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -7,9 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Utility to resolve resident identities, transitioning from TBD placeholders
- * to finalized G0 Founder names. This serves as a robust fallback for the
- * mobile-uploaded birds (Cocoa and Puff).
+ * Utility to resolve resident identities, hard-locked to production IDs
+ * for G0 Founders. This handles fallback naming for all sanctuary views.
  */
 export function getResidentName(bird?: { name: string; breed: string; id?: string } | null) {
   if (!bird) return 'New Resident';
@@ -18,15 +16,15 @@ export function getResidentName(bird?: { name: string; breed: string; id?: strin
   if (bird.id === 'G0-COCOA') return 'Cocoa';
   if (bird.id === 'G0-PUFF') return 'Puff';
   
-  // Check for TBD placeholders or empty names
+  // Check for legacy placeholders or empty names
   const nameUpper = bird.name?.toUpperCase() || '';
-  const isPlaceholder = !bird.name || nameUpper.includes('TBD') || nameUpper === 'NEW RESIDENT';
+  const isPlaceholder = !bird.name || nameUpper.includes('TBD') || nameUpper === 'NEW RESIDENT' || nameUpper === 'AWAITING NAME';
   
   if (isPlaceholder) {
-    // Exact mapping for the G0 Swedish Blue and Silver Appleyard
+    // Exact mapping for the G0 Founders based on breed signature
     if (bird.breed === 'Swedish Blue' || bird.breed?.toLowerCase().includes('swedish')) return 'Cocoa';
     if (bird.breed === 'Silver Appleyard' || bird.breed?.toLowerCase().includes('appleyard')) return 'Puff';
-    return bird.name || 'Awaiting Name';
+    return bird.name || 'Sanctuary Friend';
   }
   
   return bird.name;
