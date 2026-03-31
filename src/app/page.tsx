@@ -130,8 +130,11 @@ export default function Home() {
         <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-black/60 z-10" />
           <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-\[30000ms\] scale-110"
-            style={{ backgroundImage: `url('${heroImageUrl}')` }}
+            className="absolute inset-0 bg-cover bg-center transition-transform scale-110"
+            style={{ 
+              backgroundImage: `url('${heroImageUrl}')`,
+              transitionDuration: '30000ms'
+            }}
           />
           
           <div className="container mx-auto px-4 relative z-20 text-center">

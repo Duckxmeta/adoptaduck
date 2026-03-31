@@ -1,45 +1,9 @@
 
-import { firebaseConfig } from '@/firebase/config';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage';
-
 /**
- * Initializes or retrieves the Firebase app and its core services.
- * This function is usable in both client components and server-side route handlers.
- * Directive 'use client' is omitted to allow server-side Route Handler usage.
+ * Firebase Barrel File.
+ * Optimized for Next.js 15 to prevent server-side boundary errors.
  */
-export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-
-    return getSdks(firebaseApp);
-  }
-
-  // If already initialized, return the SDKs with the already initialized App
-  return getSdks(getApp());
-}
-
-export function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp)
-  };
-}
-
+export * from './init';
 export * from './provider';
 export * from './client-provider';
 export * from './firestore/use-collection';
