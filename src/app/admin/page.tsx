@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Resident, DailyStatus, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -225,20 +225,42 @@ function ManagerPortal({ user }: { user: any }) {
 
   const handleSaveResident = async (data: Partial<Resident>) => {
     try {
+      const batch = writeBatch(firestore!);
+
+      // If this duck is set as featured, un-feature all others
+      if (data.isFeatured) {
+        const featuredQuery = query(collection(firestore!, 'birds'), where('isFeatured', '==', true));
+        const featuredDocs = await getDocs(featuredQuery);
+        featuredDocs.forEach((d) => {
+          if (d.id !== editingResident?.id) {
+            batch.update(d.ref, { isFeatured: false });
+          }
+        });
+      }
+
       if (editingResident) {
-        await updateDoc(doc(firestore!, 'birds', editingResident.id), { 
+        const birdRef = doc(firestore!, 'birds', editingResident.id);
+        batch.update(birdRef, { 
           ...data, 
           updatedAt: new Date().toISOString() 
         });
+        await batch.commit();
         toast({ title: "Updated", description: `${data.name} has been updated.` });
       } else {
-        const docRef = await addDoc(collection(firestore!, 'birds'), { 
-          ...data, 
+        const docRef = doc(collection(firestore!, 'birds'));
+        const newId = docRef.id;
+        
+        // Execute batch for featured reset then add new
+        await batch.commit();
+        
+        await setDoc(docRef, { 
+          ...data,
+          id: newId,
           createdAt: new Date().toISOString() 
         });
-        await updateDoc(docRef, { id: docRef.id });
+        
         toast({ title: "Success!", description: `${data.name} added to the flock.` });
-        router.push('/residents/' + docRef.id);
+        router.push('/residents/' + newId);
       }
       setIsDialogOpen(false);
     } catch (error) {
@@ -533,7 +555,13 @@ function ManagerPortal({ user }: { user: any }) {
                   {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl bg-background">🦆</div>}
                 </div>
                 <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
-                  <div><h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3><p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p></div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-headline font-black text-lg uppercase tracking-tight truncate">{bird.name}</h3>
+                      {bird.isFeatured && <Star className="h-3 w-3 text-primary fill-primary" />}
+                    </div>
+                    <p className="text-[9px] text-muted-foreground uppercase font-black truncate">{bird.breed}</p>
+                  </div>
                   <div className="flex flex-col gap-2 mt-2">
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" className="h-10 flex-1 px-3 text-[10px] font-black uppercase text-secondary bg-secondary/5 rounded-lg" onClick={() => { setLoggingResident(bird); setIsHealthLogOpen(true); }}>LOG</Button>

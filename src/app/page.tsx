@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -14,34 +15,46 @@ import {
   ArrowRight,
   Loader2,
   Trophy,
-  Zap
+  Zap,
+  Megaphone,
+  Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
-import { Resident } from '@/lib/types';
+import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit, onSnapshot } from 'firebase/firestore';
+import { Resident, BulletinEntry } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [bulletins, setBulletins] = useState<BulletinEntry[]>([]);
   
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const birdsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
+  // Fetch Bulletins (3 Most Recent)
+  useEffect(() => {
+    if (!firestore) return;
+    const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as BulletinEntry[];
+      setBulletins(docs);
+    });
+    return () => unsubscribe();
   }, [firestore]);
 
   const featuredBirdQuery = useMemoFirebase(() => {
@@ -49,9 +62,7 @@ export default function Home() {
     return query(collection(firestore, 'birds'), where('isFeatured', '==', true), limit(1));
   }, [firestore]);
 
-  const { data: birds } = useCollection<Resident>(birdsQuery);
   const { data: featuredBirds } = useCollection<Resident>(featuredBirdQuery);
-
   const featuredDuck = featuredBirds && featuredBirds.length > 0 ? featuredBirds[0] : null;
 
   const checkRedirect = useCallback(async () => {
@@ -79,9 +90,8 @@ export default function Home() {
         router.push('/admin'); 
       }
     } catch (error: any) {
-      // Gracefully handle "Unexpected end of JSON input" or interrupted redirects
       if (error.message?.includes('JSON')) {
-        console.warn("Auth redirect state was empty or malformed. Redirecting to login.");
+        console.warn("Auth redirect state was empty or malformed.");
       } else {
         console.error("Auth Error:", error);
       }
@@ -153,21 +163,42 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Support Section */}
-        <section className="py-24 bg-card/50 border-y border-border">
-          <div className="container mx-auto px-4 text-center space-y-8">
-            <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From emergency rescues to daily layers, your contributions keep the sanctuary running.</p>
-            <div className="flex flex-col items-center gap-4">
-              <Button asChild size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                <Link href="/support#donate">SUPPORT THE FLOCK <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
-              </Button>
-              <Button asChild variant="outline" className="border-primary text-primary font-black h-8 px-6 text-xs rounded-xl hover:bg-primary/10">
-                <Link href="/our-story">OUR STORY</Link>
-              </Button>
+        {/* Latest from the Sanctuary - Bulletin Grid */}
+        {bulletins.length > 0 && (
+          <section className="py-24 container mx-auto px-4">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="h-px bg-border flex-1" />
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+                <Megaphone className="h-4 w-4" /> Latest Updates
+              </h2>
+              <div className="h-px bg-border flex-1" />
             </div>
-          </div>
-        </section>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {bulletins.map((b) => (
+                <Card key={b.id} className="bg-card border-2 border-border/50 rounded-3xl overflow-hidden shadow-xl hover:border-primary/30 transition-all group flex flex-col h-full">
+                  {b.imageUrl && (
+                    <div className="relative aspect-video w-full overflow-hidden border-b border-border">
+                      <Image src={b.imageUrl} alt={b.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                    </div>
+                  )}
+                  <div className="p-6 space-y-4 flex-1 flex flex-col">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                      <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                        <Clock className="h-2.5 w-2.5" />
+                        {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 font-medium">
+                      {b.content}
+                    </p>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Featured Resident Spotlight */}
         {featuredDuck && (
@@ -204,6 +235,22 @@ export default function Home() {
           </section>
         )}
 
+        {/* Support Section */}
+        <section className="py-24 bg-card/50 border-y border-border">
+          <div className="container mx-auto px-4 text-center space-y-8">
+            <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From emergency rescues to daily layers, your contributions keep the sanctuary running.</p>
+            <div className="flex flex-col items-center gap-4">
+              <Button asChild size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                <Link href="/support#donate">SUPPORT THE FLOCK <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
+              </Button>
+              <Button asChild variant="outline" className="border-primary text-primary font-black h-8 px-6 text-xs rounded-xl hover:bg-primary/10">
+                <Link href="/our-story">OUR STORY</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
         {/* Educational Section */}
         <section className="py-32 container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
@@ -219,7 +266,7 @@ export default function Home() {
                 </div>
                 <CardContent className="p-8 flex flex-col justify-center space-y-4">
                   <h3 className="text-2xl font-headline font-black text-primary">Domestic Ducks</h3>
-                  <p className="text-foreground/80 text-sm leading-relaxed">
+                  <p className="text-foreground/80 text-sm leading-relaxed font-medium">
                     Bred for human care, they <strong>cannot fly</strong> or survive in the wild. Without a sanctuary, they face certain predation.
                   </p>
                 </CardContent>
@@ -233,7 +280,7 @@ export default function Home() {
                 </div>
                 <CardContent className="p-8 flex flex-col justify-center space-y-4">
                   <h3 className="text-2xl font-headline font-black text-secondary">Wildlife Ducks</h3>
-                  <p className="text-foreground/80 text-sm leading-relaxed">
+                  <p className="text-foreground/80 text-sm leading-relaxed font-medium">
                     Wild Mallards are independent aviators. They need <strong>space to migrate</strong> and thrive without human intervention.
                   </p>
                 </CardContent>

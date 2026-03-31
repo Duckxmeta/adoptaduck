@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -15,13 +16,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info, Images, X } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info, Images, X, Star } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 
 interface ResidentDialogProps {
   open: boolean;
@@ -60,7 +62,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     isFoundingResident: true,
     generation: 0,
     tier: 'G0',
-    founder: true
+    founder: true,
+    isFeatured: false
   });
 
   const [uploading, setUploading] = useState(false);
@@ -82,7 +85,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         isFoundingResident: resident.isFoundingResident ?? (resident.source !== 'Hatched'),
         generation: resident.generation ?? 0,
         tier: resident.tier || (resident.generation === 0 ? 'G0' : 'G1'),
-        founder: resident.founder ?? (resident.generation === 0)
+        founder: resident.founder ?? (resident.generation === 0),
+        isFeatured: !!resident.isFeatured
       });
       setPreviewUrl(resident.primaryImageUrl || null);
       setGalleryPreviews(resident.galleryImageUrls || []);
@@ -103,7 +107,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         isFoundingResident: true,
         generation: 0,
         tier: 'G0',
-        founder: true
+        founder: true,
+        isFeatured: false
       });
       setPreviewUrl(null);
       setGalleryPreviews([]);
@@ -131,7 +136,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   };
 
   const removeGalleryItem = (index: number) => {
-    // If it's a previously saved URL
     const isSavedUrl = typeof galleryPreviews[index] === 'string' && galleryPreviews[index].startsWith('http');
     
     if (isSavedUrl) {
@@ -140,7 +144,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         galleryImageUrls: prev.galleryImageUrls?.filter((_, i) => i !== index)
       }));
     } else {
-      // It's a new file
       const newFileIndex = galleryPreviews.slice(0, index).filter(p => !p.startsWith('http')).length;
       setSelectedGalleryFiles(prev => prev.filter((_, i) => i !== newFileIndex));
     }
@@ -149,13 +152,10 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
   const calculateGeneration = (motherId?: string, fatherId?: string) => {
     if (!motherId && !fatherId) return 0;
-    
     const mother = birds?.find(b => b.id === motherId);
     const father = birds?.find(b => b.id === fatherId);
-    
     const motherGen = mother?.generation ?? 0;
     const fatherGen = father?.generation ?? 0;
-    
     return Math.max(motherGen, fatherGen) + 1;
   };
 
@@ -168,27 +168,14 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
     try {
       if (storage) {
-        // Upload Primary Image
         if (selectedFile) {
-          toast({
-            title: "Uploading Portrait...",
-            description: "Storing main image in the sanctuary archives.",
-          });
-          
           const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-primary-${Date.now()}`;
           const fileRef = storageRef(storage, `resident-photos/${fileName}`);
-          
           const snapshot = await uploadBytes(fileRef, selectedFile);
           finalImageUrl = await getDownloadURL(snapshot.ref);
         }
 
-        // Upload Gallery Images
         if (selectedGalleryFiles.length > 0) {
-          toast({
-            title: "Uploading Gallery...",
-            description: `Storing ${selectedGalleryFiles.length} images...`,
-          });
-
           for (const file of selectedGalleryFiles) {
             const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-gallery-${Date.now()}-${Math.random().toString(36).substring(7)}`;
             const fileRef = storageRef(storage, `resident-photos/gallery/${fileName}`);
@@ -202,7 +189,6 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       const isRehomed = formData.source !== 'Hatched';
       const finalGeneration = isRehomed ? 0 : calculateGeneration(formData.motherId, formData.fatherId);
 
-      // Ensure primary image is first in gallery if not already present
       if (finalImageUrl && !finalGalleryUrls.includes(finalImageUrl)) {
         finalGalleryUrls.unshift(finalImageUrl);
       }
@@ -253,7 +239,21 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* Photo Section */}
+          <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <Star className="h-5 w-5 text-primary fill-primary" />
+              <div>
+                <Label htmlFor="featured-toggle" className="text-[10px] font-black uppercase tracking-widest text-primary">Duck of the Month</Label>
+                <p className="text-[8px] text-muted-foreground uppercase font-black">Feature on home page</p>
+              </div>
+            </div>
+            <Switch 
+              id="featured-toggle" 
+              checked={formData.isFeatured} 
+              onCheckedChange={(val) => setFormData({...formData, isFeatured: val})} 
+            />
+          </div>
+
           <div className="space-y-4">
             <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
               <Camera className="h-3 w-3" /> Resident Portrait
@@ -275,29 +275,16 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to select primary portrait</span>
                 </div>
               )}
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                className="hidden" 
-                accept="image/*"
-                onChange={handleFileChange}
-              />
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
             </div>
           </div>
 
-          {/* Gallery Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
                 <Images className="h-3 w-3" /> Growth Album (Gallery)
               </Label>
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => galleryInputRef.current?.click()}
-                className="text-[10px] font-black uppercase tracking-widest h-8"
-              >
+              <Button type="button" variant="ghost" size="sm" onClick={() => galleryInputRef.current?.click()} className="text-[10px] font-black uppercase tracking-widest h-8">
                 Add Photos
               </Button>
             </div>
@@ -306,55 +293,28 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               {galleryPreviews.map((src, idx) => (
                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group bg-muted">
                   <Image src={src} alt={`Gallery ${idx}`} fill className="object-cover" />
-                  <button 
-                    type="button"
-                    onClick={() => removeGalleryItem(idx)}
-                    className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                  <button type="button" onClick={() => removeGalleryItem(idx)} className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
                     <X className="h-3 w-3 text-white" />
                   </button>
                 </div>
               ))}
-              <div 
-                onClick={() => galleryInputRef.current?.click()}
-                className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-background/50"
-              >
+              <div onClick={() => galleryInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-background/50">
                 <Upload className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
-            <input 
-              type="file" 
-              ref={galleryInputRef}
-              className="hidden" 
-              accept="image/*"
-              multiple
-              onChange={handleGalleryChange}
-            />
+            <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={handleGalleryChange} />
           </div>
 
-          {/* 1. Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Resident Name</Label>
-            <Input 
-              id="name" 
-              value={formData.name} 
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              placeholder="e.g. Captain Quack"
-              className="bg-background border-border h-12 rounded-xl text-lg font-headline font-bold uppercase tracking-tight"
-              required
-            />
+            <Input id="name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Captain Quack" className="bg-background border-border h-12 rounded-xl text-lg font-headline font-bold uppercase tracking-tight" required />
           </div>
 
-          {/* 2. Registration Type (source) */}
           <div className="space-y-4 p-5 bg-muted/20 border border-border rounded-2xl">
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" /> Registration Type
             </Label>
-            <RadioGroup 
-              value={formData.source} 
-              onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', founder: v !== 'Hatched', motherId: '', fatherId: ''})}
-              className="grid grid-cols-2 gap-4"
-            >
+            <RadioGroup value={formData.source} onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', founder: v !== 'Hatched', motherId: '', fatherId: ''})} className="grid grid-cols-2 gap-4">
               <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
                 <RadioGroupItem value="Rehomed" id="type-rehomed" />
                 <Label htmlFor="type-rehomed" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">G0 Founder</Label>
@@ -366,17 +326,11 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </RadioGroup>
           </div>
 
-          {/* 3. Parents (If Hatched) */}
           {isHatched && (
             <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="space-y-2">
-                <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <TreePine className="h-3 w-3 text-secondary" /> Mother
-                </Label>
-                <Select 
-                  value={formData.motherId || "unknown"} 
-                  onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}
-                >
+                <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TreePine className="h-3 w-3 text-secondary" /> Mother</Label>
+                <Select value={formData.motherId || "unknown"} onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}>
                   <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                     <SelectValue placeholder="Select mother" />
                   </SelectTrigger>
@@ -389,13 +343,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <TreePine className="h-3 w-3 text-secondary" /> Father
-                </Label>
-                <Select 
-                  value={formData.fatherId || "unknown"} 
-                  onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}
-                >
+                <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TreePine className="h-3 w-3 text-secondary" /> Father</Label>
+                <Select value={formData.fatherId || "unknown"} onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}>
                   <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                     <SelectValue placeholder="Select father" />
                   </SelectTrigger>
@@ -410,26 +359,14 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </div>
           )}
 
-          {/* 4. Breed/Species */}
           <div className="space-y-2">
             <Label htmlFor="breed" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Breed / Species</Label>
-            <Input 
-              id="breed" 
-              value={formData.breed} 
-              onChange={e => setFormData({...formData, breed: e.target.value})}
-              placeholder="e.g. Pekin Duck"
-              className="bg-background border-border h-11 rounded-xl"
-              required
-            />
+            <Input id="breed" value={formData.breed} onChange={e => setFormData({...formData, breed: e.target.value})} placeholder="e.g. Pekin Duck" className="bg-background border-border h-11 rounded-xl" required />
           </div>
 
-          {/* 5. Biological Gender */}
           <div className="space-y-2">
             <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>
-            <Select 
-              value={formData.sex} 
-              onValueChange={v => setFormData({...formData, sex: v as any})}
-            >
+            <Select value={formData.sex} onValueChange={v => setFormData({...formData, sex: v as any})}>
               <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                 <SelectValue placeholder="Select sex" />
               </SelectTrigger>
@@ -443,54 +380,22 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
 
           <div className="space-y-2">
             <Label htmlFor="hatch_date" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Arrival / Hatch Date</Label>
-            <Input 
-              id="hatch_date" 
-              type="date"
-              value={formData.hatch_date} 
-              onChange={e => setFormData({...formData, hatch_date: e.target.value})}
-              className="bg-background border-border h-11 rounded-xl"
-            />
+            <Input id="hatch_date" type="date" value={formData.hatch_date} onChange={e => setFormData({...formData, hatch_date: e.target.value})} className="bg-background border-border h-11 rounded-xl" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="traits" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Personality Traits</Label>
-            <Input 
-              id="traits" 
-              value={formData.personalityTraits} 
-              onChange={e => setFormData({...formData, personalityTraits: e.target.value})}
-              placeholder="Brave, curious, loves water..."
-              className="bg-background border-border h-11 rounded-xl"
-            />
+            <Input id="traits" value={formData.personalityTraits} onChange={e => setFormData({...formData, personalityTraits: e.target.value})} placeholder="Brave, curious, loves water..." className="bg-background border-border h-11 rounded-xl" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="story" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Story & Heritage Notes</Label>
-            <span className="text-[8px] text-muted-foreground block mb-1">G0 Founders should include rehoming context.</span>
-            <span className="text-[8px] text-muted-foreground block mb-1">Total Photos: {galleryPreviews.length}</span>
-            <Textarea 
-              id="story" 
-              value={formData.backstory} 
-              onChange={e => setFormData({...formData, backstory: e.target.value})}
-              placeholder="Describe origin story or incubation notes..."
-              className="bg-background border-border min-h-[100px] resize-none rounded-xl"
-            />
+            <Textarea id="story" value={formData.backstory} onChange={e => setFormData({...formData, backstory: e.target.value})} placeholder="Describe origin story or incubation notes..." className="bg-background border-border min-h-[100px] resize-none rounded-xl" />
           </div>
 
           <DialogFooter className="pt-4 sm:justify-between gap-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              className="flex-1 h-12 border-border font-black uppercase text-xs tracking-widest rounded-xl"
-              disabled={uploading}
-            >
-              CANCEL
-            </Button>
-            <Button 
-              type="submit" 
-              className="flex-1 bg-primary text-primary-foreground font-black h-12 text-xs tracking-widest rounded-xl shadow-lg"
-              disabled={uploading}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12 border-border font-black uppercase text-xs tracking-widest rounded-xl" disabled={uploading}>CANCEL</Button>
+            <Button type="submit" className="flex-1 bg-primary text-primary-foreground font-black h-12 text-xs tracking-widest rounded-xl shadow-lg" disabled={uploading}>
               {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               {resident ? 'SAVE CHANGES' : 'CREATE RESIDENT'}
             </Button>
