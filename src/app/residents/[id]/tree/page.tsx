@@ -12,21 +12,22 @@ import { HeritageTree } from '@/components/residents/HeritageTree';
 import { 
   Dna,
   Loader2,
-  ShieldCheck
+  ShieldCheck,
+  ArrowLeft
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LineageTreePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
   const router = useRouter();
 
-  // Fetch the main resident by ID
-  const { data: resident, isLoading: residentLoading } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id])
-  );
+  // Fetch the main resident by direct UID
+  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
+  const { data: resident, isLoading: residentLoading } = useDoc<Resident>(birdRef);
 
-  // Fetch Parents
+  // Fetch Parents by UID
   const { data: mother } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && resident?.motherId ? doc(firestore, 'birds', resident.motherId) : null), [firestore, resident?.motherId])
   );
@@ -34,15 +35,13 @@ export default function LineageTreePage({ params }: { params: Promise<{ id: stri
     useMemoFirebase(() => (firestore && resident?.fatherId ? doc(firestore, 'birds', resident.fatherId) : null), [firestore, resident?.fatherId])
   );
 
-  // Fetch Grandparents (Maternal)
+  // Fetch Grandparents by UID
   const { data: mGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && mother?.motherId ? doc(firestore, 'birds', mother.motherId) : null), [firestore, mother?.motherId])
   );
   const { data: mGrandpa } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && mother?.fatherId ? doc(firestore, 'birds', mother.fatherId) : null), [firestore, mother?.fatherId])
   );
-
-  // Fetch Grandparents (Paternal)
   const { data: fGrandma } = useDoc<Resident>(
     useMemoFirebase(() => (firestore && father?.motherId ? doc(firestore, 'birds', father.motherId) : null), [firestore, father?.motherId])
   );
@@ -61,9 +60,14 @@ export default function LineageTreePage({ params }: { params: Promise<{ id: stri
 
   if (!resident) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-muted-foreground font-black uppercase tracking-widest mb-4">Resident not found.</p>
-        <Button onClick={() => router.push('/flock')} className="bg-primary text-primary-foreground font-black px-8 rounded-xl">Back to Flock</Button>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <div className="bg-destructive/10 p-6 rounded-3xl border border-destructive/20 mb-6">
+          <p className="text-destructive font-black uppercase tracking-widest mb-2">Resident Not Found</p>
+          <p className="text-xs text-muted-foreground">The ID <strong>{id}</strong> did not match any sanctuary records.</p>
+        </div>
+        <Button asChild className="bg-primary text-primary-foreground font-black px-8 rounded-xl h-12 shadow-lg">
+          <Link href="/flock">RETURN TO FLOCK</Link>
+        </Button>
       </div>
     );
   }
@@ -83,13 +87,18 @@ export default function LineageTreePage({ params }: { params: Promise<{ id: stri
 
       <main className="flex-1 container mx-auto px-4 py-12 flex flex-col">
         <div className="flex flex-col items-center text-center space-y-6 mb-16">
-          <div className="space-y-2">
+          <div className="space-y-4">
             <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">
               PEDIGREE <span className="text-primary">EXPLORER</span>
             </h1>
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center justify-center gap-2">
-              <Dna className="h-4 w-4 text-secondary" /> SANCTUARY GENETIC LINEAGE
-            </p>
+            <div className="flex items-center justify-center gap-4">
+              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2 border-border/50">
+                <Dna className="h-4 w-4 text-secondary" /> SANCTUARY GENETIC LINEAGE
+              </Badge>
+              <Button asChild variant="ghost" className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-primary hover:bg-transparent">
+                <Link href={`/residents/${resident.id}`}>View Profile</Link>
+              </Button>
+            </div>
           </div>
         </div>
 

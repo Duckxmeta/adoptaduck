@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, use } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
@@ -19,7 +19,7 @@ import {
   Sparkles,
   ArrowLeft
 } from 'lucide-react';
-import { notFound, useParams, useRouter } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Resident, HealthLogEntry, Expense } from '@/lib/types';
@@ -32,18 +32,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Link from 'next/link';
 
-export default function ResidentProfile() {
-  const { id } = useParams() as { id: string };
+export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const firestore = useFirestore();
   const { user } = useUser();
   const router = useRouter();
 
-  const birdRef = useMemoFirebase(() => {
-    if (!firestore || !id) return null;
-    return doc(firestore, 'birds', id);
-  }, [firestore, id]);
-
+  // Fetch the main resident by direct UID
+  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
   const expensesQuery = useMemoFirebase(() => {
@@ -110,11 +108,13 @@ export default function ResidentProfile() {
         <div className="container mx-auto px-4 pt-12">
           {/* Breadcrumb */}
           <Button 
+            asChild
             variant="ghost" 
-            onClick={() => router.back()} 
             className="mb-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary p-0 h-auto"
           >
-            <ArrowLeft className="h-3 w-3 mr-2" /> Back to Flock
+            <Link href="/flock">
+              <ArrowLeft className="h-3 w-3 mr-2" /> Back to Flock
+            </Link>
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
@@ -198,10 +198,12 @@ export default function ResidentProfile() {
                   </div>
                 </div>
                 <Button 
-                  onClick={() => router.push(`/residents/${bird?.id}/tree`)}
+                  asChild
                   className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
                 >
-                  <GitBranch className="mr-2 h-4 w-4" /> VIEW LINEAGE
+                  <Link href={`/residents/${bird?.id}/tree`}>
+                    <GitBranch className="mr-2 h-4 w-4" /> VIEW LINEAGE
+                  </Link>
                 </Button>
               </div>
 
