@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Resident } from '@/lib/types';
-import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info } from 'lucide-react';
+import { Bird, Loader2, Camera, ShieldCheck, TreePine, Upload, Sparkles, User, Info, Images, X } from 'lucide-react';
 import Image from 'next/image';
 import { useStorage, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -36,6 +35,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   const firestore = useFirestore();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -66,6 +66,8 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState<File[]>([]);
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
 
   useEffect(() => {
     if (resident) {
@@ -83,6 +85,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         founder: resident.founder ?? (resident.generation === 0)
       });
       setPreviewUrl(resident.primaryImageUrl || null);
+      setGalleryPreviews(resident.galleryImageUrls || []);
     } else {
       setFormData({
         name: '',
@@ -103,8 +106,10 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         founder: true
       });
       setPreviewUrl(null);
+      setGalleryPreviews([]);
     }
     setSelectedFile(null);
+    setSelectedGalleryFiles([]);
   }, [resident, open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +119,32 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setSelectedGalleryFiles(prev => [...prev, ...files]);
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setGalleryPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeGalleryItem = (index: number) => {
+    // If it's a previously saved URL
+    const isSavedUrl = typeof galleryPreviews[index] === 'string' && galleryPreviews[index].startsWith('http');
+    
+    if (isSavedUrl) {
+      setFormData(prev => ({
+        ...prev,
+        galleryImageUrls: prev.galleryImageUrls?.filter((_, i) => i !== index)
+      }));
+    } else {
+      // It's a new file
+      const newFileIndex = galleryPreviews.slice(0, index).filter(p => !p.startsWith('http')).length;
+      setSelectedGalleryFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+    }
+    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const calculateGeneration = (motherId?: string, fatherId?: string) => {
@@ -133,27 +164,53 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     setUploading(true);
 
     let finalImageUrl = formData.primaryImageUrl || "";
+    const finalGalleryUrls = [...(formData.galleryImageUrls || [])];
 
     try {
-      if (selectedFile && storage) {
-        toast({
-          title: "Uploading Photo...",
-          description: "Storing resident image in the sanctuary archives.",
-        });
-        
-        const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-${Date.now()}`;
-        const fileRef = storageRef(storage, `resident-photos/${fileName}`);
-        
-        const snapshot = await uploadBytes(fileRef, selectedFile);
-        finalImageUrl = await getDownloadURL(snapshot.ref);
+      if (storage) {
+        // Upload Primary Image
+        if (selectedFile) {
+          toast({
+            title: "Uploading Portrait...",
+            description: "Storing main image in the sanctuary archives.",
+          });
+          
+          const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-primary-${Date.now()}`;
+          const fileRef = storageRef(storage, `resident-photos/${fileName}`);
+          
+          const snapshot = await uploadBytes(fileRef, selectedFile);
+          finalImageUrl = await getDownloadURL(snapshot.ref);
+        }
+
+        // Upload Gallery Images
+        if (selectedGalleryFiles.length > 0) {
+          toast({
+            title: "Uploading Gallery...",
+            description: `Storing ${selectedGalleryFiles.length} images...`,
+          });
+
+          for (const file of selectedGalleryFiles) {
+            const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-gallery-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+            const fileRef = storageRef(storage, `resident-photos/gallery/${fileName}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+            finalGalleryUrls.push(url);
+          }
+        }
       }
 
       const isRehomed = formData.source !== 'Hatched';
       const finalGeneration = isRehomed ? 0 : calculateGeneration(formData.motherId, formData.fatherId);
 
+      // Ensure primary image is first in gallery if not already present
+      if (finalImageUrl && !finalGalleryUrls.includes(finalImageUrl)) {
+        finalGalleryUrls.unshift(finalImageUrl);
+      }
+
       const submissionData = {
         ...formData,
         primaryImageUrl: finalImageUrl,
+        galleryImageUrls: finalGalleryUrls,
         motherId: isRehomed ? "" : (formData.motherId || ""),
         fatherId: isRehomed ? "" : (formData.fatherId || ""),
         isFoundingResident: isRehomed,
@@ -169,7 +226,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       toast({
         variant: "destructive",
         title: "Upload Failed",
-        description: "Could not save the image. Please try again.",
+        description: "Could not save images. Please try again.",
       });
     } finally {
       setUploading(false);
@@ -215,7 +272,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
               ) : (
                 <div className="flex flex-col items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
                   <Camera className="h-10 w-10" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to select or snap photo</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-center">Tap to select primary portrait</span>
                 </div>
               )}
               <input 
@@ -226,6 +283,53 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 onChange={handleFileChange}
               />
             </div>
+          </div>
+
+          {/* Gallery Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <Images className="h-3 w-3" /> Growth Album (Gallery)
+              </Label>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => galleryInputRef.current?.click()}
+                className="text-[10px] font-black uppercase tracking-widest h-8"
+              >
+                Add Photos
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              {galleryPreviews.map((src, idx) => (
+                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border group bg-muted">
+                  <Image src={src} alt={`Gallery ${idx}`} fill className="object-cover" />
+                  <button 
+                    type="button"
+                    onClick={() => removeGalleryItem(idx)}
+                    className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3 text-white" />
+                  </button>
+                </div>
+              ))}
+              <div 
+                onClick={() => galleryInputRef.current?.click()}
+                className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors bg-background/50"
+              >
+                <Upload className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+            <input 
+              type="file" 
+              ref={galleryInputRef}
+              className="hidden" 
+              accept="image/*"
+              multiple
+              onChange={handleGalleryChange}
+            />
           </div>
 
           {/* 1. Name */}
@@ -362,6 +466,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
           <div className="space-y-2">
             <Label htmlFor="story" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Story & Heritage Notes</Label>
             <span className="text-[8px] text-muted-foreground block mb-1">G0 Founders should include rehoming context.</span>
+            <span className="text-[8px] text-muted-foreground block mb-1">Total Photos: {galleryPreviews.length}</span>
             <Textarea 
               id="story" 
               value={formData.backstory} 

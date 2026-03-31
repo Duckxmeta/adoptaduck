@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from 'react';
@@ -25,6 +24,13 @@ import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Resident, HealthLogEntry, Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function ResidentProfile() {
   const { id } = useParams() as { id: string };
@@ -70,6 +76,14 @@ export default function ResidentProfile() {
     return { monthly: specific + overhead };
   }, [expenses, allBirds, id]);
 
+  const galleryImages = useMemo(() => {
+    const images = Array.from(new Set([
+      bird?.primaryImageUrl,
+      ...(bird?.galleryImageUrls || [])
+    ])).filter(Boolean) as string[];
+    return images;
+  }, [bird]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
@@ -103,26 +117,41 @@ export default function ResidentProfile() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             
-            {/* Left: Visuals */}
+            {/* Left: Visuals - Image Carousel */}
             <div className="space-y-6">
               <div className={cn(
-                "relative aspect-square rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
+                "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
                 isFounder ? "border-primary/50 glow-primary" : "border-border"
               )}>
-                {bird?.primaryImageUrl ? (
-                  <Image
-                    src={bird.primaryImageUrl}
-                    alt={bird.name}
-                    fill
-                    className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                    priority
-                  />
+                {galleryImages.length > 0 ? (
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {galleryImages.map((url, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative aspect-square">
+                            <Image
+                              src={url}
+                              alt={`${bird?.name} - Photo ${index + 1}`}
+                              fill
+                              className="object-cover"
+                              priority={index === 0}
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {galleryImages.length > 1 && (
+                      <>
+                        <CarouselPrevious className="left-4 bg-black/40 border-none text-white hover:bg-black/60" />
+                        <CarouselNext className="right-4 bg-black/40 border-none text-white hover:bg-black/60" />
+                      </>
+                    )}
+                  </Carousel>
                 ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center text-9xl">🦆</div>
+                  <div className="aspect-square bg-muted flex items-center justify-center text-9xl">🦆</div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 
-                <div className="absolute bottom-6 left-6 flex flex-wrap gap-2">
+                <div className="absolute bottom-6 left-6 flex flex-wrap gap-2 pointer-events-none z-10">
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
                      {bird?.breed}
                    </Badge>
