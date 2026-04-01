@@ -27,7 +27,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection, getDocs } from 'firebase/firestore';
 import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
@@ -61,22 +61,25 @@ function SupportContent() {
   const [merch, setMerch] = useState<any[]>([]);
   const [merchLoading, setMerchLoading] = useState(true);
 
+  // Firestore Sync for Sanctuary Gear
   useEffect(() => {
     async function fetchMerch() {
+      if (!firestore) return;
       try {
-        const res = await fetch('/api/products');
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setMerch(data);
-        }
+        const querySnapshot = await getDocs(collection(firestore, 'merch'));
+        const items = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setMerch(items);
       } catch (e) {
-        console.error("Failed to load merch", e);
+        console.error("Failed to load merch from Firestore", e);
       } finally {
         setMerchLoading(false);
       }
     }
     fetchMerch();
-  }, []);
+  }, [firestore]);
 
   const handleCheckout = async (priceId: string) => {
     setIsRedirecting(true);
@@ -87,7 +90,6 @@ function SupportContent() {
         userEmail: user?.email
       };
 
-      // Validation for custom amounts
       if (priceId === STRIPE_PRICES.SPLASH_CUSTOM) {
         const amt = parseFloat(customAmount);
         if (isNaN(amt) || amt < 1) {
@@ -401,9 +403,9 @@ function SupportContent() {
               {merch.map((product) => (
                 <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
                   <div className="relative aspect-square bg-muted">
-                    {product.thumbnail_url ? (
+                    {product.imageUrl ? (
                       <Image 
-                        src={product.thumbnail_url} 
+                        src={product.imageUrl} 
                         alt={product.name} 
                         fill 
                         className="object-cover transition-transform duration-700 group-hover:scale-110" 
@@ -414,26 +416,28 @@ function SupportContent() {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button asChild variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
-                        <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-5 w-5" />
-                        </a>
+                      <Button 
+                        onClick={() => window.open(product.redirectUrl, '_blank')}
+                        variant="outline" 
+                        className="border-primary text-primary font-black rounded-full h-12 w-12 p-0"
+                      >
+                        <ExternalLink className="h-5 w-5" />
                       </Button>
                     </div>
                   </div>
                   <CardContent className="p-6 space-y-4">
                     <div className="space-y-1">
                       <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">{product.description}</p>
                       <p className="text-lg font-headline font-black text-primary">
-                        {product.minPrice !== undefined ? (
-                          product.minPrice === product.maxPrice 
-                            ? `$${product.minPrice.toFixed(2)}` 
-                            : `$${product.minPrice.toFixed(2)} - $${product.maxPrice.toFixed(2)}`
-                        ) : "$24.99"}
+                        ${Number(product.price || 0).toFixed(2)}
                       </p>
                     </div>
-                    <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
-                      <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">VIEW PRODUCT</a>
+                    <Button 
+                      onClick={() => window.open(product.redirectUrl, '_blank')}
+                      className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl"
+                    >
+                      VIEW PRODUCT
                     </Button>
                   </CardContent>
                 </Card>
