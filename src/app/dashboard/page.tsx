@@ -50,7 +50,9 @@ import {
   ScrollText,
   Users,
   Zap,
-  Award
+  Award,
+  Lock,
+  Calendar
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -395,6 +397,15 @@ export default function MemberDashboard() {
            </Card>
         </section>
 
+        {/* GATED ITEMIZED LEDGER SECTION */}
+        <section id="itemized-ledger" className="space-y-8 animate-in fade-in duration-1000">
+           <div className="flex items-center gap-3">
+              <ScrollText className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Itemized Care Logs</h2>
+           </div>
+           <ItemizedLedger expenses={expenses} userProfile={userProfile} />
+        </section>
+
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
            <div className="space-y-8">
               <div className="flex items-center justify-between border-b border-border pb-4">
@@ -449,15 +460,90 @@ export default function MemberDashboard() {
   );
 }
 
+function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[] | null, userProfile: UserProfile | null }) {
+  const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
+  
+  if (!isGuardian) {
+    return (
+      <Card className="bg-card border-border rounded-3xl p-12 text-center space-y-6 shadow-2xl relative overflow-hidden group">
+        <div className="absolute inset-0 bg-primary/5 opacity-50" />
+        <div className="relative z-10 space-y-6">
+          <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center border-2 border-primary/20">
+            <Lock className="h-10 w-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-3xl font-headline font-black uppercase tracking-tight">GUARDIAN LEDGER ACCESS</h3>
+            <p className="text-muted-foreground font-medium max-w-sm mx-auto">
+              Upgrade to Guardian to unlock itemized care logs and track every dollar spent on sanctuary operations.
+            </p>
+          </div>
+          <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-xl hover:scale-105 transition-transform text-xs tracking-widest uppercase">
+            <Link href="/support#membership">UPGRADE TO GUARDIAN</Link>
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
+  // Time-Filter: Only show receipts dated on or after join date
+  const joinDate = userProfile?.createdAt ? new Date(userProfile.createdAt) : new Date();
+  joinDate.setHours(0, 0, 0, 0);
+
+  const filteredExpenses = (expenses || []).filter(e => {
+    const expenseDate = new Date(e.date);
+    return expenseDate >= joinDate;
+  });
+
+  return (
+    <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl">
+      <div className="p-6 border-b border-border bg-primary/5 flex justify-between items-center">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
+          <p className="text-xs font-bold text-muted-foreground">Itemized transparency from your join date onwards</p>
+        </div>
+        <Badge className="bg-primary text-black font-black text-[10px] uppercase tracking-widest px-3 py-1">UNLOCKED</Badge>
+      </div>
+      <div className="divide-y divide-border">
+        {filteredExpenses.length > 0 ? filteredExpenses.map((exp) => (
+          <div key={exp.id} className="p-6 flex items-center justify-between hover:bg-muted/10 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-muted rounded-xl border border-border">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-bold text-foreground text-lg uppercase tracking-tight">{exp.itemName}</p>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="text-[8px] font-black uppercase border-secondary/30 text-secondary">{exp.category}</Badge>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase">{format(new Date(exp.date), 'MMMM dd, yyyy')}</span>
+                </div>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-headline font-black text-primary">${Number(exp.cost).toFixed(2)}</p>
+              <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Sanctuary Expense</p>
+            </div>
+          </div>
+        )) : (
+          <div className="p-20 text-center space-y-4 opacity-40">
+            <Database className="h-12 w-12 mx-auto text-muted-foreground" />
+            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">No ledger entries found for your membership period.</p>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[] | null, totalBirds: number }) {
   const careCosts = useMemo(() => {
     if (!expenses || !totalBirds) return 0;
     const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
     const monthlyExpenses = expenses.filter(e => {
       const d = new Date(e.date);
-      return d.getMonth() === m && d.getFullYear() === y;
+      return d >= thirtyDaysAgo;
     });
     const specific = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + e.cost, 0);
     const shared = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + e.cost, 0);
@@ -480,7 +566,7 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
               <p className="text-[10px] text-primary font-black uppercase tracking-widest">{bird.breed}</p>
            </div>
            <div className="text-right">
-              <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Care Share</span>
+              <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">30-Day Share</span>
               <p className="text-lg font-headline font-black text-primary">${careCosts.toFixed(2)}</p>
            </div>
         </div>

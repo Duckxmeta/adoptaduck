@@ -23,13 +23,16 @@ import {
   Lock,
   History,
   TrendingUp,
-  ShieldCheck
+  ShieldCheck,
+  ArrowRight,
+  Database
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
 import { Resident, Expense } from '@/lib/types';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn, getResidentName } from '@/lib/utils';
 import {
   Carousel,
@@ -43,11 +46,10 @@ import Link from 'next/link';
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
 /**
- * @fileOverview Resident Profile with Multi-Tiered Financial Transparency.
+ * @fileOverview Resident Profile with Tier-Based Financial Access Control.
  * Tiers: 
- * - Public: Monthly (30 Days)
- * - Member: Annual (YTD)
- * - Admin: Lifetime (Total Archive)
+ * - Public: Locked (Flock Members Only)
+ * - Member: Global Sanctuary Investment & Average Price Per Bird
  */
 
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -61,10 +63,11 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
   // ARCHIVAL LEDGER: Permanent financial archive
+  // Conditional Fetch: Only request ledger data if user is logged in
   const expensesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
-  }, [firestore]);
+  }, [firestore, user]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -74,37 +77,13 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { data: expenses } = useCollection<Expense>(expensesQuery);
   const { data: allBirds } = useCollection<Resident>(birdsQuery);
 
-  const careCosts = useMemo(() => {
-    if (!expenses || !Array.isArray(expenses) || !allBirds || !id) {
-      return { monthly: 0, annual: 0, lifetime: 0 };
-    }
+  const totalSanctuaryInvestment = useMemo(() => {
+    if (!expenses || !Array.isArray(expenses)) return 0;
+    return expenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+  }, [expenses]);
 
-    const now = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(now.getDate() - 30);
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-
-    const birdCount = allBirds.length || 1;
-
-    // Financial Calculation Core
-    const calcShare = (subset: Expense[]) => {
-      const specific = subset
-        .filter(e => e.birdId === id)
-        .reduce((s, e) => s + (Number(e.cost) || 0), 0);
-        
-      const shared = subset
-        .filter(e => !e.birdId)
-        .reduce((s, e) => s + (Number(e.cost) || 0), 0);
-        
-      return (specific + (shared / birdCount)) || 0;
-    };
-
-    return {
-      monthly: calcShare(expenses.filter(e => e.date && new Date(e.date) >= thirtyDaysAgo)),
-      annual: calcShare(expenses.filter(e => e.date && new Date(e.date) >= startOfYear)),
-      lifetime: calcShare(expenses)
-    };
-  }, [expenses, allBirds, id]);
+  const birdCount = allBirds?.length || 1;
+  const avgPricePerBird = totalSanctuaryInvestment / birdCount;
 
   const galleryImages = useMemo(() => {
     if (!bird) return [];
@@ -146,16 +125,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
       </div>
     );
   }
-
-  // Tier Detection
-  const isAdmin = !!(user?.email && ADMIN_EMAILS.includes(user.email));
-  const isMember = !!user && !isAdmin;
-
-  const displayConfig = isAdmin 
-    ? { label: 'Lifetime Investment', val: careCosts.lifetime, timeframe: 'Total Record', icon: <History className="h-5 w-5 text-primary" /> }
-    : isMember 
-    ? { label: 'Annual Impact Share', val: careCosts.annual, timeframe: 'Year-to-Date', icon: <TrendingUp className="h-5 w-5 text-secondary" /> }
-    : { label: 'Est. Monthly Cost', val: careCosts.monthly, timeframe: 'Rolling 30 Days', icon: <Wallet className="h-5 w-5 text-primary" /> };
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const displayName = getResidentName(bird);
@@ -262,33 +231,52 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 </Button>
               </div>
 
-              {/* TIERED FINANCIAL ENGINE DISPLAY */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl relative overflow-hidden group">
-                  <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                    {displayConfig.icon}
-                    <span className="text-[10px] font-black uppercase tracking-widest">{displayConfig.label}</span>
+              {/* TIER-BASED FINANCIAL DISPLAY */}
+              {!user ? (
+                <Card className="bg-card p-12 rounded-[2.5rem] border-2 border-dashed border-border text-center space-y-6 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-primary/5 opacity-50" />
+                  <div className="relative z-10 space-y-4">
+                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
+                      <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-primary leading-tight">FLOCK MEMBERS ONLY</h2>
+                      <p className="text-sm text-muted-foreground font-medium mt-2 max-w-xs mx-auto">Detailed sanctuary investment records are exclusive to registered members.</p>
+                    </div>
+                    <Button asChild variant="outline" className="h-10 rounded-xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/5">
+                      <Link href="/signup">Join Free to Unlock <ArrowRight className="ml-2 h-3 w-3" /></Link>
+                    </Button>
                   </div>
-                  <div className="relative z-10">
-                    <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
-                      ${Number(displayConfig.val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">{displayConfig.timeframe}</span>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl relative overflow-hidden group">
+                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                      <Database className="h-5 w-5 text-primary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Total Sanctuary Investment</span>
+                    </div>
+                    <div className="relative z-10">
+                      <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
+                        ${totalSanctuaryInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Lifetime Running Total</span>
+                    </div>
                   </div>
-                  {isAdmin && <ShieldCheck className="absolute -bottom-4 -right-4 h-24 w-24 text-primary opacity-5 group-hover:opacity-10 transition-opacity" />}
+                  
+                  <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl group">
+                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
+                      <TrendingUp className="h-5 w-5 text-secondary" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Price Per Resident</span>
+                    </div>
+                    <div>
+                      <span className="text-3xl font-headline font-black text-secondary uppercase tracking-tight">
+                        ${avgPricePerBird.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Average Share</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl">
-                  <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                    <CheckCircle2 className="h-5 w-5 text-secondary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Sanctuary Status</span>
-                  </div>
-                  <div>
-                    <span className="text-3xl font-headline font-black text-secondary uppercase tracking-tight">PROTECTED</span>
-                    <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Lifetime Security</span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               <div className="space-y-4 bg-muted/5 p-8 rounded-3xl border border-border/50">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
