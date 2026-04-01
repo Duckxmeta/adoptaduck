@@ -22,7 +22,9 @@ import {
   Star,
   ShoppingBag,
   ExternalLink,
-  Ticket
+  Ticket,
+  BookOpen,
+  Home
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -359,14 +361,28 @@ function SupportContent() {
                     <ShieldCheck className="h-5 w-5" />
                     <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and school programs looking to integrate live sanctuary logs.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and dedicated school programs.</p>
                 </div>
                 <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
                   <div className="flex items-center gap-3 text-primary mb-2">
                     <Users className="h-5 w-5" />
-                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4>
+                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community Learning</h4>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Homeschooling collectives, after-school clubs, and 4-H initiatives focused on stewardship.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Homeschooling collectives, after-school clubs, and 4-H or library-based initiatives.</p>
+                </div>
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
+                  <div className="flex items-center gap-3 text-primary mb-2">
+                    <Globe className="h-5 w-5" />
+                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Public Discovery</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Agricultural programs at museums, youth centers, and nature preserves.</p>
+                </div>
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
+                  <div className="flex items-center gap-3 text-primary mb-2">
+                    <Heart className="h-5 w-5" />
+                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Therapeutic Environments</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Nursing homes, assisted living facilities, and memory care units.</p>
                 </div>
               </div>
               <div className="pt-8">
