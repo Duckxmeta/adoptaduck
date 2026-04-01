@@ -298,7 +298,7 @@ function SupportContent() {
                 <ul className="flex-1 space-y-3">
                   {['Everything in Guardian', 'Name on Physical Ledger', 'Annual Impact Report', 'Founding Member Seal', 'Priority Rescue Alerts'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
-                      <Star className="h-4 w-4 text-secondary" /> {p}
+                      <Star className="h-4 w-4" /> {p}
                     </li>
                   ))}
                 </ul>
@@ -474,7 +474,7 @@ function SupportContent() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="relative aspect-square rounded-[2rem] overflow-hidden border-2 border-primary/20 shadow-2xl">
                 <Image 
-                  src="https://picsum.photos/seed/boutique-jars/800/800" 
+                  src="https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/duckshit.png?alt=media&token=e8969995-9299-4c43-9cf3-9095fe85903e" 
                   alt="Premium Duck Decor" 
                   fill 
                   className="object-cover transition-transform duration-10000 group-hover:scale-110"
