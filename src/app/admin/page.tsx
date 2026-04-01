@@ -167,13 +167,12 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
-      // Force-write these 6 specific receipts into the ledger
+      // Filing the remaining 5 foundational receipts with today's date (2026-04-01)
       const bulkExpenses = [
-        { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-03-20', birdId: null },
-        { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-03-25', birdId: null },
-        { itemName: 'Pen door latches', category: 'Hardware', cost: 7.70, date: '2026-03-26', birdId: null },
-        { itemName: '10lb starter feed', category: 'Feed', cost: 7.67, date: '2026-03-28', birdId: null },
-        { itemName: 'Water probiotics 3-pack', category: 'Medical', cost: 5.48, date: '2026-03-30', birdId: null },
+        { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-04-01', birdId: null },
+        { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-04-01', birdId: null },
+        { itemName: 'Pen door latches', category: 'Hardware', cost: 7.70, date: '2026-04-01', birdId: null },
+        { itemName: 'Water probiotics 3-pack', category: 'Medical', cost: 5.48, date: '2026-04-01', birdId: null },
         { itemName: 'Travel and transport gas', category: 'Logistics', cost: 15.00, date: '2026-04-01', birdId: null }
       ];
 
@@ -184,10 +183,10 @@ function ManagerPortal({ user }: { user: any }) {
         });
       }
 
-      toast({ title: "Ledger Initialized", description: "All 6 founding receipts have been recorded." });
+      toast({ title: "Founding Receipts Filed", description: "The remaining 5 startup expenses have been recorded." });
     } catch (e) {
       console.error("Seeding error:", e);
-      toast({ variant: "destructive", title: "Setup Error", description: "Could not initialize ledger data." });
+      toast({ variant: "destructive", title: "Setup Error", description: "Could not file receipts." });
     } finally {
       setIsInitializingLedger(false);
     }
@@ -311,7 +310,7 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
-  const foundingResidents = birds?.filter(b => b.isFoundingResident)?.sort((a,b) => (a.name || '').localeCompare(b.name || '')) || [];
+  const foundingResidents = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder)?.sort((a,b) => (a.name || '').localeCompare(b.name || '')) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32 font-body">
@@ -557,7 +556,7 @@ function ManagerPortal({ user }: { user: any }) {
                 className="border-secondary/20 text-secondary h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
               >
                 {isInitializingLedger ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Database className="h-4 w-4 mr-1" />} 
-                Initialize Ledger
+                File Founding Receipts
               </Button>
               <Button 
                 onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} 
@@ -717,7 +716,7 @@ function MemberPulseView({ user }: { user: any }) {
   const firestore = useFirestore();
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
   const { data: birds } = useCollection<Resident>(birdsQuery);
-  const foundingResidents = birds?.filter(b => b.isFoundingResident) || [];
+  const foundingResidents = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder) || [];
 
   return (
     <div className="min-h-screen bg-background p-4">
