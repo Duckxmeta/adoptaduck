@@ -47,10 +47,11 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
+  // AUTHENTICATED FETCH: Only request ledger data if a user session exists
   const expensesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
-  }, [firestore]);
+  }, [firestore, user]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
