@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -210,6 +209,7 @@ function ManagerPortal({ user }: { user: any }) {
       let imageUrl = null;
       if (bullImage && storage) {
         const fileName = `bulletin-${Date.now()}`;
+        // Explicitly declared bulletin-images path
         const fileRef = storageRef(storage, `bulletin-images/${fileName}`);
         const snapshot = await uploadBytes(fileRef, bullImage);
         imageUrl = await getDownloadURL(snapshot.ref);
@@ -226,8 +226,10 @@ function ManagerPortal({ user }: { user: any }) {
       setBullImage(null);
       setBullPreview(null);
       toast({ title: "Bulletin Published" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Error posting update" });
+    } catch (e: any) {
+      // Detailed error logging for diagnostics
+      console.error("Sanctuary Bulletin Upload Failure:", e.code || e.message, e);
+      toast({ variant: "destructive", title: "Error posting update", description: "Storage access denied or network timeout." });
     } finally {
       setIsPosting(false);
     }

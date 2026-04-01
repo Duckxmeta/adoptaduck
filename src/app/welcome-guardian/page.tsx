@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Suspense, useState, useRef } from 'react';
@@ -33,7 +32,7 @@ function WelcomeGuardianContent() {
     const url = "https://decentducks.org";
 
     if (platform === 'twitter') {
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
     } else {
       // TikTok doesn't support direct URL sharing for captions easily, so we provide the text for copy
       navigator.clipboard.writeText(text);
