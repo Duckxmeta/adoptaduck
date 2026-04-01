@@ -28,7 +28,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, collection, getDocs } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
@@ -62,25 +62,24 @@ function SupportContent() {
   const [merch, setMerch] = useState<any[]>([]);
   const [merchLoading, setMerchLoading] = useState(true);
 
-  // Firestore Sync for Sanctuary Gear (Public Collection)
+  // Live Mirror: Synchronize Sanctuary Gear with Printful API
   useEffect(() => {
-    async function fetchMerch() {
-      if (!firestore) return;
+    async function fetchLiveCatalog() {
       try {
-        const querySnapshot = await getDocs(collection(firestore, 'merch'));
-        const items = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setMerch(items);
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+          throw new Error('Store mirror unreachable');
+        }
+        const data = await response.json();
+        setMerch(data);
       } catch (e) {
-        console.error("Failed to load merch from Firestore:", e);
+        console.error("Failed to load live merch catalog:", e);
       } finally {
         setMerchLoading(false);
       }
     }
-    fetchMerch();
-  }, [firestore]);
+    fetchLiveCatalog();
+  }, []);
 
   const handleCheckout = async (priceId: string) => {
     setIsRedirecting(true);
@@ -398,16 +397,16 @@ function SupportContent() {
           {merchLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Merch Catalog...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {merch.map((product) => (
                 <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full">
                   <div className="relative aspect-square bg-muted">
-                    {product.imageUrl ? (
+                    {product.thumbnailUrl ? (
                       <Image 
-                        src={product.imageUrl} 
+                        src={product.thumbnailUrl} 
                         alt={product.name} 
                         fill 
                         className="object-cover transition-transform duration-700 group-hover:scale-110" 
@@ -432,14 +431,16 @@ function SupportContent() {
                       <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
                       <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">{product.description}</p>
                       <p className="text-lg font-headline font-black text-primary">
-                        ${Number(product.price || 0).toFixed(2)}
+                        ${product.minPrice === product.maxPrice 
+                          ? Number(product.minPrice).toFixed(2) 
+                          : `${Number(product.minPrice).toFixed(2)} - ${Number(product.maxPrice).toFixed(2)}`}
                       </p>
                     </div>
                     <Button 
                       onClick={() => window.open(product.redirectUrl, '_blank')}
                       className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl"
                     >
-                      VIEW PRODUCT
+                      BUY NOW
                     </Button>
                   </CardContent>
                 </Card>
