@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
@@ -61,7 +62,7 @@ function SupportContent() {
   const [merch, setMerch] = useState<any[]>([]);
   const [merchLoading, setMerchLoading] = useState(true);
 
-  // Firestore Sync for Sanctuary Gear
+  // Firestore Sync for Sanctuary Gear (Public Collection)
   useEffect(() => {
     async function fetchMerch() {
       if (!firestore) return;
@@ -73,7 +74,7 @@ function SupportContent() {
         }));
         setMerch(items);
       } catch (e) {
-        console.error("Failed to load merch from Firestore", e);
+        console.error("Failed to load merch from Firestore:", e);
       } finally {
         setMerchLoading(false);
       }
@@ -106,7 +107,7 @@ function SupportContent() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status}`);
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
       const data = await response.json();
@@ -120,7 +121,7 @@ function SupportContent() {
       toast({
         variant: "destructive",
         title: "Checkout Unavailable",
-        description: error.message || "The financial engine is currently being updated. Please try again in a moment.",
+        description: error.message || "The financial engine is currently being updated. Please try again shortly.",
       });
     } finally {
       setIsRedirecting(false);
@@ -237,7 +238,7 @@ function SupportContent() {
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">$0</div>
                 <ul className="flex-1 space-y-3">
-                  {['Virtual Sanctuary Portal', 'Live Daily Care Logs', 'Real-Time Cog Counter', 'Live Vibe Board'].map((p, i) => (
+                  {['Virtual Sanctuary Portal', 'Live Daily Care Logs', 'Real-Time Egg Counter', 'Live Vibe Board'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-muted-foreground/40" /> {p}
                     </li>
@@ -393,6 +394,7 @@ function SupportContent() {
             <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Wear the Mission</h3>
             <p className="text-muted-foreground max-w-xl mx-auto font-medium">Proceeds from every order go directly to the sanctuary feed and medical fund.</p>
           </div>
+          
           {merchLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -401,7 +403,7 @@ function SupportContent() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {merch.map((product) => (
-                <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
+                <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full">
                   <div className="relative aspect-square bg-muted">
                     {product.imageUrl ? (
                       <Image 
@@ -425,8 +427,8 @@ function SupportContent() {
                       </Button>
                     </div>
                   </div>
-                  <CardContent className="p-6 space-y-4">
-                    <div className="space-y-1">
+                  <CardContent className="p-6 space-y-4 flex flex-col flex-1">
+                    <div className="space-y-1 flex-1">
                       <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
                       <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">{product.description}</p>
                       <p className="text-lg font-headline font-black text-primary">
@@ -442,6 +444,12 @@ function SupportContent() {
                   </CardContent>
                 </Card>
               ))}
+              {merch.length === 0 && (
+                <div className="col-span-full py-20 text-center space-y-4 opacity-40">
+                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground" />
+                  <p className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground">Catalog items arriving soon...</p>
+                </div>
+              )}
             </div>
           )}
         </section>
