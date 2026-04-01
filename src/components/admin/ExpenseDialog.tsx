@@ -140,6 +140,9 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
                   <SelectItem value="Medical">Medical</SelectItem>
                   <SelectItem value="Bedding">Bedding</SelectItem>
                   <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                  <SelectItem value="Acquisition">Acquisition</SelectItem>
+                  <SelectItem value="Hardware">Hardware</SelectItem>
+                  <SelectItem value="Logistics">Logistics</SelectItem>
                 </SelectContent>
               </Select>
             </div>

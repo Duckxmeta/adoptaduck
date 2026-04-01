@@ -36,7 +36,7 @@ export type EggHistoryEntry = {
 export type Expense = {
   id: string;
   itemName: string;
-  category: 'Feed' | 'Medical' | 'Bedding' | 'Infrastructure';
+  category: 'Feed' | 'Medical' | 'Bedding' | 'Infrastructure' | 'Acquisition' | 'Hardware' | 'Logistics';
   cost: number;
   date: string;
   birdId?: string;

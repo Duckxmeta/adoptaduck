@@ -167,19 +167,26 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
-      // Seed Entry for G0-COCOA
-      const seedData = {
-        birdId: 'G0-COCOA',
-        itemName: 'Sanctuary Seed Feed',
-        cost: 12.50,
-        category: 'Feed',
-        date: '2026-04-01',
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(firestore, 'ledger'), seedData);
-      toast({ title: "Infrastructure Ready", description: "Ledger initialized with seed data." });
+      const bulkExpenses = [
+        { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-03-20', birdId: null },
+        { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-03-25', birdId: null },
+        { itemName: 'Pen door latches', category: 'Hardware', cost: 7.70, date: '2026-03-26', birdId: null },
+        { itemName: '10lb starter feed', category: 'Feed', cost: 7.67, date: '2026-03-28', birdId: null },
+        { itemName: 'Water probiotics 3-pack', category: 'Medical', cost: 5.48, date: '2026-03-30', birdId: null },
+        { itemName: 'Travel and transport gas', category: 'Logistics', cost: 15.00, date: '2026-04-01', birdId: null }
+      ];
+
+      for (const item of bulkExpenses) {
+        await addDoc(collection(firestore, 'ledger'), {
+          ...item,
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      toast({ title: "Infrastructure Ready", description: "Ledger initialized with bulk founding data." });
     } catch (e) {
-      toast({ variant: "destructive", title: "Setup Error", description: "Could not initialize ledger collection." });
+      console.error("Seeding error:", e);
+      toast({ variant: "destructive", title: "Setup Error", description: "Could not initialize ledger data." });
     } finally {
       setIsInitializingLedger(false);
     }
