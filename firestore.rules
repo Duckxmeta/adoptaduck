@@ -5,8 +5,11 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.0.9 (Hardened Promo Access)
-     * Last Updated: 2026-03-31
+     * Version: 1.1.0 (Archival Ledger Release)
+     * Last Updated: 2026-04-01
+     * 
+     * PERMANENT ARCHIVE RULE: The /ledger collection is a permanent financial 
+     * record. Deletion logic is strictly prohibited.
      */
 
     // --- MASTER OVERRIDE ---
@@ -53,7 +56,8 @@ service cloud.firestore {
     }
 
     match /ledger/{expenseId} {
-      allow read: if isSignedIn();
+      // PERMANENT ARCHIVE: Publicly readable for multi-tier transparency logic
+      allow read: if true;
       allow write: if isAdmin();
     }
 

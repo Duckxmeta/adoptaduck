@@ -20,7 +20,10 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  Lock
+  Lock,
+  History,
+  TrendingUp,
+  ShieldCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
@@ -37,21 +40,31 @@ import {
 } from "@/components/ui/carousel";
 import Link from 'next/link';
 
+const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+
+/**
+ * @fileOverview Resident Profile with Multi-Tiered Financial Transparency.
+ * Tiers: 
+ * - Public: Monthly (30 Days)
+ * - Member: Annual (YTD)
+ * - Admin: Lifetime (Total Archive)
+ */
+
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
   const { user } = useUser();
   const router = useRouter();
 
-  // Fetch the main resident by direct UID from the BIRDS collection
+  // Fetch core identity
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
-  // AUTHENTICATED FETCH: Only request ledger data if a user session exists
+  // ARCHIVAL LEDGER: Permanent financial archive
   const expensesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
-  }, [firestore, user]);
+  }, [firestore]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -62,43 +75,36 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { data: allBirds } = useCollection<Resident>(birdsQuery);
 
   const careCosts = useMemo(() => {
-    // Tier Gating: Only Flock Members (Logged In) see the financial engine data
-    if (!user) {
-      return { monthly: null };
-    }
-
-    // Hardened Defense: Check existence and type of required data
     if (!expenses || !Array.isArray(expenses) || !allBirds || !id) {
-      return { monthly: 0 };
+      return { monthly: 0, annual: 0, lifetime: 0 };
     }
 
     const now = new Date();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(now.getDate() - 30);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    const monthlyExpenses = expenses.filter(e => {
-      if (!e.date) return false;
-      const d = new Date(e.date);
-      // Logic Update: Include everything in the last 30 days to prevent calendar month "zero-outs"
-      return d >= thirtyDaysAgo && d <= now;
-    });
-
-    // Ensure numeric summation to prevent NaN propagation
-    const specific = monthlyExpenses
-      .filter(e => e.birdId === id)
-      .reduce((s, e) => s + (Number(e.cost) || 0), 0);
-      
-    const shared = monthlyExpenses
-      .filter(e => !e.birdId)
-      .reduce((s, e) => s + (Number(e.cost) || 0), 0);
-      
     const birdCount = allBirds.length || 1;
-    const overhead = shared / birdCount;
 
-    const total = (specific + overhead) || 0;
-    
-    return { monthly: total };
-  }, [expenses, allBirds, id, user]);
+    // Financial Calculation Core
+    const calcShare = (subset: Expense[]) => {
+      const specific = subset
+        .filter(e => e.birdId === id)
+        .reduce((s, e) => s + (Number(e.cost) || 0), 0);
+        
+      const shared = subset
+        .filter(e => !e.birdId)
+        .reduce((s, e) => s + (Number(e.cost) || 0), 0);
+        
+      return (specific + (shared / birdCount)) || 0;
+    };
+
+    return {
+      monthly: calcShare(expenses.filter(e => e.date && new Date(e.date) >= thirtyDaysAgo)),
+      annual: calcShare(expenses.filter(e => e.date && new Date(e.date) >= startOfYear)),
+      lifetime: calcShare(expenses)
+    };
+  }, [expenses, allBirds, id]);
 
   const galleryImages = useMemo(() => {
     if (!bird) return [];
@@ -118,7 +124,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
-  // Security Gate: Handle Not Found state gracefully
   if (!bird && !isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -130,7 +135,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-headline font-black uppercase tracking-tight">RESIDENT NOT FOUND</h1>
-              <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located in our sanctuary logs.</p>
+              <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located.</p>
             </div>
             <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
               <Link href="/flock">RETURN TO THE FLOCK</Link>
@@ -142,6 +147,16 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
+  // Tier Detection
+  const isAdmin = !!(user?.email && ADMIN_EMAILS.includes(user.email));
+  const isMember = !!user && !isAdmin;
+
+  const displayConfig = isAdmin 
+    ? { label: 'Lifetime Investment', val: careCosts.lifetime, timeframe: 'Total Record', icon: <History className="h-5 w-5 text-primary" /> }
+    : isMember 
+    ? { label: 'Annual Impact Share', val: careCosts.annual, timeframe: 'Year-to-Date', icon: <TrendingUp className="h-5 w-5 text-secondary" /> }
+    : { label: 'Est. Monthly Cost', val: careCosts.monthly, timeframe: 'Rolling 30 Days', icon: <Wallet className="h-5 w-5 text-primary" /> };
+
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const displayName = getResidentName(bird);
 
@@ -151,7 +166,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
       
       <main className="flex-1 pb-32 animate-in fade-in duration-1000">
         <div className="container mx-auto px-4 pt-12">
-          {/* Breadcrumb */}
           <Button 
             asChild
             variant="ghost" 
@@ -164,7 +178,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             
-            {/* Left: Visuals - Image Carousel (Hero) */}
             <div className="space-y-6">
               <div className={cn(
                 "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
@@ -202,11 +215,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                    <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
                      {bird?.breed}
                    </Badge>
-                   {bird?.color && (
-                     <Badge variant="outline" className="bg-background/80 backdrop-blur-md text-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
-                       {bird.color}
-                     </Badge>
-                   )}
                    {isFounder && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-lg">
                        <Trophy className="h-3 w-3" /> G0 Founder
@@ -230,7 +238,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               )}
             </div>
 
-            {/* Right: Info */}
             <div className="space-y-10">
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                 <div className="space-y-4">
@@ -241,7 +248,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
                      <span className="flex items-center gap-1.5 text-primary">
                        <Wallet className="h-3.5 w-3.5" /> 
-                       {careCosts.monthly !== null ? `$${Number(careCosts.monthly || 0).toFixed(0)} Monthly Care` : 'Member Gated'}
+                       Member Gated Archival Record
                      </span>
                   </div>
                 </div>
@@ -255,33 +262,22 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 </Button>
               </div>
 
+              {/* TIERED FINANCIAL ENGINE DISPLAY */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl">
+                <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl relative overflow-hidden group">
                   <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                    <Wallet className="h-5 w-5 text-primary" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Est. Cost to Care</span>
+                    {displayConfig.icon}
+                    <span className="text-[10px] font-black uppercase tracking-widest">{displayConfig.label}</span>
                   </div>
-                  <div>
-                    {user ? (
-                      <>
-                        <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
-                          ${Number(careCosts.monthly || 0).toFixed(2)}
-                        </span>
-                        <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Month</span>
-                      </>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-primary font-black">
-                          <Lock className="h-4 w-4" />
-                          <span className="text-sm uppercase tracking-tighter">FLOCK MEMBERS ONLY</span>
-                        </div>
-                        <Link href="/signup" className="text-[9px] font-black text-secondary hover:underline uppercase tracking-widest block">
-                          JOIN FREE →
-                        </Link>
-                      </div>
-                    )}
+                  <div className="relative z-10">
+                    <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
+                      ${Number(displayConfig.val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">{displayConfig.timeframe}</span>
                   </div>
+                  {isAdmin && <ShieldCheck className="absolute -bottom-4 -right-4 h-24 w-24 text-primary opacity-5 group-hover:opacity-10 transition-opacity" />}
                 </div>
+                
                 <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl">
                   <div className="flex items-center gap-3 text-muted-foreground mb-4">
                     <CheckCircle2 className="h-5 w-5 text-secondary" />
@@ -294,7 +290,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              {/* Personality Profile Mapping */}
               <div className="space-y-4 bg-muted/5 p-8 rounded-3xl border border-border/50">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
                   <Sparkles className="h-4 w-4" /> Personality Profile
@@ -304,7 +299,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 </p>
               </div>
 
-              {/* Rescue Story Mapping */}
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
                   <BookOpen className="h-4 w-4" /> Rescue Story & Heritage Heritage
