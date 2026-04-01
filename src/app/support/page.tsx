@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
@@ -7,15 +6,6 @@ import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { 
   Heart, 
   ArrowRight,
@@ -27,7 +17,6 @@ import {
   CheckCircle2,
   Users,
   Globe,
-  Stethoscope,
   Star,
   ShoppingBag,
   ExternalLink,
@@ -41,8 +30,9 @@ import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
-// REVENUE NODE MAPPING - PRICE API IDs (SYNCED 2026)
+// REVENUE NODE MAPPING - PRICE API IDs (SYNCED 2026 PRODUCTION)
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
   SPLASH_10: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_10 || 'price_1THAidGyzCRtb3HxaeBUkg33',
@@ -53,8 +43,7 @@ const STRIPE_PRICES = {
 };
 
 function SupportContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
   
@@ -98,12 +87,26 @@ function SupportContent() {
           userEmail: user?.email
         }),
       });
+
+      // Fix SyntaxError: Check if response is valid JSON before parsing
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server returned ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.url) {
         window.location.assign(data.url);
+      } else {
+        throw new Error('No checkout URL received from sanctuary engine.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
+      toast({
+        variant: "destructive",
+        title: "Checkout Unavailable",
+        description: error.message || "The financial engine is currently being updated. Please try again in a moment.",
+      });
     } finally {
       setIsRedirecting(false);
     }
@@ -143,9 +146,9 @@ function SupportContent() {
                   { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'The Snack Pack' },
                   { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Bedding Refresh' }
                 ].map((tier) => (
-                  <Button 
+                  <button 
                     key={tier.val}
-                    variant="outline"
+                    type="button"
                     onClick={() => {
                       setSelectedSplashPrice(tier.price);
                       setSplashAmountLabel(tier.val);
@@ -157,7 +160,7 @@ function SupportContent() {
                   >
                     <span className="font-headline font-black text-2xl">${tier.val}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-70">{tier.label}</span>
-                  </Button>
+                  </button>
                 ))}
               </div>
 

@@ -6,27 +6,39 @@ const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2025-01-27.acacia',
 });
 
+// Production Price ID mapping for mode detection
+const SUBSCRIPTION_PRICE_IDS = [
+  process.env.STRIPE_PRICE_GUARDIAN_MONTHLY || 'price_1THAffGyzCRtb3Hx7RHfIdqC',
+  process.env.STRIPE_PRICE_GUARDIAN_YEARLY || 'price_1THAccGyzCRtb3HxwQ1njXlS'
+];
+
 /**
  * @fileOverview Final Production Checkout Controller.
- * Handles Price API ID mapping and dynamic session mode selection.
- * Guardian Tiers: Subscription Mode | Splash Tiers: Payment Mode
+ * Resolves SyntaxError by guaranteeing JSON responses.
+ * Maps 6 tiers to Subscription or Payment modes dynamically.
  */
 
 export async function POST(request: Request) {
   try {
-    const { priceId, userId, userEmail } = await request.json();
-
-    if (!stripeSecretKey) {
-      throw new Error('Stripe API key is missing');
+    const body = await request.json().catch(() => null);
+    
+    if (!body) {
+      return NextResponse.json({ error: 'Request body is required' }, { status: 400 });
     }
 
-    // Dynamic Mode Selection based on validated Price IDs
-    const subscriptionPrices = [
-      process.env.STRIPE_PRICE_GUARDIAN_MONTHLY,
-      process.env.STRIPE_PRICE_GUARDIAN_YEARLY
-    ];
+    const { priceId, userId, userEmail } = body;
 
-    const isSubscription = subscriptionPrices.includes(priceId);
+    if (!priceId) {
+      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
+    }
+
+    if (!stripeSecretKey) {
+      console.error('Stripe Secret Key missing in environment');
+      return NextResponse.json({ error: 'Sanctuary financial engine misconfigured' }, { status: 500 });
+    }
+
+    // Dynamic Mode Selection: Guardian Tiers = Subscription | Splash Tiers = Payment
+    const isSubscription = SUBSCRIPTION_PRICE_IDS.includes(priceId);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -50,7 +62,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    console.error('Stripe Checkout Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Stripe Checkout Critical Failure:', error);
+    return NextResponse.json({ 
+      error: error.message || 'Internal Server Error',
+      status: 'failed'
+    }, { status: 500 });
   }
 }
