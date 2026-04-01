@@ -42,9 +42,14 @@ import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 
-const STRIPE_IDS = {
-  GUARDIAN: 'prod_UFfyopJ1UUtWvC',
-  SPLASH: 'prod_UFg401BhNEqMsY'
+// REVENUE NODE MAPPING - PRICE API IDs (SYNCED 2026)
+const STRIPE_PRICES = {
+  SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
+  SPLASH_10: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_10 || 'price_1THAidGyzCRtb3HxaeBUkg33',
+  SPLASH_25: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_25 || 'price_1THAj9GyzCRtb3HxxjI9L4Yg',
+  SPLASH_CUSTOM: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_CUSTOM || 'price_1THAmlGyzCRtb3HxiD9YcrR5',
+  GUARDIAN_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_GUARDIAN_MONTHLY || 'price_1THAffGyzCRtb3Hx7RHfIdqC',
+  GUARDIAN_YEARLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_GUARDIAN_YEARLY || 'price_1THAccGyzCRtb3HxwQ1njXlS'
 };
 
 function SupportContent() {
@@ -53,7 +58,8 @@ function SupportContent() {
   const { user } = useUser();
   const firestore = useFirestore();
   
-  const [amount, setAmount] = useState<string>('10');
+  const [selectedSplashPrice, setSelectedSplashPrice] = useState<string>(STRIPE_PRICES.SPLASH_10);
+  const [splashAmountLabel, setSplashAmountLabel] = useState<string>('10');
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
@@ -92,8 +98,10 @@ function SupportContent() {
           userEmail: user?.email
         }),
       });
-      const { url } = await response.json();
-      if (url) window.location.href = url;
+      const data = await response.json();
+      if (data.url) {
+        window.location.assign(data.url);
+      }
     } catch (error) {
       console.error('Checkout error:', error);
     } finally {
@@ -131,17 +139,20 @@ function SupportContent() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { val: '5', label: 'The Treat Fund' },
-                  { val: '10', label: 'The Snack Pack' },
-                  { val: '25', label: 'Bedding Refresh' }
+                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'The Treat Fund' },
+                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'The Snack Pack' },
+                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Bedding Refresh' }
                 ].map((tier) => (
                   <Button 
                     key={tier.val}
                     variant="outline"
-                    onClick={() => setAmount(tier.val)}
+                    onClick={() => {
+                      setSelectedSplashPrice(tier.price);
+                      setSplashAmountLabel(tier.val);
+                    }}
                     className={cn(
                       "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
-                      amount === tier.val ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
+                      selectedSplashPrice === tier.price ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
                     )}
                   >
                     <span className="font-headline font-black text-2xl">${tier.val}</span>
@@ -152,11 +163,11 @@ function SupportContent() {
 
               <div className="pt-4 flex justify-center">
                 <Button 
-                  onClick={() => handleCheckout(STRIPE_IDS.SPLASH)}
+                  onClick={() => handleCheckout(selectedSplashPrice)}
                   disabled={isRedirecting}
                   className="w-full max-w-sm h-16 bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
                 >
-                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT WITH ${amount} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
+                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
                 </Button>
               </div>
             </Card>
@@ -175,6 +186,7 @@ function SupportContent() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {/* Flock Member */}
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl opacity-90 border-t-4 border-t-muted">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Flock Member</h3>
@@ -193,6 +205,7 @@ function SupportContent() {
                 </Button>
               </Card>
 
+              {/* Guardian Monthly */}
               <Card className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-primary/10 scale-105 z-10 border-t-8 border-t-primary">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart className="h-20 w-20 text-primary fill-primary" /></div>
                 <div className="space-y-1 relative z-10">
@@ -218,7 +231,7 @@ function SupportContent() {
                     </div>
                   ) : (
                     <Button 
-                      onClick={() => handleCheckout(STRIPE_IDS.GUARDIAN)}
+                      onClick={() => handleCheckout(STRIPE_PRICES.GUARDIAN_MONTHLY)}
                       disabled={isRedirecting}
                       className="w-full h-14 bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
                     >
@@ -228,6 +241,7 @@ function SupportContent() {
                 </div>
               </Card>
 
+              {/* Founding Member (Yearly) */}
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl border-t-4 border-t-secondary">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Founding Member</h3>
@@ -252,7 +266,7 @@ function SupportContent() {
                     </div>
                   ) : (
                     <Button 
-                      onClick={() => handleCheckout(STRIPE_IDS.GUARDIAN)}
+                      onClick={() => handleCheckout(STRIPE_PRICES.GUARDIAN_YEARLY)}
                       disabled={isRedirecting}
                       className="w-full h-14 bg-secondary text-secondary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
                     >
@@ -266,13 +280,32 @@ function SupportContent() {
         </section>
 
         {/* 3. PROMO CODE GATE */}
-        <section className="container mx-auto px-4 mb-32"><div className="flex items-center gap-4 mb-8"><div className="h-px bg-border flex-1" /><h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0 flex items-center gap-2"><Ticket className="h-4 w-4" /> 3. Promo Code Gate</h2><div className="h-px bg-border flex-1" /></div><div className="max-w-md mx-auto"><PromoCodeInput /></div></section>
+        <section className="container mx-auto px-4 mb-32">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px bg-border flex-1" />
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0 flex items-center gap-2">
+              <Ticket className="h-4 w-4" /> 3. Promo Code Gate
+            </h2>
+            <div className="h-px bg-border flex-1" />
+          </div>
+          <div className="max-w-md mx-auto">
+            <PromoCodeInput />
+          </div>
+        </section>
 
         {/* 4. EDUCATIONAL OUTREACH */}
         <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32">
-          <div className="flex items-center gap-4 mb-12"><div className="h-px bg-border flex-1" /><h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2"><Globe className="h-4 w-4" /> 4. Educational Outreach</h2><div className="h-px bg-border flex-1" /></div>
+          <div className="flex items-center gap-4 mb-12">
+            <div className="h-px bg-border flex-1" />
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+              <Globe className="h-4 w-4" /> 4. Educational Outreach
+            </h2>
+            <div className="h-px bg-border flex-1" />
+          </div>
           <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity"><Users className="h-40 w-40 text-primary" /></div>
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+              <Users className="h-40 w-40 text-primary" />
+            </div>
             <div className="space-y-10 relative z-10 text-center">
               <div className="space-y-4">
                 <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Sponsored Access</Badge>
@@ -280,11 +313,25 @@ function SupportContent() {
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2"><div className="flex items-center gap-3 text-primary mb-2"><ShieldCheck className="h-5 w-5" /><h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4></div><p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and school programs looking to integrate live sanctuary logs.</p></div>
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2"><div className="flex items-center gap-3 text-primary mb-2"><Users className="h-5 w-5" /><h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4></div><p className="text-sm text-muted-foreground leading-relaxed font-medium">Homeschooling collectives, after-school clubs, and 4-H initiatives focused on stewardship.</p></div>
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                  <div className="flex items-center gap-3 text-primary mb-2">
+                    <ShieldCheck className="h-5 w-5" />
+                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and school programs looking to integrate live sanctuary logs.</p>
+                </div>
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                  <div className="flex items-center gap-3 text-primary mb-2">
+                    <Users className="h-5 w-5" />
+                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Homeschooling collectives, after-school clubs, and 4-H initiatives focused on stewardship.</p>
+                </div>
               </div>
               <div className="pt-8">
-                <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"><a href="mailto:decentducksorg@gmail.com?subject=Community Access Request">REQUEST SPONSORED ACCESS <ArrowRight className="ml-2 h-5 w-5" /></a></Button>
+                <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                  <a href="mailto:decentducksorg@gmail.com?subject=Community Access Request">REQUEST SPONSORED ACCESS <ArrowRight className="ml-2 h-5 w-5" /></a>
+                </Button>
               </div>
             </div>
           </Card>
@@ -292,21 +339,61 @@ function SupportContent() {
 
         {/* 5. SANCTUARY GEAR */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24">
-          <div className="flex items-center gap-4 mb-8"><div className="h-px bg-border flex-1" /><h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2"><ShoppingBag className="h-4 w-4" /> 5. Sanctuary Gear</h2><div className="h-px bg-border flex-1" /></div>
-          <div className="text-center mb-12"><h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Wear the Mission</h3><p className="text-muted-foreground max-w-xl mx-auto font-medium">Proceeds from every order go directly to the sanctuary feed and medical fund.</p></div>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px bg-border flex-1" />
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" /> 5. Sanctuary Gear
+            </h2>
+            <div className="h-px bg-border flex-1" />
+          </div>
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Wear the Mission</h3>
+            <p className="text-muted-foreground max-w-xl mx-auto font-medium">Proceeds from every order go directly to the sanctuary feed and medical fund.</p>
+          </div>
           {merchLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="h-10 w-10 animate-spin text-primary" /><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Merch Catalog...</p></div>
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Merch Catalog...</p>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {merch.map((product) => (
                 <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
                   <div className="relative aspect-square bg-muted">
-                    {product.thumbnail_url ? <Image src={product.thumbnail_url} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="h-12 w-12" /></div>}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Button asChild variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0"><a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-5 w-5" /></a></Button></div>
+                    {product.thumbnail_url ? (
+                      <Image 
+                        src={product.thumbnail_url} 
+                        alt={product.name} 
+                        fill 
+                        className="object-cover transition-transform duration-700 group-hover:scale-110" 
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center opacity-20">
+                        <ShoppingBag className="h-12 w-12" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button asChild variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+                        <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                   <CardContent className="p-6 space-y-4">
-                    <div className="space-y-1"><h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4><p className="text-lg font-headline font-black text-primary">{product.minPrice !== undefined ? (product.minPrice === product.maxPrice ? `$${product.minPrice.toFixed(2)}` : `$${product.minPrice.toFixed(2)} - $${product.maxPrice.toFixed(2)}`) : "$24.99"}</p></div>
-                    <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl"><a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">VIEW PRODUCT</a></Button>
+                    <div className="space-y-1">
+                      <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
+                      <p className="text-lg font-headline font-black text-primary">
+                        {product.minPrice !== undefined ? (
+                          product.minPrice === product.maxPrice 
+                            ? `$${product.minPrice.toFixed(2)}` 
+                            : `$${product.minPrice.toFixed(2)} - $${product.maxPrice.toFixed(2)}`
+                        ) : "$24.99"}
+                      </p>
+                    </div>
+                    <Button asChild className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
+                      <a href={`https://decent-ducks.printful.me/product/${product.id}`} target="_blank" rel="noopener noreferrer">VIEW PRODUCT</a>
+                    </Button>
                   </CardContent>
                 </Card>
               ))}

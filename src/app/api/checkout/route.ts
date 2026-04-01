@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
@@ -8,10 +7,9 @@ const stripe = new Stripe(stripeSecretKey, {
 });
 
 /**
- * @fileOverview Stripe Checkout Session Controller.
- * Handles the creation of payment and subscription sessions for sanctuary support.
- * Guardian Price ID: prod_UFfyopJ1UUtWvC
- * Splash Price ID: prod_UFg401BhNEqMsY
+ * @fileOverview Final Production Checkout Controller.
+ * Handles Price API ID mapping and dynamic session mode selection.
+ * Guardian Tiers: Subscription Mode | Splash Tiers: Payment Mode
  */
 
 export async function POST(request: Request) {
@@ -22,9 +20,13 @@ export async function POST(request: Request) {
       throw new Error('Stripe API key is missing');
     }
 
-    // Mapping logic for Guardian vs. Splash
-    // We treat prod_UFfyopJ1UUtWvC as the subscription node
-    const isGuardian = priceId === 'prod_UFfyopJ1UUtWvC';
+    // Dynamic Mode Selection based on validated Price IDs
+    const subscriptionPrices = [
+      process.env.STRIPE_PRICE_GUARDIAN_MONTHLY,
+      process.env.STRIPE_PRICE_GUARDIAN_YEARLY
+    ];
+
+    const isSubscription = subscriptionPrices.includes(priceId);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      mode: isGuardian ? 'subscription' : 'payment',
+      mode: isSubscription ? 'subscription' : 'payment',
       success_url: `${request.headers.get('origin')}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${request.headers.get('origin')}/cancel`,
       customer_email: userEmail || undefined,
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
       metadata: {
         type: 'Sanctuary Support',
         userId: userId || 'anonymous',
+        source: 'Decent Ducks Production'
       },
     });
 
