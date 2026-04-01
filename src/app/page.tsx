@@ -127,14 +127,16 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-black/60 z-10" />
-          <div 
-            className="absolute inset-0 bg-cover bg-center transition-transform scale-110"
-            style={{ 
-              backgroundImage: `url('${heroImageUrl}')`,
-              transitionDuration: '30000ms'
-            }}
-          />
+          <div className="absolute inset-0 bg-black/40 z-10" />
+          <div className="absolute inset-0 transition-transform scale-110" style={{ transitionDuration: '30000ms' }}>
+            <Image 
+              src={heroImageUrl} 
+              alt="Sanctuary Hero" 
+              fill 
+              className="object-cover" 
+              priority 
+            />
+          </div>
           
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
