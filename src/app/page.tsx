@@ -130,17 +130,16 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section - Hard Overwrite for Background Rendering to prevent black voids */}
-        <section 
-          className="relative h-[85vh] flex items-center justify-center overflow-hidden w-full"
-          style={{ 
-            backgroundImage: "linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            backgroundColor: "#1A1A1A"
-          }}
-        >
+        {/* Hero Section */}
+        <section className="relative h-[85vh] flex items-center justify-center overflow-hidden w-full bg-[#1A1A1A]">
+          <Image 
+            src="https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media&token=6bf819bf-3329-4dea-8fe4-e715d60978c7" 
+            alt="Sanctuary Hero" 
+            fill 
+            priority 
+            className="object-cover brightness-50" 
+            unoptimized 
+          />
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
               <Sparkles className="h-3.5 w-3.5" />
