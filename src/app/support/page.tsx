@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
@@ -341,7 +340,7 @@ function SupportContent() {
         <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
-            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2 whitespace-nowrap">
               <Globe className="h-4 w-4" /> 4. Educational Outreach
             </h2>
             <div className="h-px bg-border flex-1" />
@@ -353,8 +352,8 @@ function SupportContent() {
             <div className="space-y-10 relative z-10 text-center">
               <div className="space-y-4">
                 <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Sponsored Access</Badge>
-                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
+                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-tight">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
+                <p className="text-muted-foreground text-lg mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
                 <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">

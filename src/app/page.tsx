@@ -105,7 +105,6 @@ export default function Home() {
     checkRedirect();
   }, [auth, mounted, checkRedirect]);
 
-  const heroImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media";
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
 
@@ -125,11 +124,11 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section - Hard Overwrite for Background Loading */}
+        {/* Hero Section - Hard Overwrite for Background Rendering */}
         <section 
           className="relative h-[85vh] flex items-center justify-center overflow-hidden"
           style={{ 
-            backgroundImage: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media')",
+            backgroundImage: "linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat"
