@@ -167,6 +167,7 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
+      // Force-write these 6 specific receipts into the ledger
       const bulkExpenses = [
         { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-03-20', birdId: null },
         { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-03-25', birdId: null },
@@ -183,7 +184,7 @@ function ManagerPortal({ user }: { user: any }) {
         });
       }
 
-      toast({ title: "Infrastructure Ready", description: "Ledger initialized with bulk founding data." });
+      toast({ title: "Ledger Initialized", description: "All 6 founding receipts have been recorded." });
     } catch (e) {
       console.error("Seeding error:", e);
       toast({ variant: "destructive", title: "Setup Error", description: "Could not initialize ledger data." });

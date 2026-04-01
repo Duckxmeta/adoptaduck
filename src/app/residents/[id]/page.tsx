@@ -73,13 +73,14 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     }
 
     const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
 
     const monthlyExpenses = expenses.filter(e => {
       if (!e.date) return false;
       const d = new Date(e.date);
-      return d.getMonth() === m && d.getFullYear() === y;
+      // Logic Update: Include everything in the last 30 days to prevent calendar month "zero-outs"
+      return d >= thirtyDaysAgo && d <= now;
     });
 
     // Ensure numeric summation to prevent NaN propagation
@@ -306,7 +307,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               {/* Rescue Story Mapping */}
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" /> Rescue Story & Heritage
+                  <BookOpen className="h-4 w-4" /> Rescue Story & Heritage Heritage
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary."}

@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expense } from '@/lib/types';
 import { Wallet, Info, Sparkles } from 'lucide-react';
 
@@ -25,26 +25,25 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
   const chartData = useMemo(() => {
     if (!expenses) return [];
     
-    // Filter for current month or specifically seeded dates
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(now.getDate() - 30);
     
-    const monthlyExpenses = expenses.filter(e => {
+    const rollingExpenses = expenses.filter(e => {
       if (!e.date) return false;
       const d = new Date(e.date);
-      // For verification purposes, we'll show expenses from March/April 2026
-      return (d.getMonth() === 2 || d.getMonth() === 3) && d.getFullYear() === 2026;
+      // Logic Update: Show expenses from the last 30 days
+      return d >= thirtyDaysAgo && d <= now;
     });
 
     const categories = ['Feed', 'Medical', 'Bedding', 'Infrastructure', 'Acquisition', 'Hardware', 'Logistics'];
     return categories.map(cat => ({
       name: cat,
-      value: monthlyExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.cost), 0)
+      value: rollingExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.cost), 0)
     })).filter(d => d.value > 0);
   }, [expenses]);
 
-  const totalMonthly = useMemo(() => chartData.reduce((sum, d) => sum + d.value, 0), [chartData]);
+  const totalPeriod = useMemo(() => chartData.reduce((sum, d) => sum + d.value, 0), [chartData]);
 
   return (
     <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl">
@@ -54,11 +53,11 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
             <CardTitle className="text-2xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" /> SANCTUARY LEDGER
             </CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Live Financial Transparency</CardDescription>
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rolling 30-Day Transparency</CardDescription>
           </div>
           <div className="text-right">
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Cumulative Spend</p>
-            <p className="text-3xl font-headline font-black text-primary">${totalMonthly.toFixed(2)}</p>
+            <p className="text-3xl font-headline font-black text-primary">${totalPeriod.toFixed(2)}</p>
           </div>
         </div>
       </CardHeader>
