@@ -335,7 +335,7 @@ function SupportContent() {
         </section>
 
         {/* 4. EDUCATIONAL OUTREACH */}
-        <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32">
+        <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32 h-auto">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2 whitespace-normal">
@@ -343,7 +343,7 @@ function SupportContent() {
             </h2>
             <div className="h-px bg-border flex-1" />
           </div>
-          <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group">
+          <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group h-auto">
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
               <Users className="h-40 w-40 text-primary" />
             </div>
@@ -354,14 +354,14 @@ function SupportContent() {
                 <p className="text-muted-foreground text-lg mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
                   <div className="flex items-center gap-3 text-primary mb-2">
                     <ShieldCheck className="h-5 w-5" />
                     <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and school programs looking to integrate live sanctuary logs.</p>
                 </div>
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2">
+                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
                   <div className="flex items-center gap-3 text-primary mb-2">
                     <Users className="h-5 w-5" />
                     <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community</h4>
