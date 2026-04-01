@@ -125,19 +125,16 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="relative h-[85vh] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 z-10" />
-          <div className="absolute inset-0 transition-transform scale-110" style={{ transitionDuration: '30000ms' }}>
-            <Image 
-              src={heroImageUrl} 
-              alt="Sanctuary Hero" 
-              fill 
-              className="object-cover" 
-              priority 
-            />
-          </div>
-          
+        {/* Hero Section - Hard Overwrite for Background Loading */}
+        <section 
+          className="relative h-[85vh] flex items-center justify-center overflow-hidden"
+          style={{ 
+            backgroundImage: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
+          }}
+        >
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
               <Sparkles className="h-3.5 w-3.5" />
