@@ -23,7 +23,8 @@ import {
   Star,
   ShoppingBag,
   ExternalLink,
-  Ticket
+  Ticket,
+  Gem
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -381,7 +382,7 @@ function SupportContent() {
         </section>
 
         {/* 5. SANCTUARY GEAR */}
-        <section id="merch" className="container mx-auto px-4 scroll-mt-24">
+        <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
@@ -453,6 +454,66 @@ function SupportContent() {
               )}
             </div>
           )}
+        </section>
+
+        {/* 6. EXCLUSIVE BOUTIQUE */}
+        <section id="boutique" className="container mx-auto px-4 scroll-mt-24">
+          <div className="flex items-center gap-4 mb-12">
+            <div className="h-px bg-primary/20 flex-1" />
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
+              <Star className="h-4 w-4" /> 6. Exclusive Boutique
+            </h2>
+            <div className="h-px bg-primary/20 flex-1" />
+          </div>
+
+          <Card className="max-w-5xl mx-auto bg-gradient-to-br from-card to-background border-4 border-primary/30 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+              <Star className="h-40 w-40 text-primary" />
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="relative aspect-square rounded-[2rem] overflow-hidden border-2 border-primary/20 shadow-2xl">
+                <Image 
+                  src="https://picsum.photos/seed/boutique-jars/800/800" 
+                  alt="Premium Duck Decor" 
+                  fill 
+                  className="object-cover transition-transform duration-10000 group-hover:scale-110"
+                  data-ai-hint="premium decor"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <Badge className="absolute bottom-6 left-6 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 py-2">Collector's Edition</Badge>
+              </div>
+
+              <div className="space-y-8 text-center lg:text-left">
+                <div className="space-y-4">
+                  <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Limited Release</Badge>
+                  <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-tight">Decent Duck <span className="text-primary">Premium Decor</span></h2>
+                  <p className="text-muted-foreground text-lg font-medium leading-relaxed">
+                    Elevate your space with the 'Decent Duck Premium Duck Desk Decor Jars'. A high-end artisan collaboration for the most dedicated sanctuary supporters.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 justify-center lg:justify-start text-primary">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="text-sm font-black uppercase tracking-widest">Artisan Craftsmanship</span>
+                  </div>
+                  <div className="flex items-center gap-3 justify-center lg:justify-start text-primary">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="text-sm font-black uppercase tracking-widest">Exclusivo One Collection</span>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform w-full sm:w-auto">
+                    <a href="https://app.exclusivo.one/duck" target="_blank" rel="noopener noreferrer">
+                      EXPLORE THE VAULT <ArrowRight className="ml-2 h-5 w-5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
         </section>
       </main>
 
