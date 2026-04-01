@@ -60,21 +60,36 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { data: allBirds } = useCollection<Resident>(birdsQuery);
 
   const careCosts = useMemo(() => {
-    if (!expenses || !allBirds || !id) return { monthly: 0 };
+    // Hardened Defense: Check existence and type of required data
+    if (!expenses || !Array.isArray(expenses) || !allBirds || !id) {
+      return { monthly: 0 };
+    }
+
     const now = new Date();
     const m = now.getMonth();
     const y = now.getFullYear();
 
     const monthlyExpenses = expenses.filter(e => {
+      if (!e.date) return false;
       const d = new Date(e.date);
       return d.getMonth() === m && d.getFullYear() === y;
     });
 
-    const specific = monthlyExpenses.filter(e => e.birdId === id).reduce((s, e) => s + e.cost, 0);
-    const shared = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + e.cost, 0);
-    const overhead = shared / (allBirds.length || 1);
+    // Ensure numeric summation to prevent NaN propagation
+    const specific = monthlyExpenses
+      .filter(e => e.birdId === id)
+      .reduce((s, e) => s + (Number(e.cost) || 0), 0);
+      
+    const shared = monthlyExpenses
+      .filter(e => !e.birdId)
+      .reduce((s, e) => s + (Number(e.cost) || 0), 0);
+      
+    const birdCount = allBirds.length || 1;
+    const overhead = shared / birdCount;
 
-    return { monthly: specific + overhead };
+    const total = (specific + overhead) || 0;
+    
+    return { monthly: total };
   }, [expenses, allBirds, id]);
 
   const galleryImages = useMemo(() => {
@@ -216,7 +231,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     <span className="flex items-center gap-1.5 text-primary"><Wallet className="h-3.5 w-3.5" /> ${careCosts.monthly.toFixed(0)} Monthly Care</span>
+                     <span className="flex items-center gap-1.5 text-primary"><Wallet className="h-3.5 w-3.5" /> ${Number(careCosts.monthly || 0).toFixed(0)} Monthly Care</span>
                   </div>
                 </div>
                 <Button 
@@ -236,7 +251,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                     <span className="text-[10px] font-black uppercase tracking-widest">Est. Cost to Care</span>
                   </div>
                   <div>
-                    <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">${careCosts.monthly.toFixed(2)}</span>
+                    <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">${Number(careCosts.monthly || 0).toFixed(2)}</span>
                     <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Month</span>
                   </div>
                 </div>

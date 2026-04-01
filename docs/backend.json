@@ -61,6 +61,21 @@
         "id": { "type": "string" },
         "usageCount": { "type": "number" }
       }
+    },
+    "Expense": {
+      "title": "Expense",
+      "type": "object",
+      "description": "Records of sanctuary expenditures.",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string" },
+        "category": { "type": "string", "enum": ["Feed", "Medical", "Bedding", "Infrastructure"] },
+        "cost": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "birdId": { "type": "string", "description": "Optional link to a specific resident." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["itemName", "category", "cost", "date"]
     }
   },
   "auth": {
@@ -86,6 +101,10 @@
     "/promo_codes/{codeId}": {
       "schema": "#/backend/entities/PromoCode",
       "description": "Tracking for promo code usage."
+    },
+    "/ledger/{expenseId}": {
+      "schema": "#/backend/entities/Expense",
+      "description": "Historical log of sanctuary costs."
     }
   }
 }

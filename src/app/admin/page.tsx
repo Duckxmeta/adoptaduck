@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,17 +17,18 @@ import {
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
   Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench, Settings
+  Wrench, Settings, Wallet, Database
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs, deleteField } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Resident, DailyStatus, UserProfile } from '@/lib/types';
+import { Resident, DailyStatus, UserProfile, Expense } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
 import { DeleteResidentDialog } from '@/components/admin/DeleteResidentDialog';
+import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
 import { cn, getResidentName } from '@/lib/utils';
@@ -88,6 +90,9 @@ function ManagerPortal({ user }: { user: any }) {
   const [loggingResident, setLoggingResident] = useState<Resident | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isInitializingLedger, setIsInitializingLedger] = useState(false);
   const [vibeBird, setVibeBird] = useState<Resident | null>(null);
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
@@ -106,6 +111,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [isPosting, setIsPosting] = useState(false);
 
   const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
+  const expensesQuery = useMemoFirebase(() => query(collection(firestore!, 'ledger'), orderBy('date', 'desc')), [firestore]);
   const todayEggRef = useMemoFirebase(() => {
     if (!firestore || !todayDate) return null;
     return doc(firestore, 'egg_history', todayDate);
@@ -113,6 +119,7 @@ function ManagerPortal({ user }: { user: any }) {
   const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: expenses } = useCollection<Expense>(expensesQuery);
   const { data: todayEggData } = useDoc<any>(todayEggRef);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
@@ -154,6 +161,28 @@ function ManagerPortal({ user }: { user: any }) {
     });
     toast({ title: status ? "Status Updated" : "Status Cleared" });
     setVibeBird(null);
+  };
+
+  const handleInitializeLedger = async () => {
+    if (!firestore) return;
+    setIsInitializingLedger(true);
+    try {
+      // Seed Entry for G0-COCOA
+      const seedData = {
+        birdId: 'G0-COCOA',
+        itemName: 'Sanctuary Seed Feed',
+        cost: 12.50,
+        category: 'Feed',
+        date: '2026-04-01',
+        createdAt: new Date().toISOString()
+      };
+      await addDoc(collection(firestore, 'ledger'), seedData);
+      toast({ title: "Infrastructure Ready", description: "Ledger initialized with seed data." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Setup Error", description: "Could not initialize ledger collection." });
+    } finally {
+      setIsInitializingLedger(false);
+    }
   };
 
   const handleSyncEggs = async () => {
@@ -209,7 +238,6 @@ function ManagerPortal({ user }: { user: any }) {
       let imageUrl = null;
       if (bullImage && storage) {
         const fileName = `bulletin-${Date.now()}`;
-        // Explicitly declared bulletin-images path
         const fileRef = storageRef(storage, `bulletin-images/${fileName}`);
         const snapshot = await uploadBytes(fileRef, bullImage);
         imageUrl = await getDownloadURL(snapshot.ref);
@@ -227,7 +255,6 @@ function ManagerPortal({ user }: { user: any }) {
       setBullPreview(null);
       toast({ title: "Bulletin Published" });
     } catch (e: any) {
-      // Detailed error logging for diagnostics
       console.error("Sanctuary Bulletin Upload Failure:", e.code || e.message, e);
       toast({ variant: "destructive", title: "Error posting update", description: "Storage access denied or network timeout." });
     } finally {
@@ -507,6 +534,63 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
+        {/* SANCTUARY LEDGER ADMIN */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Wallet className="h-4 w-4 text-primary" />
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SANCTUARY LEDGER</h2>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleInitializeLedger} 
+                disabled={isInitializingLedger}
+                variant="outline" 
+                className="border-secondary/20 text-secondary h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
+              >
+                {isInitializingLedger ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Database className="h-4 w-4 mr-1" />} 
+                Initialize Ledger
+              </Button>
+              <Button 
+                onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} 
+                className="bg-primary/10 text-primary border border-primary/20 h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
+              >
+                <Plus className="h-4 w-4 mr-1" /> ADD EXPENSE
+              </Button>
+            </div>
+          </div>
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
+            {expenses && expenses.length > 0 ? (
+              <div className="space-y-3">
+                {expenses.slice(0, 10).map((exp) => (
+                  <div key={exp.id} className="flex items-center justify-between p-4 bg-muted/10 rounded-xl border border-border">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Activity className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">{exp.itemName}</p>
+                        <p className="text-[9px] font-black uppercase text-muted-foreground">{exp.category} • {exp.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="font-headline font-black text-primary">${Number(exp.cost).toFixed(2)}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => { setEditingExpense(exp); setIsExpenseDialogOpen(true); }}>
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
+                <Wallet className="h-8 w-8 text-muted-foreground" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No expenses recorded. Use Initialize to seed data.</p>
+              </div>
+            )}
+          </Card>
+        </section>
+
         {/* VIBE BOARD */}
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
@@ -615,6 +699,8 @@ function ManagerPortal({ user }: { user: any }) {
         await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
         toast({ title: "Removed" });
       }} />
+
+      <ExpenseDialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen} expense={editingExpense} />
     </div>
   );
 }
