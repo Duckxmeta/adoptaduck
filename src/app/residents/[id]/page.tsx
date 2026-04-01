@@ -19,7 +19,8 @@ import {
   Sparkles,
   ArrowLeft,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
@@ -60,6 +61,11 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { data: allBirds } = useCollection<Resident>(birdsQuery);
 
   const careCosts = useMemo(() => {
+    // Tier Gating: Only Flock Members (Logged In) see the financial engine data
+    if (!user) {
+      return { monthly: null };
+    }
+
     // Hardened Defense: Check existence and type of required data
     if (!expenses || !Array.isArray(expenses) || !allBirds || !id) {
       return { monthly: 0 };
@@ -90,7 +96,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     const total = (specific + overhead) || 0;
     
     return { monthly: total };
-  }, [expenses, allBirds, id]);
+  }, [expenses, allBirds, id, user]);
 
   const galleryImages = useMemo(() => {
     if (!bird) return [];
@@ -231,7 +237,10 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     <span className="flex items-center gap-1.5 text-primary"><Wallet className="h-3.5 w-3.5" /> ${Number(careCosts.monthly || 0).toFixed(0)} Monthly Care</span>
+                     <span className="flex items-center gap-1.5 text-primary">
+                       <Wallet className="h-3.5 w-3.5" /> 
+                       {careCosts.monthly !== null ? `$${Number(careCosts.monthly || 0).toFixed(0)} Monthly Care` : 'Member Gated'}
+                     </span>
                   </div>
                 </div>
                 <Button 
@@ -251,8 +260,24 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                     <span className="text-[10px] font-black uppercase tracking-widest">Est. Cost to Care</span>
                   </div>
                   <div>
-                    <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">${Number(careCosts.monthly || 0).toFixed(2)}</span>
-                    <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Month</span>
+                    {user ? (
+                      <>
+                        <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
+                          ${Number(careCosts.monthly || 0).toFixed(2)}
+                        </span>
+                        <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Month</span>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-primary font-black">
+                          <Lock className="h-4 w-4" />
+                          <span className="text-sm uppercase tracking-tighter">FLOCK MEMBERS ONLY</span>
+                        </div>
+                        <Link href="/signup" className="text-[9px] font-black text-secondary hover:underline uppercase tracking-widest block">
+                          JOIN FREE →
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl">
