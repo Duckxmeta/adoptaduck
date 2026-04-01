@@ -29,6 +29,12 @@ import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * @fileOverview Decent Ducks Sanctuary Home Page.
+ * Restored to original branding with hard-fixed Hero focal point.
+ * Maintains strict content lock on mission and $75/yr pricing.
+ */
+
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
@@ -124,14 +130,15 @@ export default function Home() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section - Hard Overwrite for Background Rendering */}
+        {/* Hero Section - Hard Overwrite for Background Rendering to prevent black voids */}
         <section 
-          className="relative h-[85vh] flex items-center justify-center overflow-hidden"
+          className="relative h-[85vh] flex items-center justify-center overflow-hidden w-full"
           style={{ 
             backgroundImage: "linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media')",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat"
+            backgroundRepeat: "no-repeat",
+            backgroundColor: "#1A1A1A"
           }}
         >
           <div className="container mx-auto px-4 relative z-20 text-center">
@@ -163,7 +170,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Latest from the Sanctuary - Bulletin Grid */}
+        {/* Latest Updates - Sanctuary Bulletin */}
         {bulletins.length > 0 && (
           <section className="py-24 container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
@@ -235,7 +242,7 @@ export default function Home() {
           </section>
         )}
 
-        {/* Support Section */}
+        {/* Support CTA */}
         <section className="py-24 bg-card/50 border-y border-border">
           <div className="container mx-auto px-4 text-center space-y-8">
             <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>

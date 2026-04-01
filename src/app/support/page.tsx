@@ -22,10 +22,8 @@ import {
   Star,
   ShoppingBag,
   ExternalLink,
-  Ticket,
-  Gem
+  Ticket
 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -35,7 +33,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
-// REVENUE NODE MAPPING - PRICE API IDs (SYNCED 2026 PRODUCTION)
+// PRODUCTION STRIPE PRICE IDS (SYNCED 2026)
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
   SPLASH_10: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_10 || 'price_1THAidGyzCRtb3HxaeBUkg33',
@@ -120,7 +118,7 @@ function SupportContent() {
       toast({
         variant: "destructive",
         title: "Checkout Unavailable",
-        description: error.message || "The financial engine is currently being updated. Please try again shortly.",
+        description: error.message || "Financial system communication error. Please retry.",
       });
     } finally {
       setIsRedirecting(false);
@@ -340,7 +338,7 @@ function SupportContent() {
         <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
-            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2 whitespace-nowrap">
+            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2 whitespace-normal">
               <Globe className="h-4 w-4" /> 4. Educational Outreach
             </h2>
             <div className="h-px bg-border flex-1" />
@@ -477,7 +475,6 @@ function SupportContent() {
                   alt="Premium Duck Decor" 
                   fill 
                   className="object-cover transition-transform duration-10000 group-hover:scale-110"
-                  data-ai-hint="premium decor"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <Badge className="absolute bottom-6 left-6 bg-primary text-black font-black uppercase text-[10px] tracking-widest px-4 py-2">Collector's Edition</Badge>
