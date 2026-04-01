@@ -6,6 +6,8 @@ import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Heart, 
   ArrowRight,
@@ -49,6 +51,7 @@ function SupportContent() {
   
   const [selectedSplashPrice, setSelectedSplashPrice] = useState<string>(STRIPE_PRICES.SPLASH_10);
   const [splashAmountLabel, setSplashAmountLabel] = useState<string>('10');
+  const [customAmount, setCustomAmount] = useState<string>('');
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
@@ -78,17 +81,27 @@ function SupportContent() {
   const handleCheckout = async (priceId: string) => {
     setIsRedirecting(true);
     try {
+      const body: any = {
+        priceId,
+        userId: user?.uid,
+        userEmail: user?.email
+      };
+
+      // Validation for custom amounts
+      if (priceId === STRIPE_PRICES.SPLASH_CUSTOM) {
+        const amt = parseFloat(customAmount);
+        if (isNaN(amt) || amt < 1) {
+          throw new Error("Please enter a custom amount of at least $1.");
+        }
+        body.amount = amt;
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          userId: user?.uid,
-          userEmail: user?.email
-        }),
+        body: JSON.stringify(body),
       });
 
-      // Fix SyntaxError: Check if response is valid JSON before parsing
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Server returned ${response.status}`);
@@ -152,16 +165,41 @@ function SupportContent() {
                     onClick={() => {
                       setSelectedSplashPrice(tier.price);
                       setSplashAmountLabel(tier.val);
+                      setCustomAmount('');
                     }}
                     className={cn(
                       "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
-                      selectedSplashPrice === tier.price ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
+                      selectedSplashPrice === tier.price && !customAmount ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
                     )}
                   >
                     <span className="font-headline font-black text-2xl">${tier.val}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest opacity-70">{tier.label}</span>
                   </button>
                 ))}
+              </div>
+
+              <div className="pt-6 border-t border-border/50">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 mb-2 block">Or Enter Custom Amount</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className={cn("font-black text-lg transition-colors", selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "text-secondary" : "text-muted-foreground")}>$</span>
+                  </div>
+                  <Input 
+                    type="number"
+                    min="1"
+                    placeholder="0.00"
+                    value={customAmount}
+                    onChange={(e) => {
+                      setCustomAmount(e.target.value);
+                      setSelectedSplashPrice(STRIPE_PRICES.SPLASH_CUSTOM);
+                      setSplashAmountLabel(e.target.value || 'Custom');
+                    }}
+                    className={cn(
+                      "pl-10 bg-background border-2 h-14 rounded-xl font-black text-lg transition-all",
+                      selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "border-secondary ring-2 ring-secondary/10" : "border-border"
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="pt-4 flex justify-center">
