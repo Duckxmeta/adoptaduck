@@ -59,7 +59,11 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "usageCount": { "type": "number" }
+        "type": { "type": "string", "enum": ["discount", "bypass_upgrade"] },
+        "targetRole": { "type": "string" },
+        "durationDays": { "type": "number" },
+        "usageCount": { "type": "number" },
+        "isActive": { "type": "boolean" }
       }
     },
     "Expense": {

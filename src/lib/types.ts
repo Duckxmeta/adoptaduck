@@ -50,7 +50,10 @@ export type UserProfile = {
   email: string;
   my_flock: string[];
   community_codes: string[];
+  usedCodes?: string[]; // Code tracking for Golden Tickets
   role: 'member' | 'admin' | 'guardian';
+  membershipStartedAt?: string;
+  membershipExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -105,4 +108,13 @@ export type BulletinEntry = {
   content: string;
   imageUrl?: string;
   timestamp: any;
+};
+
+export type PromoCode = {
+  id: string;
+  type: 'discount' | 'bypass_upgrade';
+  targetRole?: string;
+  durationDays?: number;
+  usageCount: number;
+  isActive: boolean;
 };
