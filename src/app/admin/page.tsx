@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,13 +16,13 @@ import {
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
   Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench, Settings, Wallet, Database
+  Wrench, Settings, Wallet, Database, XCircle
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs, deleteField } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Resident, DailyStatus, UserProfile, Expense } from '@/lib/types';
+import { Resident, DailyStatus, UserProfile, Expense, NamingRequest } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -96,7 +95,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [vibeBird, setVibeBird] = useState<Resident | null>(null);
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
   const [todayDate, setTodayDate] = useState<string>('');
 
   useEffect(() => {
@@ -127,27 +126,22 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Admin Notification Listener
+  // Naming Request Listener
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email) || !firestore) return;
 
     const q = query(
-      collection(firestore, 'notifications'),
-      where('status', '==', 'unread')
+      collection(firestore, 'naming_requests'),
+      where('status', '==', 'pending'),
+      orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).sort((a: any, b: any) => {
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
-      });
-      setNotifications(docs);
-    }, (error) => {
-      console.error("Notification listener error:", error);
+      })) as NamingRequest[];
+      setNamingRequests(docs);
     });
 
     return () => unsubscribe();
@@ -167,7 +161,6 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
-      // Filing the remaining 5 foundational receipts with today's date (2026-04-01)
       const bulkExpenses = [
         { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-04-01', birdId: null },
         { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-04-01', birdId: null },
@@ -209,31 +202,31 @@ function ManagerPortal({ user }: { user: any }) {
     setDoc(dailyStatusRef, { [taskKey]: newValue }, { merge: true });
   };
 
-  const markNotificationRead = async (id: string) => {
+  const handleApproveRequest = async (req: NamingRequest) => {
     try {
-      await updateDoc(doc(firestore!, 'notifications', id), {
-        status: 'read'
-      });
+      const batch = writeBatch(firestore!);
+      const birdRef = doc(firestore!, 'birds', req.birdId);
+      const reqRef = doc(firestore!, 'naming_requests', req.id);
+
+      batch.update(birdRef, { name: req.suggestedName, updatedAt: new Date().toISOString() });
+      batch.update(reqRef, { status: 'approved', updatedAt: new Date().toISOString() });
+
+      await batch.commit();
+      toast({ title: "Approved!", description: `Resident renamed to ${req.suggestedName}.` });
     } catch (e) {
-      console.error("Error marking notification as read:", e);
+      toast({ variant: "destructive", title: "Error", description: "Could not approve naming request." });
     }
   };
 
-  const handleVerifyAndApprove = async (note: any) => {
-    if (!ADMIN_EMAILS.includes(user.email)) return;
-
+  const handleDenyRequest = async (requestId: string) => {
     try {
-      const batch = writeBatch(firestore!);
-      const birdRef = doc(firestore!, 'birds', note.birdId);
-      const noteRef = doc(firestore!, 'notifications', note.id);
-
-      batch.update(birdRef, { name: note.suggestedName });
-      batch.update(noteRef, { status: 'approved' });
-
-      await batch.commit();
-      toast({ title: "Success!", description: `Resident renamed to ${note.suggestedName} successfully.` });
+      await updateDoc(doc(firestore!, 'naming_requests', requestId), {
+        status: 'denied',
+        updatedAt: new Date().toISOString()
+      });
+      toast({ title: "Request Denied" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not approve suggestion." });
+      toast({ variant: "destructive", title: "Error", description: "Could not deny request." });
     }
   };
 
@@ -324,9 +317,9 @@ function ManagerPortal({ user }: { user: any }) {
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Bell className="h-6 w-6 text-muted-foreground" />
-                {notifications.length > 0 && (
+                {namingRequests.length > 0 && (
                   <div className="absolute -top-2 -right-2 bg-destructive text-white h-5 w-5 flex items-center justify-center rounded-full text-[10px] border-2 border-background font-bold animate-pulse">
-                    {notifications.length}
+                    {namingRequests.length}
                   </div>
                 )}
               </div>
@@ -336,75 +329,42 @@ function ManagerPortal({ user }: { user: any }) {
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
 
-        {/* NOTIFICATION CENTER */}
+        {/* PENDING NAME REQUESTS */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
-            <Bell className="h-4 w-4 text-secondary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">RECENT SUGGESTIONS</h2>
+            <Sparkles className="h-4 w-4 text-secondary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">PENDING NAME REQUESTS</h2>
           </div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
-            {notifications.length > 0 ? (
-              <ScrollArea className="h-[250px] pr-4">
+            {namingRequests.length > 0 ? (
+              <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-3">
-                  {notifications.map((note) => (
-                    <div key={note.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
+                  {namingRequests.map((req) => (
+                    <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl gap-4">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary/10 rounded-full">
                           <Inbox className="h-4 w-4 text-secondary" />
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground">
-                            <span className="text-secondary">{note.userIdentity}</span> suggested <span className="text-primary">'{note.suggestedName}'</span> for {getResidentName({ name: note.birdName, breed: '' })}
+                            <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary">'{req.suggestedName}'</span> for Resident {req.birdName}
                           </p>
-                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Status: {note.userStatus}</p>
+                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Email: {req.userEmail} • Bird ID: {req.birdId}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="bg-card text-card-foreground border-border rounded-2xl">
-                            <DialogHeader>
-                              <DialogTitle className="font-headline font-black uppercase tracking-tight">Suggestion Details</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="flex items-center gap-3 p-3 bg-muted/20 rounded-xl">
-                                <div className="p-2 bg-primary/10 rounded-full"><Info className="h-4 w-4 text-primary" /></div>
-                                <div>
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Proposed Name</p>
-                                  <p className="font-bold text-lg">{note.suggestedName}</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Requester</p>
-                                  <p className="text-xs break-all">{note.userIdentity}</p>
-                                  <Badge className="mt-1 text-[8px]">{note.userStatus}</Badge>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] font-black uppercase text-muted-foreground">Target Bird</p>
-                                  <p className="text-xs">{getResidentName({ name: note.birdName, breed: '' })} (ID: {note.birdId})</p>
-                                </div>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
                         <Button 
-                          onClick={() => handleVerifyAndApprove(note)}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                          onClick={() => handleApproveRequest(req)}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 text-[10px] font-black uppercase tracking-widest flex-1 md:flex-none"
                         >
-                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Verify & Approve
+                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Approve
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm" 
-                          onClick={() => markNotificationRead(note.id)}
-                          className="text-muted-foreground hover:bg-muted/10 h-8 px-2"
+                          onClick={() => handleDenyRequest(req.id)}
+                          className="text-destructive hover:bg-destructive/10 h-10 px-4 text-[10px] font-black uppercase tracking-widest flex-1 md:flex-none border border-destructive/20"
                         >
-                          <CheckCheck className="h-3.5 w-3.5" />
+                          <XCircle className="h-3.5 w-3.5 mr-1" /> Deny
                         </Button>
                       </div>
                     </div>
@@ -414,7 +374,7 @@ function ManagerPortal({ user }: { user: any }) {
             ) : (
               <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
                 <CheckCheck className="h-8 w-8 text-muted-foreground" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No unread suggestions.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">No pending naming requests.</p>
               </div>
             )}
           </Card>

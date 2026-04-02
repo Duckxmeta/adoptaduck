@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "ResidentBird": {
@@ -80,6 +79,20 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["itemName", "category", "cost", "date"]
+    },
+    "NamingRequest": {
+      "title": "NamingRequest",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "birdId": { "type": "string" },
+        "birdName": { "type": "string" },
+        "suggestedName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "denied"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -109,6 +122,10 @@
     "/ledger/{expenseId}": {
       "schema": "#/backend/entities/Expense",
       "description": "Historical log of sanctuary costs."
+    },
+    "/naming_requests/{requestId}": {
+      "schema": "#/backend/entities/NamingRequest",
+      "description": "User suggested names for review."
     }
   }
 }

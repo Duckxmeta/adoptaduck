@@ -1,4 +1,3 @@
-
 export type Resident = {
   id: string;
   name: string;
@@ -69,14 +68,15 @@ export type Donation = {
   uid: string | null;
 };
 
-export type NameSuggestion = {
+export type NamingRequest = {
   id: string;
   birdId: string;
-  birdOriginalName: string;
+  birdName: string;
   suggestedName: string;
-  donorEmail?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
+  userEmail: string;
+  userName: string;
+  status: 'pending' | 'approved' | 'denied';
+  createdAt: any;
 };
 
 export type HealthLogEntry = {

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -17,9 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Resident } from "@/lib/types";
 import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
@@ -30,33 +28,28 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const { toast } = useToast();
   const router = useRouter();
 
-  const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
   const displayName = resident.name;
 
   const handleSubmitSuggestion = async () => {
     setIsSubmitting(true);
     try {
       if (suggestedName.trim() && firestore && user) {
-        const userDoc = await getDoc(doc(firestore, 'users', user.uid));
-        const role = userDoc.exists() ? userDoc.data().role : 'Member';
-
-        const notificationData = {
-          type: 'name_suggestion',
+        // Naming Request Engine: Save to naming_requests
+        const requestData = {
           birdId: resident.id,
           birdName: resident.name,
           suggestedName: suggestedName.trim(),
-          userIdentity: user.email,
-          userStatus: role,
-          userId: user.uid,
-          status: 'unread',
+          userEmail: user.email || 'anonymous',
+          userName: user.displayName || 'A Supporter',
+          status: 'pending',
           createdAt: serverTimestamp()
         };
 
-        await addDoc(collection(firestore, 'notifications'), notificationData);
+        await addDoc(collection(firestore, 'naming_requests'), requestData);
         
         toast({
           title: "Suggestion Recorded!",
-          description: `Noted your suggestion for ${displayName}. Redirecting...`,
+          description: `Admin notified of your suggested name for ${displayName}.`,
         });
       }
       
@@ -65,10 +58,11 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
         setIsSubmitting(false);
       }, 1000);
     } catch (error) {
+      console.error("Submission Error:", error);
       toast({
         variant: "destructive",
         title: "Submission Error",
-        description: "Could not save. You can still support directly.",
+        description: "Could not save your request. You can still support directly.",
       });
       setIsSubmitting(false);
     }
