@@ -11,12 +11,6 @@ import { Sparkles, Trophy, ArrowRight, Heart, CheckCircle2, Star } from 'lucide-
 import Link from 'next/link';
 import Image from 'next/image';
 
-/**
- * @fileOverview High-contrast Stripe Success Page.
- * Differentiates between Guardians and Supporters.
- * Featuring Branded Achievement Branding.
- */
-
 function SuccessContent() {
   const searchParams = useSearchParams();
   const type = searchParams.get('type') || 'supporter';
@@ -53,13 +47,11 @@ function SuccessContent() {
 
           {/* Branded Achievement Anchor */}
           <div className="relative group animate-in zoom-in duration-700 delay-300">
-            {/* Gold Glow Effect */}
             <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-[3rem] opacity-50 group-hover:opacity-80 transition-opacity" />
             
             <Card className="relative overflow-hidden bg-card border-[6px] border-primary rounded-[3rem] shadow-2xl">
               <div className="absolute top-0 left-0 w-full h-3 bg-primary" />
               <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
-                {/* ACHIEVEMENT VISUAL */}
                 <div className="w-full md:w-1/2 bg-[#1A1A1A] relative flex items-center justify-center p-12 min-h-[400px] border-b md:border-b-0 md:border-r border-border/50">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-50" />
                   <div className="relative z-10 space-y-8 flex flex-col items-center">

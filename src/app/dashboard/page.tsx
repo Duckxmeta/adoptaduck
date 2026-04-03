@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -31,28 +32,22 @@ import {
   Award,
   Lock,
   Database,
-  CreditCard,
   ShieldCheck,
   LogOut,
   Zap,
-  Megaphone
+  Megaphone,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
-import { BulletinBoard } from '@/components/members/BulletinBoard';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
-
-const GOALS = {
-  feed: 300,
-  medical: 500,
-  infrastructure: 1000
-};
 
 export default function MemberDashboard() {
   const { user, isUserLoading } = useUser();
@@ -88,7 +83,7 @@ export default function MemberDashboard() {
   }, [firestore]);
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
-  const isAdmin = user?.email === 'flowmarket1@gmail.com' || user?.email === 'decentducksorg@gmail.com';
+  const role = userProfile?.role || 'member';
 
   // DATA QUERIES
   const expensesQuery = useMemoFirebase(() => {
@@ -97,20 +92,6 @@ export default function MemberDashboard() {
   }, [firestore, isGuardian]);
 
   const { data: expenses } = useCollection<Expense>(expensesQuery);
-
-  const donationsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'donations'), orderBy('timestamp', 'desc'), limit(50));
-  }, [firestore]);
-
-  const { data: donations } = useCollection<Donation>(donationsQuery);
-
-  const myDonationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return query(collection(firestore, 'donations'), where('uid', '==', user.uid));
-  }, [firestore, user?.uid]);
-
-  const { data: myDonations } = useCollection<Donation>(myDonationsQuery);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -133,31 +114,6 @@ export default function MemberDashboard() {
   }, [firestore, todayStr]);
 
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
-
-  // IMPACT CALCULATIONS
-  const myTotalImpact = useMemo(() => {
-    if (!myDonations) return 0;
-    return myDonations.reduce((sum, d) => sum + (Number(d?.amount) || 0), 0);
-  }, [myDonations]);
-
-  const impactStats = useMemo(() => {
-    if (!donations) return { feed: 0, medical: 0, infrastructure: 0 };
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthly = donations.filter(d => {
-      if (!d?.timestamp) return false;
-      const date = new Date(d.timestamp);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-    });
-
-    return {
-      feed: monthly.filter(d => d?.designation === 'feed' || d?.designation?.toLowerCase().includes('feed')).reduce((s, d) => s + (Number(d?.amount) || 0), 0),
-      medical: monthly.filter(d => d?.designation === 'medical' || d?.designation?.toLowerCase().includes('medical')).reduce((s, d) => s + (Number(d?.amount) || 0), 0),
-      infrastructure: monthly.filter(d => d?.designation === 'infrastructure' || d?.designation?.toLowerCase().includes('infra')).reduce((s, d) => s + (Number(d?.amount) || 0), 0)
-    };
-  }, [donations]);
 
   const globalHealth = useMemo(() => {
     if (!dailyStatus) return 0;
@@ -190,7 +146,7 @@ export default function MemberDashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
-        {/* MIRROR HEADER: WELCOME BANNER */}
+        {/* HEADER */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
@@ -205,19 +161,9 @@ export default function MemberDashboard() {
            </div>
 
            <div className="flex flex-col md:flex-row gap-4">
-             <Card className="bg-primary/5 border-primary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4 group">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                   <Award className="h-6 w-6" />
-                </div>
-                <div>
-                   <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">My Impact</p>
-                   <p className="text-2xl font-headline font-black text-primary">${myTotalImpact.toFixed(0)}</p>
-                </div>
-             </Card>
-
              <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                   {isGuardian ? <ShieldCheck className="h-6 w-6" /> : <CreditCard className="h-6 w-6" />}
+                   {isGuardian ? <ShieldCheck className="h-6 w-6" /> : <Heart className="h-6 w-6" />}
                 </div>
                 <div>
                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Tier</p>
@@ -229,124 +175,108 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* MIRROR SECTION 1: BULLETIN */}
-        {bulletins.length > 0 && (
-          <section className="animate-in fade-in duration-1000">
-            <div className="flex items-center gap-3 mb-6">
-              <Megaphone className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {bulletins.map(b => (
-                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
-                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
-                      <Clock className="h-2.5 w-2.5" />
-                      {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
-        <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
-
-        {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
-        <EggCounter initialCount={eggHistory?.count || 0} readOnly />
-
-        {/* SECTION 4: IMPACT PROGRESS */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <Card className="lg:col-span-2 bg-card border-border border-2 rounded-3xl p-8 shadow-2xl">
-              <div className="space-y-8">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" /> COMMUNITY SUSTAINMENT
-                  </h2>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Monthly funding progress towards direct care</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   {[
-                     { label: "Flock Feed", key: "feed", goal: GOALS.feed, icon: "🌾" },
-                     { label: "Vet Fund", key: "medical", goal: GOALS.medical, icon: "🏥" },
-                     { label: "Projects", key: "infrastructure", goal: GOALS.infrastructure, icon: "🔨" }
-                   ].map(item => (
-                     <div key={item.key} className="space-y-3 p-4 bg-muted/10 rounded-2xl border border-border">
-                        <div className="flex justify-between items-center">
-                           <span className="text-lg">{item.icon}</span>
-                           <span className="text-[10px] font-black text-primary">
-                             ${Math.round(impactStats[item.key as keyof typeof impactStats] || 0)} / ${item.goal}
-                           </span>
-                        </div>
-                        <Progress value={((impactStats[item.key as keyof typeof impactStats] || 0) / item.goal) * 100} className="h-2" />
-                        <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">{item.label}</p>
-                     </div>
-                   ))}
-                </div>
+        {/* MEMBER ROLE VIEW */}
+        {role === 'member' ? (
+          <section className="max-w-3xl mx-auto py-20 text-center space-y-12 animate-in zoom-in duration-700">
+            <div className="space-y-6">
+              <div className="mx-auto w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
+                <Heart className="h-12 w-12 text-primary" />
               </div>
-           </Card>
+              <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
+                THANK YOU FOR <span className="text-primary">YOUR SUPPORT!</span>
+              </h2>
+              <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed">
+                Your one-time donation ensures our residents have everything they need today. Want to unlock archival care logs and heritage trees?
+              </p>
+            </div>
+            <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+              <Link href="/support#membership">UPGRADE TO GUARDIAN <ArrowRight className="ml-2 h-5 w-5" /></Link>
+            </Button>
+          </section>
+        ) : (
+          <>
+            {/* MIRROR SECTION 1: BULLETIN */}
+            {bulletins.length > 0 && (
+              <section className="animate-in fade-in duration-1000">
+                <div className="flex items-center gap-3 mb-6">
+                  <Megaphone className="h-5 w-5 text-primary" />
+                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {bulletins.map(b => (
+                    <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
+                      <div className="p-6 space-y-4">
+                        <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
+                        <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                          <Clock className="h-2.5 w-2.5" />
+                          {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
 
-           {/* LIVE PULSE */}
-           <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-              <div className="flex items-center gap-4 mb-6">
+            {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
+            <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
+
+            {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
+            <EggCounter initialCount={eggHistory?.count || 0} readOnly />
+
+            {/* LIVE PULSE */}
+            <section className="space-y-8">
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse">
                   <Zap className="h-5 w-5 text-primary-foreground fill-current" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
-                  <p className="text-[9px] font-bold text-primary uppercase">Real-time Energy</p>
-                </div>
+                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {liveStatusBirds.map(bird => (
-                  <div key={bird.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-xl border border-primary/10">
-                    <span className="text-lg">🦆</span>
+                  <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
+                    <span className="text-2xl">🦆</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-black uppercase text-primary truncate">{bird.name}</p>
-                      <p className="text-[10px] font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
+                      <p className="text-[10px] font-black uppercase text-primary truncate">{bird.name}</p>
+                      <p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
-           </Card>
-        </section>
+            </section>
 
-        {/* MIRROR SECTION 4: FLOCK RECORDS */}
-        <section className="space-y-8">
-           <div className="flex items-center justify-between border-b border-border pb-4">
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-                <Bird className="h-4 w-4" /> THE SANCTUARY FLOCK
-              </h2>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {birds?.map((bird) => (
-               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
-             ))}
-           </div>
-        </section>
+            {/* MIRROR SECTION 4: FLOCK RECORDS */}
+            <section className="space-y-8">
+               <div className="flex items-center justify-between border-b border-border pb-4">
+                  <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+                    <Bird className="h-4 w-4" /> THE SANCTUARY FLOCK
+                  </h2>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 {birds?.map((bird) => (
+                   <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
+                 ))}
+               </div>
+            </section>
 
-        {/* ROLE-GATED SECTION: ARCHIVAL LEDGER */}
-        {isGuardian && (
-          <section className="space-y-8 pt-12 border-t border-border">
-             <div className="flex items-center gap-3">
-                <ScrollText className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
-             </div>
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in zoom-in duration-500">
-                <div className="lg:col-span-2">
-                   <SanctuaryCostCard expenses={expenses || []} />
-                </div>
-                <ItemizedLedger expenses={expenses || []} userProfile={userProfile} />
-             </div>
-          </section>
+            {/* ARCHIVAL LEDGER (GUARDIAN ONLY) */}
+            <section className="space-y-8 pt-12 border-t border-border">
+               <div className="flex items-center gap-3">
+                  <ScrollText className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
+               </div>
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2">
+                     <SanctuaryCostCard expenses={expenses || []} />
+                  </div>
+                  <ItemizedLedger expenses={expenses || []} userProfile={userProfile || null} />
+               </div>
+            </section>
+          </>
         )}
 
-        {/* LOGOUT UTILITY */}
+        {/* LOGOUT */}
         <section className="pt-12 border-t border-border flex justify-center">
            <Button variant="ghost" onClick={async () => { await signOut(auth!); router.push('/'); }} className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive">
              <LogOut className="h-4 w-4 mr-2" /> Log Out of Sanctuary
@@ -369,7 +299,7 @@ function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userPr
   });
 
   return (
-    <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+    <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
       <div className="p-6 border-b border-border bg-primary/5">
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
         <p className="text-xs font-bold text-muted-foreground">Detailed transparency logs</p>
