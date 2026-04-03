@@ -180,7 +180,7 @@ export default function MemberDashboard() {
     );
   }
 
-  // ACCESS FLAG OVERRIDE: ROLE IS THE ABSOLUTE SOURCE OF TRUTH
+  // ACCESS AUTHORITY: DATA-DRIVEN ROLES ONLY. NO HARDCODED OVERRIDES.
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
   const isAlphaTester = isGuardian && !userProfile?.stripeSubscriptionId;
 

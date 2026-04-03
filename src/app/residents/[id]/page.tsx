@@ -59,8 +59,8 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
-  const isGuardian = userProfile?.role === 'guardian' || isAdmin;
+  // ACCESS AUTHORITY: DATA-DRIVEN ROLES ONLY.
+  const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
   // ARCHIVAL LEDGER
   const expensesQuery = useMemoFirebase(() => {
