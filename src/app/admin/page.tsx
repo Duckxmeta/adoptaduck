@@ -16,7 +16,7 @@ import {
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
   Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench, Settings, Wallet, Database, XCircle
+  Wrench, Settings, Wallet, Database, XCircle, Ticket
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -92,6 +92,7 @@ function ManagerPortal({ user }: { user: any }) {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isInitializingLedger, setIsInitializingLedger] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
   const [vibeBird, setVibeBird] = useState<Resident | null>(null);
   const [isSavingEggs, setIsSavingEggs] = useState(false);
   const [localEggCount, setLocalEggCount] = useState(0);
@@ -155,6 +156,28 @@ function ManagerPortal({ user }: { user: any }) {
     });
     toast({ title: status ? "Status Updated" : "Status Cleared" });
     setVibeBird(null);
+  };
+
+  const handleProvisionGodCode = async () => {
+    if (!firestore) return;
+    setIsProvisioning(true);
+    try {
+      const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
+      await setDoc(codeRef, {
+        type: 'bypass_upgrade',
+        targetRole: 'guardian',
+        durationDays: 365,
+        isActive: true,
+        expirationDate: null,
+        usageCount: 0,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      toast({ title: "God Code Provisioned", description: "SPRINGDUCKS-JDI-G0 is now active indefinitely." });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Provisioning Error" });
+    } finally {
+      setIsProvisioning(false);
+    }
   };
 
   const handleInitializeLedger = async () => {
@@ -328,6 +351,33 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">Sanctuary Operations</p>
         </div>
+
+        {/* SYSTEM BYPASS ADMIN */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">SYSTEM OVERRIDES</h2>
+          </div>
+          <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Ticket className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-headline font-black text-sm uppercase">Golden Ticket Bypass</h3>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight mt-1">Force reset 'SPRINGDUCKS-JDI-G0' to active status.</p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleProvisionGodCode} 
+              disabled={isProvisioning}
+              className="bg-primary text-primary-foreground font-black px-8 h-12 rounded-xl shadow-lg hover:scale-105 transition-transform text-[10px] uppercase tracking-widest"
+            >
+              {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+              PROVISION GOD CODE
+            </Button>
+          </Card>
+        </section>
 
         {/* PENDING NAME REQUESTS */}
         <section className="space-y-4">

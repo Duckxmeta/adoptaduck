@@ -117,4 +117,5 @@ export type PromoCode = {
   durationDays?: number;
   usageCount: number;
   isActive: boolean;
+  expirationDate?: string | null;
 };

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from 'react';
@@ -14,6 +13,7 @@ import { PromoCode, UserProfile } from '@/lib/types';
 /**
  * Enhanced Promo Code component with Golden Ticket Redemption logic.
  * Supports bypassing Stripe checkout for 'bypass_upgrade' ticket types.
+ * HARD SHIELD: SPRINGDUCKS-JDI-G0 bypasses all activation/expiration checks.
  */
 export function PromoCodeInput() {
   const [code, setCode] = useState('');
@@ -23,61 +23,73 @@ export function PromoCodeInput() {
   const { toast } = useToast();
 
   const handleApplyCode = async () => {
-    const promoCodeInput = code.trim();
+    const promoCodeInput = code.trim().toUpperCase();
     if (!promoCodeInput || !firestore || !user) return;
 
     setIsValidating(true);
     try {
       await runTransaction(firestore, async (transaction) => {
+        const isGodCode = promoCodeInput === 'SPRINGDUCKS-JDI-G0';
         const promoRef = doc(firestore, 'promo_codes', promoCodeInput);
         const userRef = doc(firestore, 'users', user.uid);
         
         const promoDoc = await transaction.get(promoRef);
         const userDoc = await transaction.get(userRef);
 
-        if (!promoDoc.exists()) {
-          throw new Error("Invalid or expired promo code.");
+        if (!userDoc.exists()) {
+          throw new Error("User profile not found.");
         }
 
-        const promoData = promoDoc.data() as PromoCode;
         const userData = userDoc.data() as UserProfile;
-
-        if (!promoData.isActive) {
-          throw new Error("This promo code is no longer active.");
-        }
 
         // Stacking Protection
         if (userData.usedCodes?.includes(promoCodeInput)) {
           throw new Error("You have already redeemed this reward.");
         }
 
-        // Redemption Logic
-        if (promoData.type === 'bypass_upgrade') {
-          const now = new Date();
-          const expires = new Date();
-          expires.setDate(now.getDate() + (promoData.durationDays || 365));
+        let duration = 365;
+        let targetRole = 'guardian';
 
-          transaction.update(userRef, { 
-            role: promoData.targetRole || 'guardian',
-            membershipStartedAt: now.toISOString(),
-            membershipExpiresAt: expires.toISOString(),
-            usedCodes: arrayUnion(promoCodeInput),
-            updatedAt: new Date().toISOString()
-          });
+        // God Code Shielding: Ignore DB status for the specific GOD string
+        if (!isGodCode) {
+          if (!promoDoc.exists()) {
+            throw new Error("Invalid or expired promo code.");
+          }
 
+          const promoData = promoDoc.data() as PromoCode;
+
+          if (!promoData.isActive) {
+            throw new Error("This promo code is no longer active.");
+          }
+
+          duration = promoData.durationDays || 365;
+          targetRole = promoData.targetRole || 'guardian';
+          
           transaction.update(promoRef, { 
             usageCount: (promoData.usageCount || 0) + 1 
           });
         } else {
-          // Legacy/Standard counter logic
-          transaction.update(promoRef, { 
-            usageCount: (promoData.usageCount || 0) + 1 
-          });
-          transaction.update(userRef, { 
-            role: 'guardian',
-            updatedAt: new Date().toISOString()
-          });
+          // God Code handling
+          if (promoDoc.exists()) {
+            const pData = promoDoc.data() as PromoCode;
+            transaction.update(promoRef, { 
+              usageCount: (pData.usageCount || 0) + 1 
+            });
+          }
         }
+
+        // Provision Entitlement
+        const now = new Date();
+        const expires = new Date();
+        expires.setDate(now.getDate() + duration);
+
+        transaction.update(userRef, { 
+          role: targetRole,
+          membershipStartedAt: now.toISOString(),
+          membershipExpiresAt: expires.toISOString(),
+          usedCodes: arrayUnion(promoCodeInput),
+          updatedAt: new Date().toISOString()
+        });
       });
 
       toast({
