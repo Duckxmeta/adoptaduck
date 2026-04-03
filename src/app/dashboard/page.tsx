@@ -43,7 +43,9 @@ import {
   Award,
   Lock,
   Calendar,
-  Database
+  Database,
+  Ticket,
+  CreditCard
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -181,6 +183,7 @@ export default function MemberDashboard() {
   const globalHealth = calculateProgress();
   const liveStatusBirds = allBirds?.filter(b => b.liveStatus)?.sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
+  const isGiftedAccess = isGuardian && !userProfile?.stripeSubscriptionId && (userProfile?.usedCodes?.length || 0) > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body pb-32">
@@ -192,7 +195,7 @@ export default function MemberDashboard() {
               <div className="flex items-center gap-3 text-primary">
                  <LayoutDashboard className="h-6 w-6" />
                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">
-                   {isGuardian ? "Guardian Dashboard" : "Supporter Hub"}
+                   {isGuardian ? "Guardian Hub" : "Supporter Hub"}
                  </span>
               </div>
               <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-[0.8]">
@@ -211,9 +214,19 @@ export default function MemberDashboard() {
                 </div>
              </Card>
 
-             <div className="md:w-80">
-                <PromoCodeInput />
-             </div>
+             {isGuardian && (
+               <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                     {isGiftedAccess ? <Ticket className="h-6 w-6" /> : <CreditCard className="h-6 w-6" />}
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Status</p>
+                     <p className="text-sm font-headline font-black text-secondary uppercase leading-tight">
+                       {isGiftedAccess ? "Gifted Access" : "Guardian Pro"}
+                     </p>
+                  </div>
+               </Card>
+             )}
            </div>
         </section>
 
@@ -333,7 +346,7 @@ export default function MemberDashboard() {
            </Card>
         </section>
 
-        {/* ROLE-GATED SECTION: ITEMIZED LEDGER */}
+        {/* ROLE-GATED SECTION: ITEMIZIED LEDGER */}
         <section className="space-y-8 animate-in fade-in duration-1000">
            <div className="flex items-center gap-3">
               <ScrollText className="h-5 w-5 text-primary" />
@@ -440,10 +453,19 @@ function ItemizedLedger({ expenses, isGuardian, userProfile }: { expenses: Expen
     );
   }
 
-  // Filter based on join date for transparency
-  const joinDate = userProfile?.membershipStartedAt ? new Date(userProfile.membershipStartedAt) : new Date();
+  // Null-Safe Join Date Calculation
+  const getSafeDate = (dString?: string | null) => {
+    if (!dString) return new Date();
+    const d = new Date(dString);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
+  const joinDate = getSafeDate(userProfile?.membershipStartedAt);
+  
   const filteredExpenses = (expenses || []).filter(e => {
+    if (!e.date) return false;
     const d = new Date(e.date);
+    if (isNaN(d.getTime())) return true; // Show malformed dates instead of hiding
     return d >= joinDate;
   });
 
@@ -494,8 +516,9 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
     thirtyDaysAgo.setDate(now.getDate() - 30);
 
     const monthlyExpenses = expenses.filter(e => {
+      if (!e.date) return false;
       const d = new Date(e.date);
-      return d >= thirtyDaysAgo;
+      return !isNaN(d.getTime()) && d >= thirtyDaysAgo;
     });
     const specific = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + (e.cost || 0), 0);
     const shared = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + (e.cost || 0), 0);

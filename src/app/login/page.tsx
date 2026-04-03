@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bird, ArrowLeft, Loader2, Sparkles, UserCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { initiateGoogleSignIn, initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { UserProfile } from '@/lib/types';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 
@@ -22,18 +25,27 @@ export default function MemberLogin() {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
+
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (user && !isUserLoading && mounted) {
-      router.push('/admin');
+    if (user && !isUserLoading && mounted && userProfile) {
+      const isAdmin = ADMIN_EMAILS.includes(user.email || '');
+      if (isAdmin) {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     }
-  }, [user, isUserLoading, mounted, router]);
+  }, [user, isUserLoading, mounted, router, userProfile]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

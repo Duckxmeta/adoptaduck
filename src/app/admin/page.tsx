@@ -19,11 +19,13 @@ import {
   Plus,
   Heart,
   Eye,
-  Lock
+  Lock,
+  Search,
+  UserCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { Resident, DailyStatus, Expense, NamingRequest, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
@@ -82,6 +84,9 @@ function ManagerPortal({ user }: { user: any }) {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isProvisioning, setIsProvisioning] = useState(false);
+  
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [isRecovering, setIsRecovery] = useState(false);
 
   // QUERIES
   const birdsQuery = useMemoFirebase(() => {
@@ -94,20 +99,20 @@ function ManagerPortal({ user }: { user: any }) {
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
   }, [firestore]);
 
-  const namingQuery = useMemoFirebase(() => {
-    if (!firestore || !isAdmin) return null;
-    return query(collection(firestore, 'naming_requests'), where('status', '==', 'pending'));
+  // Real-time Naming Queue
+  const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
+  useEffect(() => {
+    if (!firestore || !isAdmin) return;
+    const q = query(collection(firestore, 'naming_requests'), where('status', '==', 'pending'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const results = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as NamingRequest));
+      setNamingRequests(results);
+    });
+    return () => unsubscribe();
   }, [firestore, isAdmin]);
-
-  const userProfileRef = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user?.uid]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: expenses } = useCollection<Expense>(expensesQuery);
-  const { data: namingRequests } = useCollection<NamingRequest>(namingQuery);
-  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   // HANDLERS
   const handleUpdateStatus = (birdId: string, status: string) => {
@@ -167,8 +172,32 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
+  const handleRoleRecovery = async () => {
+    if (!firestore || !isAdmin || !recoveryEmail.trim()) return;
+    setIsRecovery(true);
+    try {
+      const userRef = doc(firestore, 'users', recoveryEmail.trim());
+      await updateDoc(userRef, { 
+        role: 'guardian', 
+        updatedAt: serverTimestamp(),
+        membershipStartedAt: new Date().toISOString()
+      });
+      toast({ title: "Role Provisioned", description: `Access restored for user.` });
+      setRecoveryEmail('');
+    } catch (e) {
+      toast({ variant: "destructive", title: "Recovery Failed", description: "Verify User ID exists in Firestore." });
+    } finally {
+      setIsRecovery(false);
+    }
+  };
+
   if (birdsLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-primary font-black uppercase tracking-[0.3em] text-xs">Syncing Sanctuary Pulse...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
+        <Loader2 className="h-12 w-12 animate-spin" />
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Syncing Sanctuary Pulse...</p>
+      </div>
+    );
   }
 
   return (
@@ -332,30 +361,65 @@ function ManagerPortal({ user }: { user: any }) {
 
         {/* 4. SYSTEM ACTIONS (ADMIN ONLY) */}
         {isAdmin && (
-          <section className="space-y-4 border-t border-border pt-12">
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-muted-foreground">System Actions</h2>
-            <div className="flex flex-wrap gap-4">
-              <Button 
-                onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
-                className="bg-primary text-primary-foreground font-black uppercase text-[10px] px-8 h-14 rounded-2xl shadow-xl hover:scale-105 transition-transform"
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add Bird
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  setIsProvisioning(true);
-                  const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
-                  await setDoc(codeRef, { type: 'bypass_upgrade', targetRole: 'guardian', durationDays: 365, isActive: true, usageCount: 0 }, { merge: true });
-                  setIsProvisioning(false);
-                  toast({ title: "God Code Provisioned" });
-                }} 
-                disabled={isProvisioning} 
-                className="border-secondary text-secondary font-black uppercase text-[10px] px-8 h-14 rounded-2xl hover:bg-secondary/5"
-              >
-                {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                Provision God Code
-              </Button>
+          <section className="space-y-8 border-t border-border pt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Provisioning Tool */}
+              <div className="space-y-4">
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-muted-foreground">Admin Entitlements</h2>
+                <div className="flex flex-wrap gap-4">
+                  <Button 
+                    onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
+                    className="bg-primary text-primary-foreground font-black uppercase text-[10px] px-8 h-14 rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Bird
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={async () => {
+                      setIsProvisioning(true);
+                      const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
+                      await setDoc(codeRef, { type: 'bypass_upgrade', targetRole: 'guardian', durationDays: 365, isActive: true, usageCount: 0 }, { merge: true });
+                      setIsProvisioning(false);
+                      toast({ title: "God Code Provisioned" });
+                    }} 
+                    disabled={isProvisioning} 
+                    className="border-secondary text-secondary font-black uppercase text-[10px] px-8 h-14 rounded-2xl hover:bg-secondary/5"
+                  >
+                    {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                    Provision God Code
+                  </Button>
+                </div>
+              </div>
+
+              {/* Hybrid Account Recovery Tool */}
+              <div className="space-y-4">
+                <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary">Role Recovery Tool</h2>
+                <Card className="bg-secondary/5 border-secondary/20 p-6 rounded-2xl space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Enter User UID (e.g. buchebobby62)</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="UID / Account Key"
+                        value={recoveryEmail}
+                        onChange={(e) => setRecoveryEmail(e.target.value)}
+                        className="bg-background border-border h-12 rounded-xl text-xs"
+                      />
+                      <Button 
+                        onClick={handleRoleRecovery}
+                        disabled={isRecovering || !recoveryEmail.trim()}
+                        className="bg-secondary text-secondary-foreground font-black px-6 rounded-xl h-12"
+                      >
+                        {isRecovering ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed">
+                    Manually force-sync a user to Guardian tier. Resolves hybrid transaction conflicts.
+                  </p>
+                </Card>
+              </div>
+
             </div>
           </section>
         )}
