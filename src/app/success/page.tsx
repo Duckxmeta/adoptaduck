@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Suspense } from 'react';
@@ -52,6 +53,7 @@ function SuccessContent() {
 
           {/* Branded Achievement Anchor */}
           <div className="relative group animate-in zoom-in duration-700 delay-300">
+            {/* Gold Glow Effect */}
             <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-[3rem] opacity-50 group-hover:opacity-80 transition-opacity" />
             
             <Card className="relative overflow-hidden bg-card border-[6px] border-primary rounded-[3rem] shadow-2xl">
@@ -89,7 +91,7 @@ function SuccessContent() {
                     </h2>
                   </div>
                   <p className="text-muted-foreground text-sm md:text-base font-medium leading-relaxed italic">
-                    "Every egg counted is a victory. Your support ensures our founders and the entire flock live in safety and comfort."
+                    "Every egg counted is a victory. Your support ensures our residents live in safety and comfort."
                   </p>
                   <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-10 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform w-full md:w-auto">
                     <Link href="/dashboard">ENTER DASHBOARD <ArrowRight className="ml-2 h-5 w-5" /></Link>
