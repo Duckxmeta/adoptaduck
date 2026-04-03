@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,28 +11,21 @@ import {
   Bird, 
   Zap,  
   Plus,
-  Heart,
   Eye,
-  CheckCircle2,
-  Egg,
-  Utensils,
-  Droplets,
-  Stethoscope,
-  Clock,
-  ChevronRight,
-  ChevronLeft,
   Bell,
   Edit3
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile } from '@/lib/types';
+import { Resident, DailyStatus, EggHistoryEntry, NamingRequest } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format } from 'date-fns';
-import { getResidentName, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { DailyRoutine } from '@/components/DailyRoutine';
+import { EggCounter } from '@/components/EggCounter';
 
 const ADMIN_EMAILS = ['flowmarket1@gmail.com', 'decentducksorg@gmail.com'];
 
@@ -135,15 +127,14 @@ function ManagerPortal({ user }: { user: any }) {
     toast({ title: "Task Updated" });
   };
 
-  const handleUpdateEggs = async (delta: number) => {
+  const handleSaveEggs = async (newCount: number) => {
     if (!firestore || !isAdmin) return;
     const ref = doc(firestore, 'egg_history', todayStr);
-    const currentCount = eggHistory?.count || 0;
     await setDoc(ref, { 
-      count: Math.max(0, currentCount + delta), 
+      count: newCount, 
       updatedAt: new Date().toISOString() 
     }, { merge: true });
-    toast({ title: "Egg Count Updated" });
+    toast({ title: "Egg Count Saved" });
   };
 
   const handleApproveRequest = async (req: NamingRequest) => {
@@ -258,87 +249,14 @@ function ManagerPortal({ user }: { user: any }) {
           </section>
         )}
 
-        {/* 2. DAILY CHECKLIST */}
+        {/* 2. DAILY ROUTINE */}
         {isAdmin && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-              </div>
-              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Routine</h2>
-            </div>
-            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                {[
-                  { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
-                  { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
-                  { label: "Egg Counter", key: "eggCounter", icon: <Egg className="h-4 w-4" /> },
-                  { label: "Health Check", key: "healthCheck", icon: <Stethoscope className="h-4 w-4" /> },
-                  { label: "Nightly Pen Up", key: "nightlyPenUp", icon: <Clock className="h-4 w-4" /> },
-                ].map((item) => {
-                  const isDone = dailyStatus ? !!(dailyStatus as any)[item.key] : false;
-                  return (
-                    <button
-                      key={item.key}
-                      onClick={() => handleToggleRoutine(item.key as any)}
-                      className={cn(
-                        "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group gap-3",
-                        isDone 
-                          ? "bg-primary/5 border-primary/30 text-primary" 
-                          : "bg-muted/10 border-border text-muted-foreground hover:border-primary/20"
-                      )}
-                    >
-                      {item.icon}
-                      <span className="text-[9px] font-black uppercase tracking-widest text-center">{item.label}</span>
-                      {isDone && <CheckCircle2 className="h-4 w-4 fill-primary text-black" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </Card>
-          </section>
+          <DailyRoutine dailyStatus={dailyStatus || null} onToggle={handleToggleRoutine} />
         )}
 
         {/* 3. EGG COUNTER */}
         {isAdmin && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-secondary/10 rounded-lg">
-                <Egg className="h-5 w-5 text-secondary" />
-              </div>
-              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Egg Count</h2>
-            </div>
-            <Card className="bg-card border-2 border-border rounded-3xl p-8 shadow-xl">
-              <div className="flex flex-col items-center justify-center space-y-8">
-                <div className="text-center">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">Today's Harvest</p>
-                  <span className="text-8xl font-headline font-black text-primary leading-none">{eggHistory?.count || 0}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Button 
-                    onClick={() => handleUpdateEggs(-1)} 
-                    variant="outline" 
-                    className="h-16 w-16 rounded-2xl border-2 border-border hover:border-destructive hover:text-destructive transition-all"
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </Button>
-                  <Button 
-                    onClick={() => handleUpdateEggs(1)} 
-                    className="h-16 w-32 rounded-2xl bg-secondary text-secondary-foreground font-black text-xl shadow-lg hover:scale-105 transition-transform"
-                  >
-                    <Plus className="h-6 w-6 mr-2" /> ADD
-                  </Button>
-                  <Button 
-                    onClick={() => handleUpdateEggs(1)} 
-                    variant="outline"
-                    className="h-16 w-16 rounded-2xl border-2 border-border hover:border-primary hover:text-primary transition-all"
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </section>
+          <EggCounter initialCount={eggHistory?.count || 0} onSave={handleSaveEggs} />
         )}
 
         {/* 4. FLOCK RECORDS */}
@@ -400,7 +318,7 @@ function ManagerPortal({ user }: { user: any }) {
                             size="sm"
                             variant={bird.liveStatus === vibe ? "default" : "outline"}
                             className={cn(
-                              "h-10 px-1 text-[8px] font-black uppercase rounded-lg transition-all text-center leading-tight whitespace-normal",
+                              "h-12 px-1 text-[9px] font-black uppercase rounded-lg transition-all text-center leading-tight whitespace-normal",
                               bird.liveStatus === vibe ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"
                             )}
                             onClick={() => handleUpdateStatus(bird.id, vibe)}
@@ -411,7 +329,7 @@ function ManagerPortal({ user }: { user: any }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-10 px-1 text-[8px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
+                          className="h-12 px-1 text-[9px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
                           onClick={() => handleUpdateStatus(bird.id, "")}
                         >
                           Clear
