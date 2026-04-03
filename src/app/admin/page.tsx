@@ -17,7 +17,7 @@ import {
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
   Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench, Settings, Wallet, Database, XCircle, Ticket
+  Wrench, Settings, Wallet, Database, XCircle, Ticket, Calendar
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -141,7 +141,7 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Real-time Naming Request Listener - Hardened status and collection path
+  // Real-time Naming Request Listener - Hardened for Mobile & Data Types
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email || '') || !firestore) return;
 
@@ -152,11 +152,18 @@ function ManagerPortal({ user }: { user: any }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...(doc.data() || {})
-      })) as NamingRequest[];
-      setNamingRequests(docs);
+      try {
+        const docs = snapshot.docs.map(doc => {
+          const data = doc.data() || {};
+          return {
+            id: doc.id,
+            ...data
+          } as NamingRequest;
+        });
+        setNamingRequests(docs);
+      } catch (err) {
+        console.error("Error mapping naming requests:", err);
+      }
     }, async (err) => {
       const permissionError = new FirestorePermissionError({
         path: 'naming_requests',
@@ -420,7 +427,7 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* PENDING NAME REQUESTS */}
+        {/* PENDING NAME REQUESTS - MOBILE OPTIMIZED & HARDENED */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-secondary" />
@@ -428,33 +435,61 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
             {Array.isArray(namingRequests) && namingRequests.length > 0 ? (
-              <ScrollArea className="h-[300px] pr-4">
-                <div className="space-y-3">
-                  {namingRequests?.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-secondary/10 rounded-full">
-                          <Inbox className="h-4 w-4 text-secondary" />
+              <ScrollArea className="h-auto max-h-[500px] pr-4">
+                <div className="space-y-4">
+                  {namingRequests?.map((req) => {
+                    // defensive mapping for timestamp vs string
+                    const dateLabel = req.createdAt?.toDate 
+                      ? req.createdAt.toDate().toLocaleDateString() 
+                      : String(req.createdAt || 'Recent');
+                    
+                    return (
+                      <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-5 rounded-2xl gap-6">
+                        <div className="flex items-start gap-4">
+                          <div className="p-3 bg-secondary/10 rounded-xl shrink-0">
+                            <Inbox className="h-5 w-5 text-secondary" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-foreground leading-tight">
+                              <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary font-black uppercase">'{req.suggestedName}'</span> for Resident {req.birdName || req.birdId}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-3 pt-1">
+                              <p className="text-[9px] font-black uppercase text-muted-foreground flex items-center gap-1">
+                                <Inbox className="h-2.5 w-2.5" /> {req.userEmail}
+                              </p>
+                              <p className="text-[9px] font-black uppercase text-secondary flex items-center gap-1">
+                                <Calendar className="h-2.5 w-2.5" /> {dateLabel}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground">
-                            <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary">'{req.suggestedName}'</span> for Resident {req.birdName || req.birdId}
-                          </p>
-                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Email: {req.userEmail}</p>
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                          <Button 
+                            onClick={() => handleApproveRequest(req)} 
+                            className="flex-1 md:flex-none bg-primary text-primary-foreground hover:bg-primary/90 h-12 md:h-10 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg"
+                          >
+                            <UserCheck className="h-4 w-4 mr-2" /> Approve
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleDenyRequest(req.id)} 
+                            className="flex-1 md:flex-none text-destructive hover:bg-destructive/10 h-12 md:h-10 px-6 text-[10px] font-black uppercase tracking-widest"
+                          >
+                            <XCircle className="h-4 w-4 mr-2" /> Deny
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button onClick={() => handleApproveRequest(req)} className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 text-[10px] font-black uppercase tracking-widest"><UserCheck className="h-3.5 w-3.5 mr-1" /> Approve</Button>
-                        <Button variant="ghost" onClick={() => handleDenyRequest(req.id)} className="text-destructive hover:bg-destructive/10 h-9 px-4 text-[10px] font-black uppercase tracking-widest"><XCircle className="h-3.5 w-3.5 mr-1" /> Deny</Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             ) : (
-              <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
-                <CheckCheck className="h-8 w-8 text-muted-foreground" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No pending naming requests.</p>
+              <div className="h-[150px] flex flex-col items-center justify-center text-center opacity-50 space-y-3">
+                <CheckCheck className="h-10 w-10 text-muted-foreground" />
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest">All caught up! 🌿</p>
+                  <p className="text-[8px] font-bold uppercase tracking-tight text-muted-foreground">No pending naming requests in the queue.</p>
+                </div>
               </div>
             )}
           </Card>
@@ -513,7 +548,7 @@ function ManagerPortal({ user }: { user: any }) {
                     accept="image/*" 
                   />
                 </div>
-                <Button type="submit" disabled={isPosting || !bullTitle.trim() || !bullContent.trim()} className="w-full h-12 bg-primary text-primary-foreground font-black rounded-xl shadow-lg">
+                <Button type="submit" disabled={isPosting || !bullTitle.trim() || !bullContent.trim()} className="w-full h-14 bg-primary text-primary-foreground font-black rounded-xl shadow-lg text-[10px] tracking-widest uppercase">
                   {isPosting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Megaphone className="h-4 w-4 mr-2" />}
                   PUBLISH TO BULLETIN
                 </Button>
@@ -763,13 +798,18 @@ function MemberPulseView({ user }: { user: any }) {
   return (
     <div className="min-h-screen bg-background p-4">
       <Navbar />
-      <div className="max-w-4xl mx-auto py-12 space-y-8">
-        <h1 className="text-2xl font-headline font-black uppercase">Member Sanctuary Feed</h1>
+      <div className="max-w-4xl mx-auto py-12 space-y-8 text-center md:text-left">
+        <h1 className="text-2xl md:text-4xl font-headline font-black uppercase tracking-tighter">Member Sanctuary <span className="text-primary">Pulse</span></h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {foundingResidents?.map(bird => (
-            <Card key={bird.id} className="p-6 bg-card border-border rounded-2xl">
-              <h2 className="text-lg font-headline font-black uppercase">{getResidentName(bird)}</h2>
-              <p className="text-sm text-muted-foreground">{bird.liveStatus || 'At Routine'}</p>
+            <Card key={bird.id} className="p-6 bg-card border-border rounded-2xl flex flex-col items-center md:items-start gap-4">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20">
+                {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={getResidentName(bird)} fill className="object-cover" /> : <div className="w-full h-full flex items-center justify-center text-3xl">🦆</div>}
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-lg font-headline font-black uppercase tracking-tight">{getResidentName(bird)}</h2>
+                <p className="text-sm text-muted-foreground font-medium">{bird.liveStatus || 'At Routine'}</p>
+              </div>
             </Card>
           ))}
         </div>
