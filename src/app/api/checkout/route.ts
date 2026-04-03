@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       payment_method_types: ['card'],
       line_items,
       mode: isSubscription ? 'subscription' : 'payment',
-      success_url: `${request.headers.get('origin')}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${request.headers.get('origin')}/success?session_id={CHECKOUT_SESSION_ID}&type=${isSubscription ? 'guardian' : 'supporter'}`,
       cancel_url: `${request.headers.get('origin')}/cancel`,
       customer_email: userEmail || undefined,
       client_reference_id: userId || undefined,

@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { initializeFirebase } from '@/firebase/init';
@@ -41,8 +40,8 @@ export async function POST(request: Request) {
 
     const { firestore } = initializeFirebase();
 
-    // Provision Guardian Status if User ID is present
-    if (userId && userId !== 'anonymous') {
+    // Provision Guardian Status ONLY if session mode is subscription
+    if (userId && userId !== 'anonymous' && session.mode === 'subscription') {
       try {
         const userRef = doc(firestore, 'users', userId);
         await updateDoc(userRef, {
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
     try {
       await addDoc(collection(firestore, 'donations'), {
         amount: amount,
-        designation: 'Stripe Checkout',
+        designation: session.mode === 'subscription' ? 'Guardian Subscription' : 'One-Time Support',
         timestamp: new Date().toISOString(),
         donorDisplayName: session.customer_details?.name || 'Sanctuary Supporter',
         uid: userId && userId !== 'anonymous' ? userId : null,
