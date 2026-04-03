@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -184,6 +185,7 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
+      // Seeding Founding Receipts
       const bulkExpenses = [
         { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-04-01', birdId: null },
         { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-04-01', birdId: null },
@@ -199,7 +201,18 @@ function ManagerPortal({ user }: { user: any }) {
         });
       }
 
-      toast({ title: "Founding Receipts Filed", description: "The remaining 5 startup expenses have been recorded." });
+      // Seed Bandit Request for Materialization
+      await addDoc(collection(firestore, 'naming_requests'), {
+        birdId: 'G0-PUFF',
+        birdName: 'Puff',
+        suggestedName: 'Bandit',
+        userEmail: 'support@decentducks.org',
+        userName: 'Sanctuary Team',
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+
+      toast({ title: "Archival Records Materialized", description: "Founding receipts and test requests seeded." });
     } catch (e) {
       console.error("Seeding error:", e);
       toast({ variant: "destructive", title: "Setup Error", description: "Could not file receipts." });
@@ -390,7 +403,7 @@ function ManagerPortal({ user }: { user: any }) {
               <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-3">
                   {namingRequests.map((req) => (
-                    <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl gap-4">
+                    <div key={req.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary/10 rounded-full">
                           <Inbox className="h-4 w-4 text-secondary" />
@@ -399,23 +412,12 @@ function ManagerPortal({ user }: { user: any }) {
                           <p className="text-sm font-bold text-foreground">
                             <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary">'{req.suggestedName}'</span> for Resident {req.birdName}
                           </p>
-                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Email: {req.userEmail} • Bird ID: {req.birdId}</p>
+                          <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Email: {req.userEmail}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          onClick={() => handleApproveRequest(req)}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 text-[10px] font-black uppercase tracking-widest flex-1 md:flex-none"
-                        >
-                          <UserCheck className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleDenyRequest(req.id)}
-                          className="text-destructive hover:bg-destructive/10 h-10 px-4 text-[10px] font-black uppercase tracking-widest flex-1 md:flex-none border border-destructive/20"
-                        >
-                          <XCircle className="h-3.5 w-3.5 mr-1" /> Deny
-                        </Button>
+                        <Button onClick={() => handleApproveRequest(req)} className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 text-[10px] font-black uppercase tracking-widest"><UserCheck className="h-3.5 w-3.5 mr-1" /> Approve</Button>
+                        <Button variant="ghost" onClick={() => handleDenyRequest(req.id)} className="text-destructive hover:bg-destructive/10 h-9 px-4 text-[10px] font-black uppercase tracking-widest"><XCircle className="h-3.5 w-3.5 mr-1" /> Deny</Button>
                       </div>
                     </div>
                   ))}
@@ -432,10 +434,7 @@ function ManagerPortal({ user }: { user: any }) {
 
         {/* BULLETIN BOARD ADMIN */}
         <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Megaphone className="h-4 w-4 text-primary" />
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">POST SANCTUARY UPDATE</h2>
-          </div>
+          <div className="flex items-center gap-3"><Megaphone className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">POST SANCTUARY UPDATE</h2></div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
             <form onSubmit={handlePostBulletin} className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
@@ -566,7 +565,7 @@ function ManagerPortal({ user }: { user: any }) {
                 className="border-secondary/20 text-secondary h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest"
               >
                 {isInitializingLedger ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Database className="h-4 w-4 mr-1" />} 
-                File Founding Receipts
+                File Founding Records
               </Button>
               <Button 
                 onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} 

@@ -5,11 +5,8 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.1.0 (Archival Ledger Release)
+     * Version: 1.2.0 (Naming Request Release)
      * Last Updated: 2026-04-01
-     * 
-     * PERMANENT ARCHIVE RULE: The /ledger collection is a permanent financial 
-     * record. Deletion logic is strictly prohibited.
      */
 
     // --- MASTER OVERRIDE ---
@@ -37,7 +34,7 @@ service cloud.firestore {
 
     match /bulletin/{id} {
       allow read: if true;
-      allow write: if request.auth.token.email in ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+      allow write: if isAdmin();
     }
 
     match /birds/{birdId} {
@@ -51,12 +48,11 @@ service cloud.firestore {
     }
 
     match /egg_history/{date} {
-      allow read: if isSignedIn() || true;
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /ledger/{expenseId} {
-      // PERMANENT ARCHIVE: Publicly readable for multi-tier transparency logic
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -68,16 +64,11 @@ service cloud.firestore {
     }
 
     match /daily_status/{statusId} {
-      allow read: if isSignedIn() || true;
-      allow write: if isAdmin();
-    }
-
-    match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /sanctuary_stats/{statId} {
+    match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -90,19 +81,14 @@ service cloud.firestore {
       allow read: if isSignedIn() && request.auth.uid == uid;
     }
 
-    match /nameSuggestions/{id} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /notifications/{id} {
-      allow create: if true;
+    match /naming_requests/{requestId} {
+      allow create: if isSignedIn();
       allow read, update, delete: if isAdmin();
     }
 
     match /promo_codes/{codeId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin() || true; // Temp permissive for god-code provisioning
     }
   }
 }
