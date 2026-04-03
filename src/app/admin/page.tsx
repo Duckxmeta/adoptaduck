@@ -128,9 +128,9 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Naming Request Listener
+  // Real-time Naming Request Listener
   useEffect(() => {
-    if (!user || !ADMIN_EMAILS.includes(user.email) || !firestore) return;
+    if (!user || !ADMIN_EMAILS.includes(user.email || '') || !firestore) return;
 
     const q = query(
       collection(firestore, 'naming_requests'),
@@ -201,13 +201,13 @@ function ManagerPortal({ user }: { user: any }) {
         });
       }
 
-      // Seed Bandit Request for Materialization
+      // Seed Bandit Request for immediate verification (Kyle's Request)
       await addDoc(collection(firestore, 'naming_requests'), {
         birdId: 'G0-PUFF',
         birdName: 'Puff',
         suggestedName: 'Bandit',
-        userEmail: 'support@decentducks.org',
-        userName: 'Sanctuary Team',
+        userEmail: 'coryb@example.com',
+        userName: 'CoryB',
         status: 'pending',
         createdAt: serverTimestamp()
       });
@@ -410,7 +410,7 @@ function ManagerPortal({ user }: { user: any }) {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-foreground">
-                            <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary">'{req.suggestedName}'</span> for Resident {req.birdName}
+                            <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary">'{req.suggestedName}'</span> for Resident {req.birdName || req.birdId}
                           </p>
                           <p className="text-[9px] font-black uppercase text-muted-foreground mt-1">Email: {req.userEmail}</p>
                         </div>
