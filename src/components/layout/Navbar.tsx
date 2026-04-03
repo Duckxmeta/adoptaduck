@@ -3,29 +3,43 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home } from 'lucide-react';
-import { useUser, useAuth } from '@/firebase';
+import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home, Loader2 } from 'lucide-react';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { doc } from 'firebase/firestore';
+import { UserProfile } from '@/lib/types';
 
-const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export function Navbar() {
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
-  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
-  const isInDashboard = pathname === '/admin';
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isGuardian = userProfile?.role === 'guardian' || isAdmin;
+  const isInDashboard = pathname === '/admin' || pathname === '/dashboard';
 
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
       router.push('/');
     }
+  };
+
+  const getDashboardHref = () => {
+    if (!user) return '/login';
+    if (isAdmin) return '/admin';
+    if (isGuardian) return '/dashboard';
+    return '/support';
   };
 
   const Logo = () => (
@@ -45,17 +59,15 @@ export function Navbar() {
     </Link>
   );
 
-  // BOTTOM NAVIGATION BAR LINKS
   const navLinks = [
     { label: 'Home', href: '/', icon: Home },
     { label: 'The Flock', href: '/flock', icon: Bird },
-    { label: 'Dashboard', href: user ? '/admin' : '/login', icon: LayoutDashboard },
+    { label: 'Dashboard', href: getDashboardHref(), icon: LayoutDashboard },
     { label: user ? 'Logout' : 'Login', onClick: user ? handleLogout : () => router.push('/login'), icon: user ? LogOut : Lock },
   ];
 
   return (
     <>
-      {/* Desktop Navigation */}
       <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 md:py-4">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -74,7 +86,7 @@ export function Navbar() {
             </Link>
             {user ? (
               <>
-                <Link href="/admin" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", isInDashboard && "text-primary")}>
+                <Link href={getDashboardHref()} className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", isInDashboard && "text-primary")}>
                   <LayoutDashboard className="h-3.5 w-3.5" /> {isAdmin ? 'Manager Portal' : 'My Dashboard'}
                 </Link>
                 <Button variant="ghost" size="sm" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.2em] hover:text-destructive transition-colors p-0 h-auto">
@@ -96,7 +108,6 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile Only Quick Action */}
           <div className="md:hidden">
             {!isAdmin && (
               <Button size="sm" asChild className="bg-primary text-primary-foreground font-black rounded-lg h-10 px-4 text-[10px] tracking-widest uppercase shadow-lg">
@@ -107,7 +118,6 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* FIXED BOTTOM NAVIGATION BAR - MOBILE FIRST */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-white/5 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
         <div className="flex items-center justify-around h-16 px-2">
           {navLinks.map((link) => {

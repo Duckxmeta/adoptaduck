@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -18,7 +17,7 @@ import {
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, NamingRequest } from '@/lib/types';
+import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
@@ -27,24 +26,12 @@ import { cn } from '@/lib/utils';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
 
-// STICT ADMIN CHECK
-const KYLE_EMAIL = 'flowmarket1@gmail.com';
-const ADMIN_EMAILS = [KYLE_EMAIL, 'decentducksorg@gmail.com'];
-
-const VIBES = [
-  "Happy ☀️", 
-  "Hungry 🥨", 
-  "Sassy 💅", 
-  "Sleepy 💤", 
-  "Bath Time 🧼", 
-  "Exploring 🌿", 
-  "Relaxing 🛁", 
-  "Zoomies 🏎️", 
-  "Broody 🪺"
-];
+// STRICT ADMIN LOCK
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -52,14 +39,25 @@ export default function AdminDashboard() {
     setMounted(true);
   }, []);
 
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
   // Hard Redirect for non-admin users
   useEffect(() => {
-    if (mounted && !isUserLoading && (!user || !ADMIN_EMAILS.includes(user.email || ''))) {
-      router.replace('/');
+    if (mounted && !isUserLoading && user) {
+      if (user.email !== ADMIN_EMAIL) {
+        if (userProfile?.role === 'guardian') {
+          router.replace('/dashboard');
+        } else {
+          router.replace('/support');
+        }
+      }
+    } else if (mounted && !isUserLoading && !user) {
+      router.replace('/login');
     }
-  }, [user, isUserLoading, mounted, router]);
+  }, [user, isUserLoading, mounted, router, userProfile]);
 
-  if (isUserLoading || !mounted || !user || !ADMIN_EMAILS.includes(user.email || '')) {
+  if (isUserLoading || !mounted || !user || user.email !== ADMIN_EMAIL) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-primary">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -76,6 +74,18 @@ function ManagerPortal({ user }: { user: any }) {
   
   const [isResidentDialogOpen, setIsResidentDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
+
+  const VIBES = [
+    "Happy ☀️", 
+    "Hungry 🥨", 
+    "Sassy 💅", 
+    "Sleepy 💤", 
+    "Bath Time 🧼", 
+    "Exploring 🌿", 
+    "Relaxing 🛁", 
+    "Zoomies 🏎️", 
+    "Broody 🪺"
+  ];
 
   // QUERIES
   const birdsQuery = useMemoFirebase(() => {
@@ -190,21 +200,11 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
-  if (birdsLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
-        <Loader2 className="h-12 w-12 animate-spin" />
-        <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Syncing Sanctuary Pulse...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground pb-32">
       <Navbar />
       <main className="container mx-auto p-4 space-y-12 mt-8">
         
-        {/* HEADER */}
         <div className="flex items-center justify-between pb-4 border-b border-border">
           <h1 className="font-headline font-black text-2xl uppercase tracking-tighter">MANAGER PORTAL</h1>
           <Badge className="bg-primary text-primary-foreground font-black">ADMIN ACCESS</Badge>
@@ -294,27 +294,23 @@ function ManagerPortal({ user }: { user: any }) {
                     </Label>
                     <div className="grid grid-cols-3 gap-1.5">
                       {VIBES.map((vibe) => (
-                        <Button
+                        <button
                           key={vibe}
-                          size="sm"
-                          variant={bird.liveStatus === vibe ? "default" : "outline"}
                           className={cn(
-                            "h-12 px-1 text-[9px] font-black uppercase rounded-lg transition-all text-center leading-tight whitespace-normal",
-                            bird.liveStatus === vibe ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"
+                            "h-12 px-1 text-[9px] font-black uppercase rounded-lg transition-all text-center leading-tight whitespace-normal border-2",
+                            bird.liveStatus === vibe ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:border-primary/50 text-foreground"
                           )}
                           onClick={() => handleUpdateStatus(bird.id, vibe)}
                         >
                           {vibe}
-                        </Button>
+                        </button>
                       ))}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-12 px-1 text-[9px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
+                      <button
+                        className="h-12 px-1 text-[9px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10 border-2 border-transparent"
                         onClick={() => handleUpdateStatus(bird.id, "")}
                       >
                         Clear
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>

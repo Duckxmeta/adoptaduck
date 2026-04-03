@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -15,7 +14,7 @@ import {
   limit, 
   onSnapshot
 } from 'firebase/firestore';
-import { Resident, DailyStatus, UserProfile, Expense, Donation, BulletinEntry, EggHistoryEntry } from '@/lib/types';
+import { Resident, DailyStatus, UserProfile, Expense, BulletinEntry, EggHistoryEntry } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -24,30 +23,28 @@ import {
   Heart, 
   Bird, 
   Loader2, 
-  Sparkles,
   LayoutDashboard,
   ChevronRight,
-  TrendingUp,
   ScrollText,
-  Award,
-  Lock,
-  Database,
   ShieldCheck,
   LogOut,
   Zap,
   Megaphone,
   Clock,
-  ArrowRight
+  ArrowRight,
+  Database,
+  TrendingUp
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
+
+const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
 export default function MemberDashboard() {
   const { user, isUserLoading } = useUser();
@@ -62,12 +59,20 @@ export default function MemberDashboard() {
     setIsMounted(true);
   }, []);
 
-  const userProfileRef = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return doc(firestore, 'users', user.uid);
-  }, [firestore, user?.uid]);
-
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isGuardian = userProfile?.role === 'guardian' || isAdmin;
+
+  // STRICT ACCESS GATING: Non-Guardians redirect to /support
+  useEffect(() => {
+    if (isMounted && !isUserLoading && !profileLoading && user && userProfile) {
+      if (!isGuardian) {
+        router.replace('/support');
+      }
+    }
+  }, [user, userProfile, isGuardian, isUserLoading, profileLoading, isMounted, router]);
 
   useEffect(() => {
     if (!firestore) return;
@@ -82,10 +87,7 @@ export default function MemberDashboard() {
     return () => unsubscribe();
   }, [firestore]);
 
-  const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
-  const role = userProfile?.role || 'member';
-
-  // DATA QUERIES
+  // DATA QUERIES (Bypassed for non-guardians)
   const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !isGuardian) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
@@ -94,24 +96,24 @@ export default function MemberDashboard() {
   const { data: expenses } = useCollection<Expense>(expensesQuery);
 
   const birdsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isGuardian) return null;
     return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
-  }, [firestore]);
+  }, [firestore, isGuardian]);
 
   const { data: birds } = useCollection<Resident>(birdsQuery);
 
   const dailyStatusRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isGuardian) return null;
     return doc(firestore, 'daily_status', 'today');
-  }, [firestore]);
+  }, [firestore, isGuardian]);
 
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const eggHistoryRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isGuardian) return null;
     return doc(firestore, 'egg_history', todayStr);
-  }, [firestore, todayStr]);
+  }, [firestore, todayStr, isGuardian]);
 
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
 
@@ -131,9 +133,12 @@ export default function MemberDashboard() {
     );
   }
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (!user || !isGuardian) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   const liveStatusBirds = (birds || [])
@@ -151,130 +156,104 @@ export default function MemberDashboard() {
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
                  <LayoutDashboard className="h-6 w-6" />
-                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">
-                   {isGuardian ? "Guardian Hub" : "Supporter Hub"}
-                 </span>
+                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Guardian Hub</span>
               </div>
               <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-[0.8]">
-                WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'HERO'}</span>
+                WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'GUARDIAN'}</span>
               </h1>
            </div>
 
            <div className="flex flex-col md:flex-row gap-4">
              <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                   {isGuardian ? <ShieldCheck className="h-6 w-6" /> : <Heart className="h-6 w-6" />}
+                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Tier</p>
-                   <p className="text-sm font-headline font-black text-secondary uppercase leading-tight">
-                     {isGuardian ? "Verified Guardian" : "Active Supporter"}
-                   </p>
+                   <p className="text-sm font-headline font-black text-secondary uppercase leading-tight">Verified Guardian</p>
                 </div>
              </Card>
            </div>
         </section>
 
-        {/* MEMBER ROLE VIEW */}
-        {role === 'member' ? (
-          <section className="max-w-3xl mx-auto py-20 text-center space-y-12 animate-in zoom-in duration-700">
-            <div className="space-y-6">
-              <div className="mx-auto w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20">
-                <Heart className="h-12 w-12 text-primary" />
-              </div>
-              <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
-                THANK YOU FOR <span className="text-primary">YOUR SUPPORT!</span>
-              </h2>
-              <p className="text-muted-foreground text-lg md:text-xl font-medium leading-relaxed">
-                Your one-time donation ensures our residents have everything they need today. Want to unlock archival care logs and heritage trees?
-              </p>
+        {/* MIRROR SECTION 1: BULLETIN */}
+        {bulletins.length > 0 && (
+          <section className="animate-in fade-in duration-1000">
+            <div className="flex items-center gap-3 mb-6">
+              <Megaphone className="h-5 w-5 text-primary" />
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
             </div>
-            <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
-              <Link href="/support#membership">UPGRADE TO GUARDIAN <ArrowRight className="ml-2 h-5 w-5" /></Link>
-            </Button>
-          </section>
-        ) : (
-          <>
-            {/* MIRROR SECTION 1: BULLETIN */}
-            {bulletins.length > 0 && (
-              <section className="animate-in fade-in duration-1000">
-                <div className="flex items-center gap-3 mb-6">
-                  <Megaphone className="h-5 w-5 text-primary" />
-                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {bulletins.map(b => (
-                    <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
-                      <div className="p-6 space-y-4">
-                        <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
-                        <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
-                          <Clock className="h-2.5 w-2.5" />
-                          {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
-            <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
-
-            {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
-            <EggCounter initialCount={eggHistory?.count || 0} readOnly />
-
-            {/* LIVE PULSE */}
-            <section className="space-y-8">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse">
-                  <Zap className="h-5 w-5 text-primary-foreground fill-current" />
-                </div>
-                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {liveStatusBirds.map(bird => (
-                  <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
-                    <span className="text-2xl">🦆</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase text-primary truncate">{bird.name}</p>
-                      <p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {bulletins.map(b => (
+                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
+                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                      <Clock className="h-2.5 w-2.5" />
+                      {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
                     </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            {/* MIRROR SECTION 4: FLOCK RECORDS */}
-            <section className="space-y-8">
-               <div className="flex items-center justify-between border-b border-border pb-4">
-                  <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-                    <Bird className="h-4 w-4" /> THE SANCTUARY FLOCK
-                  </h2>
-               </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {birds?.map((bird) => (
-                   <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
-                 ))}
-               </div>
-            </section>
-
-            {/* ARCHIVAL LEDGER (GUARDIAN ONLY) */}
-            <section className="space-y-8 pt-12 border-t border-border">
-               <div className="flex items-center gap-3">
-                  <ScrollText className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
-               </div>
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2">
-                     <SanctuaryCostCard expenses={expenses || []} />
                   </div>
-                  <ItemizedLedger expenses={expenses || []} userProfile={userProfile || null} />
-               </div>
-            </section>
-          </>
+                </Card>
+              ))}
+            </div>
+          </section>
         )}
+
+        {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
+        <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
+
+        {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
+        <EggCounter initialCount={eggHistory?.count || 0} readOnly />
+
+        {/* LIVE PULSE */}
+        <section className="space-y-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse">
+              <Zap className="h-5 w-5 text-primary-foreground fill-current" />
+            </div>
+            <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {liveStatusBirds.map(bird => (
+              <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
+                <span className="text-2xl">🦆</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-black uppercase text-primary truncate">{bird.name}</p>
+                  <p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* MIRROR SECTION 4: FLOCK RECORDS */}
+        <section className="space-y-8">
+           <div className="flex items-center justify-between border-b border-border pb-4">
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
+                <Bird className="h-4 w-4" /> THE SANCTUARY FLOCK
+              </h2>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {birds?.map((bird) => (
+               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
+             ))}
+           </div>
+        </section>
+
+        {/* ARCHIVAL LEDGER (GUARDIAN ONLY) */}
+        <section className="space-y-8 pt-12 border-t border-border">
+           <div className="flex items-center gap-3">
+              <ScrollText className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
+           </div>
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                 <SanctuaryCostCard expenses={expenses || []} />
+              </div>
+              <ItemizedLedger expenses={expenses || []} userProfile={userProfile || null} />
+           </div>
+        </section>
 
         {/* LOGOUT */}
         <section className="pt-12 border-t border-border flex justify-center">
