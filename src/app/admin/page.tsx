@@ -154,7 +154,7 @@ function ManagerPortal({ user }: { user: any }) {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data()
+        ...(doc.data() || {})
       })) as NamingRequest[];
       setNamingRequests(docs);
     }, async (err) => {
@@ -357,6 +357,15 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
+  if (birdsLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
+        <Loader2 className="h-10 w-10 animate-spin" />
+        <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Loading Sanctuary Data...</p>
+      </div>
+    );
+  }
+
   const progress = dailyStatus ? (['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'].filter(t => !!(dailyStatus as any)[t]).length / 5) * 100 : 0;
   const foundingResidents = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder)?.sort((a,b) => (a.name || '').localeCompare(b.name || '')) || [];
 
@@ -418,10 +427,10 @@ function ManagerPortal({ user }: { user: any }) {
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">PENDING NAME REQUESTS</h2>
           </div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
-            {namingRequests.length > 0 ? (
+            {Array.isArray(namingRequests) && namingRequests.length > 0 ? (
               <ScrollArea className="h-[300px] pr-4">
                 <div className="space-y-3">
-                  {namingRequests.map((req) => (
+                  {namingRequests?.map((req) => (
                     <div key={req.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/10 p-4 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-secondary/10 rounded-full">
@@ -595,7 +604,7 @@ function ManagerPortal({ user }: { user: any }) {
             </div>
           </div>
           <Card className="bg-card border-border rounded-[2rem] p-6 shadow-xl">
-            {expenses && expenses.length > 0 ? (
+            {expenses && Array.isArray(expenses) && expenses.length > 0 ? (
               <div className="space-y-3">
                 {expenses.slice(0, 10).map((exp) => (
                   <div key={exp.id} className="flex items-center justify-between p-4 bg-muted/10 rounded-xl border border-border">
@@ -630,7 +639,7 @@ function ManagerPortal({ user }: { user: any }) {
         <section className="space-y-4">
           <div className="flex items-center gap-3"><Zap className="h-4 w-4 text-primary" /><h2 className="font-headline font-black text-xs uppercase tracking-[0.3em]">LIVE VIBE BOARD</h2></div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {foundingResidents.map((bird) => {
+            {foundingResidents?.map((bird) => {
               const lastUpdatedDate = bird.statusLastUpdated ? new Date(bird.statusLastUpdated) : null;
               const formattedTime = lastUpdatedDate && isDateValid(lastUpdatedDate) 
                 ? format(lastUpdatedDate, 'h:mm a') 
@@ -757,7 +766,7 @@ function MemberPulseView({ user }: { user: any }) {
       <div className="max-w-4xl mx-auto py-12 space-y-8">
         <h1 className="text-2xl font-headline font-black uppercase">Member Sanctuary Feed</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {foundingResidents.map(bird => (
+          {foundingResidents?.map(bird => (
             <Card key={bird.id} className="p-6 bg-card border-border rounded-2xl">
               <h2 className="text-lg font-headline font-black uppercase">{getResidentName(bird)}</h2>
               <p className="text-sm text-muted-foreground">{bird.liveStatus || 'At Routine'}</p>
