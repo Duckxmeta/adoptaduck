@@ -6,7 +6,8 @@ import Image from 'next/image';
 import { 
   Sparkles, 
   X,
-  Heart
+  Heart,
+  Loader2
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -38,10 +39,23 @@ interface HeritageTreeProps {
 export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, familyData }) => {
   const [selectedBird, setSelectedBird] = useState<Resident | null>(null);
 
+  if (!rootResident) {
+    return (
+      <div className="py-20 text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+        <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Growing your tree...</p>
+      </div>
+    );
+  }
+
   const { mother, father, mGrandma, mGrandpa, fGrandma, fGrandpa } = familyData;
 
   const TreeCard = ({ bird, label, genLabel, className }: { bird: Resident | null, label: string, genLabel?: string, className?: string }) => {
-    if (!bird) return null;
+    if (!bird) return (
+      <div className={cn("w-[220px] h-[280px] rounded-2xl border-2 border-dashed border-border flex items-center justify-center bg-muted/5", className)}>
+        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">{label} Unknown</span>
+      </div>
+    );
 
     const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder || bird.source === 'Rehomed';
     const imagePath = bird.primaryImageUrl || 'https://picsum.photos/seed/duck-placeholder/400/400';
@@ -92,7 +106,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
     );
   };
 
-  const isRootHatched = rootResident.source === 'Hatched';
+  const isRootHatched = rootResident.source === 'Hatched' || !!(rootResident.motherId || rootResident.fatherId);
 
   return (
     <div className="w-full">
@@ -195,7 +209,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
                   </Link>
                 </Button>
                 <p className="text-[9px] text-center font-black uppercase tracking-widest text-muted-foreground">
-                  Secure Donation via PayPal
+                  Secure Donation Portal
                 </p>
               </div>
             </div>

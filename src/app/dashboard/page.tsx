@@ -45,7 +45,8 @@ import {
   Calendar,
   Database,
   Ticket,
-  CreditCard
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -54,7 +55,6 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import { BulletinBoard } from '@/components/members/BulletinBoard';
-import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 
 const GOALS = {
   feed: 300,
@@ -87,7 +87,7 @@ export default function MemberDashboard() {
         ...doc.data()
       })) as BulletinEntry[];
       setBulletins(docs);
-    }, (err) => console.warn("Bulletin access denied or malformed", err));
+    }, (err) => console.warn("Bulletin access denied", err));
     return () => unsubscribe();
   }, [firestore]);
 
@@ -156,12 +156,12 @@ export default function MemberDashboard() {
     };
   }, [donations]);
 
-  const calculateProgress = () => {
+  const globalHealth = useMemo(() => {
     if (!dailyStatus) return 0;
     const tasks = ['morningFeeding', 'freshWater', 'eggCounter', 'healthCheck', 'nightlyPenUp'];
     const completed = tasks.filter(t => !!(dailyStatus as any)[t]).length;
     return (completed / tasks.length) * 100;
-  };
+  }, [dailyStatus]);
 
   const routineTasks = [
     { label: "Morning Feeding", key: "morningFeeding", icon: <ForkKnife className="h-4 w-4" /> },
@@ -180,10 +180,11 @@ export default function MemberDashboard() {
     );
   }
 
-  const globalHealth = calculateProgress();
-  const liveStatusBirds = allBirds?.filter(b => b.liveStatus)?.sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
+  // ACCESS FLAG OVERRIDE: ROLE IS THE ABSOLUTE SOURCE OF TRUTH
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
-  const isGiftedAccess = isGuardian && !userProfile?.stripeSubscriptionId && (userProfile?.usedCodes?.length || 0) > 0;
+  const isAlphaTester = isGuardian && !userProfile?.stripeSubscriptionId;
+
+  const liveStatusBirds = allBirds?.filter(b => b.liveStatus)?.sort((a,b) => (b.statusLastUpdated || '').localeCompare(a.statusLastUpdated || '')) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-body pb-32">
@@ -217,12 +218,12 @@ export default function MemberDashboard() {
              {isGuardian && (
                <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                     {isGiftedAccess ? <Ticket className="h-6 w-6" /> : <CreditCard className="h-6 w-6" />}
+                     {isAlphaTester ? <ShieldCheck className="h-6 w-6" /> : <CreditCard className="h-6 w-6" />}
                   </div>
                   <div>
                      <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Status</p>
                      <p className="text-sm font-headline font-black text-secondary uppercase leading-tight">
-                       {isGiftedAccess ? "Gifted Access" : "Guardian Pro"}
+                       {isAlphaTester ? "Alpha Tester" : "Guardian Pro"}
                      </p>
                   </div>
                </Card>
@@ -454,19 +455,12 @@ function ItemizedLedger({ expenses, isGuardian, userProfile }: { expenses: Expen
   }
 
   // Null-Safe Join Date Calculation
-  const getSafeDate = (dString?: string | null) => {
-    if (!dString) return new Date();
-    const d = new Date(dString);
-    return isNaN(d.getTime()) ? new Date() : d;
-  };
-
-  const joinDate = getSafeDate(userProfile?.membershipStartedAt);
+  const joinDate = userProfile?.membershipStartedAt ? new Date(userProfile.membershipStartedAt) : new Date(0);
   
   const filteredExpenses = (expenses || []).filter(e => {
     if (!e.date) return false;
     const d = new Date(e.date);
-    if (isNaN(d.getTime())) return true; // Show malformed dates instead of hiding
-    return d >= joinDate;
+    return !isNaN(d.getTime()) && d >= joinDate;
   });
 
   return (
