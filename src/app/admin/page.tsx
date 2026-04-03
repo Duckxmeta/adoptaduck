@@ -111,13 +111,25 @@ function ManagerPortal({ user }: { user: any }) {
   const [bullPreview, setBullPreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
 
-  const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
-  const expensesQuery = useMemoFirebase(() => query(collection(firestore!, 'ledger'), orderBy('date', 'desc')), [firestore]);
+  const birdsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
+  }, [firestore]);
+
+  const expensesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
+  }, [firestore]);
+
   const todayEggRef = useMemoFirebase(() => {
     if (!firestore || !todayDate) return null;
     return doc(firestore, 'egg_history', todayDate);
   }, [firestore, todayDate]);
-  const dailyStatusRef = useMemoFirebase(() => doc(firestore!, 'daily_status', 'today'), [firestore]);
+
+  const dailyStatusRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'daily_status', 'today');
+  }, [firestore]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
   const { data: expenses } = useCollection<Expense>(expensesQuery);
@@ -150,7 +162,8 @@ function ManagerPortal({ user }: { user: any }) {
   }, [user, firestore]);
 
   const handleUpdateStatus = (birdId: string, status: string) => {
-    const birdRef = doc(firestore!, 'birds', birdId);
+    if (!firestore) return;
+    const birdRef = doc(firestore, 'birds', birdId);
     updateDoc(birdRef, {
       liveStatus: status || "",
       statusLastUpdated: status ? new Date().toISOString() : null
@@ -239,10 +252,11 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleApproveRequest = async (req: NamingRequest) => {
+    if (!firestore) return;
     try {
-      const batch = writeBatch(firestore!);
-      const birdRef = doc(firestore!, 'birds', req.birdId);
-      const reqRef = doc(firestore!, 'naming_requests', req.id);
+      const batch = writeBatch(firestore);
+      const birdRef = doc(firestore, 'birds', req.birdId);
+      const reqRef = doc(firestore, 'naming_requests', req.id);
 
       batch.update(birdRef, { name: req.suggestedName, updatedAt: new Date().toISOString() });
       batch.update(reqRef, { status: 'approved', updatedAt: new Date().toISOString() });
@@ -255,8 +269,9 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleDenyRequest = async (requestId: string) => {
+    if (!firestore) return;
     try {
-      await updateDoc(doc(firestore!, 'naming_requests', requestId), {
+      await updateDoc(doc(firestore, 'naming_requests', requestId), {
         status: 'denied',
         updatedAt: new Date().toISOString()
       });
@@ -268,7 +283,7 @@ function ManagerPortal({ user }: { user: any }) {
 
   const handlePostBulletin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bullTitle.trim() || !bullContent.trim()) return;
+    if (!bullTitle.trim() || !bullContent.trim() || !firestore) return;
     setIsPosting(true);
     try {
       let imageUrl = null;
@@ -279,7 +294,7 @@ function ManagerPortal({ user }: { user: any }) {
         imageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      await addDoc(collection(firestore!, 'bulletin'), {
+      await addDoc(collection(firestore, 'bulletin'), {
         title: bullTitle,
         content: bullContent,
         imageUrl,
@@ -299,11 +314,12 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleSaveResident = async (data: Partial<Resident>) => {
+    if (!firestore) return;
     try {
-      const batch = writeBatch(firestore!);
+      const batch = writeBatch(firestore);
 
       if (data.isFeatured) {
-        const featuredQuery = query(collection(firestore!, 'birds'), where('isFeatured', '==', true));
+        const featuredQuery = query(collection(firestore, 'birds'), where('isFeatured', '==', true));
         const featuredDocs = await getDocs(featuredQuery);
         featuredDocs.forEach((d) => {
           if (d.id !== editingResident?.id) {
@@ -313,7 +329,7 @@ function ManagerPortal({ user }: { user: any }) {
       }
 
       if (editingResident) {
-        const birdRef = doc(firestore!, 'birds', editingResident.id);
+        const birdRef = doc(firestore, 'birds', editingResident.id);
         batch.update(birdRef, { 
           ...data, 
           updatedAt: new Date().toISOString() 
@@ -321,7 +337,7 @@ function ManagerPortal({ user }: { user: any }) {
         await batch.commit();
         toast({ title: "Updated", description: `${data.name} has been updated.` });
       } else {
-        const docRef = doc(collection(firestore!, 'birds'));
+        const docRef = doc(collection(firestore, 'birds'));
         const newId = docRef.id;
         await batch.commit();
         await setDoc(docRef, { 
@@ -440,11 +456,11 @@ function ManagerPortal({ user }: { user: any }) {
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Update Title</Label>
-                  <Input 
+                  <input 
                     value={bullTitle} 
                     onChange={e => setBullTitle(e.target.value)}
                     placeholder="e.g. Morning Routine Completed"
-                    className="bg-background border-border h-12 rounded-xl"
+                    className="flex h-12 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="space-y-2">
@@ -706,13 +722,15 @@ function ManagerPortal({ user }: { user: any }) {
       <ResidentDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onSave={handleSaveResident} resident={editingResident} />
       
       <HealthLogDialog open={isHealthLogOpen} onOpenChange={setIsHealthLogOpen} onSave={async (notes) => {
-        await addDoc(collection(firestore!, 'birds', loggingResident!.id, 'healthLogs'), { birdId: loggingResident!.id, logDate: new Date().toISOString(), notes });
+        if (!firestore) return;
+        await addDoc(collection(firestore, 'birds', loggingResident!.id, 'healthLogs'), { birdId: loggingResident!.id, logDate: new Date().toISOString(), notes });
         toast({ title: "Log Saved" });
         setIsHealthLogOpen(false);
       }} residentName={getResidentName(loggingResident)} />
 
       <DeleteResidentDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen} resident={deletingResident} offspringCount={0} onConfirm={async () => {
-        await deleteDoc(doc(firestore!, 'birds', deletingResident!.id));
+        if (!firestore) return;
+        await deleteDoc(doc(firestore, 'birds', deletingResident!.id));
         toast({ title: "Removed" });
       }} />
 
@@ -723,7 +741,10 @@ function ManagerPortal({ user }: { user: any }) {
 
 function MemberPulseView({ user }: { user: any }) {
   const firestore = useFirestore();
-  const birdsQuery = useMemoFirebase(() => query(collection(firestore!, 'birds'), orderBy('name', 'asc')), [firestore]);
+  const birdsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
+  }, [firestore]);
   const { data: birds } = useCollection<Resident>(birdsQuery);
   const foundingResidents = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder) || [];
 
