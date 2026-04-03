@@ -5,8 +5,8 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.2.0 (Naming Request Release)
-     * Last Updated: 2026-04-01
+     * Version: 1.2.1 (Naming Queue Logic Alignment)
+     * Last Updated: 2026-04-03
      */
 
     // --- MASTER OVERRIDE ---
@@ -88,7 +88,7 @@ service cloud.firestore {
 
     match /promo_codes/{codeId} {
       allow read: if true;
-      allow write: if isAdmin() || true; // Temp permissive for god-code provisioning
+      allow write: if isAdmin();
     }
   }
 }

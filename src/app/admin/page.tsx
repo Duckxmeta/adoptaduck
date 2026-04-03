@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDoc, getDocs, deleteField } from 'firebase/firestore';
+import { collection, doc, query, orderBy, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, where, updateDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Resident, DailyStatus, UserProfile, Expense, NamingRequest } from '@/lib/types';
+import { Resident, DailyStatus, Expense, NamingRequest } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { HealthLogDialog } from '@/components/admin/HealthLogDialog';
@@ -32,8 +32,10 @@ import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format, isValid as isDateValid } from 'date-fns';
 import { cn, getResidentName } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Link from 'next/link';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
 const PRESET_VIBES = [
@@ -80,7 +82,6 @@ export default function AdminDashboard() {
 function ManagerPortal({ user }: { user: any }) {
   const firestore = useFirestore();
   const storage = useStorage();
-  const router = useRouter();
   const { toast } = useToast();
   const bullFileRef = useRef<HTMLInputElement>(null);
 
@@ -140,7 +141,7 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Real-time Naming Request Listener
+  // Real-time Naming Request Listener - Hardened status and collection path
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email || '') || !firestore) return;
 
@@ -156,6 +157,12 @@ function ManagerPortal({ user }: { user: any }) {
         ...doc.data()
       })) as NamingRequest[];
       setNamingRequests(docs);
+    }, async (err) => {
+      const permissionError = new FirestorePermissionError({
+        path: 'naming_requests',
+        operation: 'list',
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
 
     return () => unsubscribe();
@@ -198,7 +205,6 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     setIsInitializingLedger(true);
     try {
-      // Seeding Founding Receipts
       const bulkExpenses = [
         { itemName: 'Purchase of Cocoa and Puff', category: 'Acquisition', cost: 20.00, date: '2026-04-01', birdId: null },
         { itemName: 'Flex Seal for pond liner', category: 'Infrastructure', cost: 37.30, date: '2026-04-01', birdId: null },
@@ -214,7 +220,6 @@ function ManagerPortal({ user }: { user: any }) {
         });
       }
 
-      // Seed Bandit Request for immediate verification (Kyle's Request)
       await addDoc(collection(firestore, 'naming_requests'), {
         birdId: 'G0-PUFF',
         birdName: 'Puff',
@@ -225,7 +230,7 @@ function ManagerPortal({ user }: { user: any }) {
         createdAt: serverTimestamp()
       });
 
-      toast({ title: "Archival Records Materialized", description: "Founding receipts and test requests seeded." });
+      toast({ title: "Records Materialized", description: "Founding receipts and test requests seeded." });
     } catch (e) {
       console.error("Seeding error:", e);
       toast({ variant: "destructive", title: "Setup Error", description: "Could not file receipts." });
@@ -306,8 +311,7 @@ function ManagerPortal({ user }: { user: any }) {
       setBullPreview(null);
       toast({ title: "Bulletin Published" });
     } catch (e: any) {
-      console.error("Sanctuary Bulletin Upload Failure:", e.code || e.message, e);
-      toast({ variant: "destructive", title: "Error posting update", description: "Storage access denied or network timeout." });
+      toast({ variant: "destructive", title: "Error posting update" });
     } finally {
       setIsPosting(false);
     }
@@ -349,7 +353,6 @@ function ManagerPortal({ user }: { user: any }) {
       }
       setIsDialogOpen(false);
     } catch (error) {
-      console.error("Error saving resident:", error);
       toast({ variant: "destructive", title: "Save Failed" });
     }
   };
@@ -617,7 +620,7 @@ function ManagerPortal({ user }: { user: any }) {
             ) : (
               <div className="h-[100px] flex flex-col items-center justify-center text-center opacity-50 space-y-2">
                 <Wallet className="h-8 w-8 text-muted-foreground" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No expenses recorded. Use Initialize to seed data.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest">No expenses recorded.</p>
               </div>
             )}
           </Card>
