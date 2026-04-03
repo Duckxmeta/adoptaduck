@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -33,11 +32,11 @@ export default function StripeSuccessPage() {
               WELCOME TO THE <span className="text-primary">FLOCK!</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">
-              Welcome to the Flock, Guardian! Your support provides a high-quality home for our rescued birds.
+              Welcome to the Family, Guardian! Your support provides a high-quality home for our rescued birds.
             </p>
           </div>
 
-          {/* G0 Founder Visual Anchor */}
+          {/* Founding Visual Anchor */}
           <div className="relative group animate-in zoom-in duration-700 delay-300">
             <div className="absolute -inset-4 bg-primary/10 blur-3xl rounded-[3rem] opacity-50 group-hover:opacity-80 transition-opacity" />
             
@@ -46,12 +45,12 @@ export default function StripeSuccessPage() {
               <CardContent className="p-0 flex flex-col md:flex-row items-stretch">
                 <div className="relative w-full md:w-1/2 aspect-square md:aspect-auto min-h-[400px]">
                   <Image 
-                    src="https://picsum.photos/seed/cocoapuff/800/600" 
-                    alt="Cocoa and Puff" 
+                    src="https://picsum.photos/seed/sanctuary-success/800/600" 
+                    alt="Sanctuary Flock" 
                     fill 
                     className="object-cover"
                     priority
-                    data-ai-hint="cocoa puff ducks"
+                    data-ai-hint="duck sanctuary"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-card" />
                 </div>
@@ -62,11 +61,11 @@ export default function StripeSuccessPage() {
                       <Sparkles className="h-4 w-4" /> Guardian Activated
                     </span>
                     <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tighter leading-none">
-                      COCOA & <span className="text-primary">PUFF</span>
+                      THE <span className="text-primary">FLOCK</span>
                     </h2>
                   </div>
                   <p className="text-muted-foreground text-sm md:text-base font-medium leading-relaxed italic">
-                    "Every egg counted is a victory. Your support ensures our inaugural G0 founders and the entire flock live in safety and comfort."
+                    "Every egg counted is a victory. Your support ensures our founders and the entire flock live in safety and comfort."
                   </p>
                   <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-10 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform w-full md:w-auto">
                     <Link href="/dashboard">ENTER DASHBOARD <ArrowRight className="ml-2 h-5 w-5" /></Link>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Navbar } from '@/components/layout/Navbar';
@@ -29,7 +28,7 @@ export default function StripeCancelPage() {
               NO <span className="text-secondary">WORRIES!</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl font-medium">
-              Cocoa and Puff will be here if you change your mind.
+              The flock will be here if you change your mind.
             </p>
           </div>
 
@@ -37,7 +36,7 @@ export default function StripeCancelPage() {
             <CardContent className="p-0 space-y-8">
               <div className="space-y-4">
                 <p className="text-foreground/80 leading-relaxed font-medium">
-                  We understand! Whether you're ready to join the flock today or simply want to browse, we're glad you're here.
+                  We understand! Whether you're ready to join the family today or simply want to browse, we're glad you're here.
                 </p>
                 <div className="p-6 bg-primary/5 border border-primary/10 rounded-2xl italic text-sm text-muted-foreground">
                   "A modern, transparent sanctuary providing a peaceful, high-quality home for domestic ducks."
