@@ -50,7 +50,7 @@ service cloud.firestore {
       allow write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
     }
     
-    match /promo_codes/{codeId} {
+    match /promo_codes/{code} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
     }

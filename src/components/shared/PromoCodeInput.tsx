@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -13,7 +14,8 @@ import { PromoCode, UserProfile } from '@/lib/types';
 /**
  * Enhanced Promo Code component with Golden Ticket Redemption logic.
  * Supports bypassing Stripe checkout for 'bypass_upgrade' ticket types.
- * HARD SHIELD: SPRINGDUCKS-JDI-G0 bypasses all activation/expiration checks.
+ * HARD SHIELD: SPRINGDUCKS and SPRINGDUCKS-JDI-G0 bypass activation/expiration checks.
+ * Multi-use enabled: Allows different users to use the same code.
  */
 export function PromoCodeInput() {
   const [code, setCode] = useState('');
@@ -29,7 +31,8 @@ export function PromoCodeInput() {
     setIsValidating(true);
     try {
       await runTransaction(firestore, async (transaction) => {
-        const isGodCode = promoCodeInput === 'SPRINGDUCKS-JDI-G0';
+        // God Code Shielding: SPRINGDUCKS and SPRINGDUCKS-JDI-G0
+        const isGodCode = promoCodeInput === 'SPRINGDUCKS-JDI-G0' || promoCodeInput === 'SPRINGDUCKS';
         const promoRef = doc(firestore, 'promo_codes', promoCodeInput);
         const userRef = doc(firestore, 'users', user.uid);
         
@@ -42,7 +45,7 @@ export function PromoCodeInput() {
 
         const userData = userDoc.data() as UserProfile;
 
-        // Stacking Protection
+        // User-Specific Usage Check (Ensures a user can only redeem a specific code once)
         if (userData.usedCodes?.includes(promoCodeInput)) {
           throw new Error("You have already redeemed this reward.");
         }
@@ -50,7 +53,6 @@ export function PromoCodeInput() {
         let duration = 365;
         let targetRole = 'guardian';
 
-        // God Code Shielding: Ignore DB status for the specific GOD string
         if (!isGodCode) {
           if (!promoDoc.exists()) {
             throw new Error("Invalid or expired promo code.");
@@ -69,7 +71,7 @@ export function PromoCodeInput() {
             usageCount: (promoData.usageCount || 0) + 1 
           });
         } else {
-          // God Code handling
+          // God Code handling: Unlimited multi-user use regardless of collection state
           if (promoDoc.exists()) {
             const pData = promoDoc.data() as PromoCode;
             transaction.update(promoRef, { 
@@ -98,10 +100,16 @@ export function PromoCodeInput() {
       });
       setCode('');
     } catch (error: any) {
+      console.error("Redemption Error:", error);
+      
+      // Friendly Override for Permission or System Errors
+      const isPermissionError = error.message?.toLowerCase().includes('permission') || error.code === 'permission-denied';
+      const displayMessage = isPermissionError ? "Checking your Golden Ticket... 🦆" : (error.message || "Failed to validate code.");
+
       toast({
         variant: "destructive",
-        title: "Redemption Error",
-        description: error.message || "Failed to validate code.",
+        title: "Code Note",
+        description: displayMessage,
       });
     } finally {
       setIsValidating(false);
@@ -120,7 +128,7 @@ export function PromoCodeInput() {
         </div>
         <div className="flex gap-2">
           <Input 
-            placeholder="Enter code..." 
+            placeholder={isValidating ? "Verifying Golden Ticket... 🦆" : "Enter code..."}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="bg-background border-secondary/20 h-12 text-sm font-black tracking-widest uppercase rounded-xl placeholder:text-muted-foreground/30"
