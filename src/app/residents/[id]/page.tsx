@@ -12,8 +12,6 @@ import {
   Wallet, 
   MapPin, 
   Zap, 
-  CheckCircle2, 
-  GitBranch,
   Trophy,
   BookOpen,
   Sparkles,
@@ -21,18 +19,17 @@ import {
   Loader2,
   AlertCircle,
   Lock,
-  History,
   TrendingUp,
-  ShieldCheck,
   ArrowRight,
-  Database
+  Database,
+  GitBranch
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
 import { doc, collection, query, orderBy } from 'firebase/firestore';
-import { Resident, Expense } from '@/lib/types';
+import { Resident, Expense, UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { cn, getResidentName } from '@/lib/utils';
 import {
   Carousel,
@@ -43,13 +40,11 @@ import {
 } from "@/components/ui/carousel";
 import Link from 'next/link';
 
-const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+const ADMIN_EMAILS = ['flowmarket1@gmail.com', 'decentducksorg@gmail.com'];
 
 /**
- * @fileOverview Resident Profile with Tier-Based Financial Access Control.
- * Tiers: 
- * - Public: Locked (Flock Members Only)
- * - Member: Global Sanctuary Investment & Average Price Per Bird
+ * @fileOverview Resident Profile with Tier-Based Access Control.
+ * Gated Sections: itemized ledger summaries and heritage tree links.
  */
 
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -58,16 +53,20 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { user } = useUser();
   const router = useRouter();
 
-  // Fetch core identity
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
-  // ARCHIVAL LEDGER: Permanent financial archive
-  // Conditional Fetch: Only request ledger data if user is logged in
+  const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
+  const isAdmin = user && ADMIN_EMAILS.includes(user.email || '');
+  const isGuardian = userProfile?.role === 'guardian' || isAdmin;
+
+  // ARCHIVAL LEDGER
   const expensesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !isGuardian) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
-  }, [firestore, user]);
+  }, [firestore, isGuardian]);
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -98,7 +97,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="font-black uppercase tracking-[0.3em] text-xs text-muted-foreground">Checking Sanctuary Records...</p>
+        <p className="font-black uppercase tracking-[0.3em] text-xs text-muted-foreground">Verifying Sanctuary Identity...</p>
       </div>
     );
   }
@@ -215,24 +214,28 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     <span className="flex items-center gap-1.5 text-primary">
-                       <Wallet className="h-3.5 w-3.5" /> 
-                       Member Gated Archival Record
-                     </span>
+                     {isGuardian && (
+                       <span className="flex items-center gap-1.5 text-primary">
+                         <Wallet className="h-3.5 w-3.5" /> 
+                         Guardian Archival Record
+                       </span>
+                     )}
                   </div>
                 </div>
-                <Button 
-                  asChild
-                  className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
-                >
-                  <Link href={`/residents/${id}/tree`}>
-                    <GitBranch className="mr-2 h-4 w-4" /> VIEW LINEAGE
-                  </Link>
-                </Button>
+                {isGuardian && (
+                  <Button 
+                    asChild
+                    className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
+                  >
+                    <Link href={`/residents/${id}/tree`}>
+                      <GitBranch className="mr-2 h-4 w-4" /> VIEW LINEAGE
+                    </Link>
+                  </Button>
+                )}
               </div>
 
-              {/* TIER-BASED FINANCIAL DISPLAY */}
-              {!user ? (
+              {/* TIER-BASED ACCESS CONTROL */}
+              {!isGuardian ? (
                 <Card className="bg-card p-12 rounded-[2.5rem] border-2 border-dashed border-border text-center space-y-6 shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-primary/5 opacity-50" />
                   <div className="relative z-10 space-y-4">
@@ -240,16 +243,16 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                       <Lock className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-primary leading-tight">FLOCK MEMBERS ONLY</h2>
-                      <p className="text-sm text-muted-foreground font-medium mt-2 max-w-xs mx-auto">Detailed sanctuary investment records are exclusive to registered members.</p>
+                      <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-primary leading-tight">UNLOCK THIS BIRD'S HISTORY</h2>
+                      <p className="text-sm text-muted-foreground font-medium mt-2 max-w-xs mx-auto">Detailed financial archives and heritage trees are exclusive to Sanctuary Guardians.</p>
                     </div>
-                    <Button asChild variant="outline" className="h-10 rounded-xl border-primary/20 text-primary font-black uppercase text-[10px] tracking-widest hover:bg-primary/5">
-                      <Link href="/signup">Join Free to Unlock <ArrowRight className="ml-2 h-3 w-3" /></Link>
+                    <Button asChild className="bg-primary text-primary-foreground font-black h-14 px-8 rounded-xl uppercase text-xs tracking-widest shadow-xl hover:scale-105 transition-transform">
+                      <Link href="/support#membership">Upgrade to Guardian <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </Button>
                   </div>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in zoom-in duration-500">
                   <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl relative overflow-hidden group">
                     <div className="flex items-center gap-3 text-muted-foreground mb-4">
                       <Database className="h-5 w-5 text-primary" />
@@ -259,20 +262,20 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                       <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
                         ${totalSanctuaryInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Lifetime Running Total</span>
+                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Archival Total</span>
                     </div>
                   </div>
                   
                   <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl group">
                     <div className="flex items-center gap-3 text-muted-foreground mb-4">
                       <TrendingUp className="h-5 w-5 text-secondary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Price Per Resident</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">Average Share</span>
                     </div>
                     <div>
                       <span className="text-3xl font-headline font-black text-secondary uppercase tracking-tight">
                         ${avgPricePerBird.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
-                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Average Share</span>
+                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Resident</span>
                     </div>
                   </div>
                 </div>
@@ -289,7 +292,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" /> Rescue Story & Heritage Heritage
+                  <BookOpen className="h-4 w-4" /> Rescue Story & Heritage
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary."}
