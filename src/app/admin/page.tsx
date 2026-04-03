@@ -21,12 +21,20 @@ import {
   Eye,
   Lock,
   Search,
-  UserCheck
+  CheckCircle2,
+  Egg,
+  Utensils,
+  Droplets,
+  Stethoscope,
+  Clock,
+  ChevronRight,
+  ChevronLeft,
+  Settings
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { Resident, DailyStatus, Expense, NamingRequest, UserProfile } from '@/lib/types';
+import { Resident, DailyStatus, EggHistoryEntry, Expense, NamingRequest, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
@@ -84,9 +92,6 @@ function ManagerPortal({ user }: { user: any }) {
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [isProvisioning, setIsProvisioning] = useState(false);
-  
-  const [recoveryEmail, setRecoveryEmail] = useState('');
-  const [isRecovering, setIsRecovery] = useState(false);
 
   // QUERIES
   const birdsQuery = useMemoFirebase(() => {
@@ -98,6 +103,22 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
   }, [firestore]);
+
+  const dailyStatusRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'daily_status', 'today');
+  }, [firestore]);
+
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const eggHistoryRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'egg_history', todayStr);
+  }, [firestore, todayStr]);
+
+  const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: expenses } = useCollection<Expense>(expensesQuery);
+  const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
+  const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
 
   // Real-time Naming Queue
   const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
@@ -111,9 +132,6 @@ function ManagerPortal({ user }: { user: any }) {
     return () => unsubscribe();
   }, [firestore, isAdmin]);
 
-  const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: expenses } = useCollection<Expense>(expensesQuery);
-
   // HANDLERS
   const handleUpdateStatus = (birdId: string, status: string) => {
     if (!firestore || !isAdmin) return;
@@ -123,6 +141,25 @@ function ManagerPortal({ user }: { user: any }) {
       statusLastUpdated: status ? new Date().toISOString() : null
     });
     toast({ title: "Vibe Updated" });
+  };
+
+  const handleToggleRoutine = async (key: keyof DailyStatus) => {
+    if (!firestore || !isAdmin) return;
+    const ref = doc(firestore, 'daily_status', 'today');
+    const currentValue = dailyStatus ? !!(dailyStatus as any)[key] : false;
+    await setDoc(ref, { [key]: !currentValue, lastReset: new Date().toISOString() }, { merge: true });
+    toast({ title: "Task Updated" });
+  };
+
+  const handleUpdateEggs = async (delta: number) => {
+    if (!firestore || !isAdmin) return;
+    const ref = doc(firestore, 'egg_history', todayStr);
+    const currentCount = eggHistory?.count || 0;
+    await setDoc(ref, { 
+      count: Math.max(0, currentCount + delta), 
+      updatedAt: new Date().toISOString() 
+    }, { merge: true });
+    toast({ title: "Egg Count Updated" });
   };
 
   const handleApproveRequest = async (req: NamingRequest) => {
@@ -172,25 +209,6 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
-  const handleRoleRecovery = async () => {
-    if (!firestore || !isAdmin || !recoveryEmail.trim()) return;
-    setIsRecovery(true);
-    try {
-      const userRef = doc(firestore, 'users', recoveryEmail.trim());
-      await updateDoc(userRef, { 
-        role: 'guardian', 
-        updatedAt: serverTimestamp(),
-        membershipStartedAt: new Date().toISOString()
-      });
-      toast({ title: "Role Provisioned", description: `Access restored for user.` });
-      setRecoveryEmail('');
-    } catch (e) {
-      toast({ variant: "destructive", title: "Recovery Failed", description: "Verify User ID exists in Firestore." });
-    } finally {
-      setIsRecovery(false);
-    }
-  };
-
   if (birdsLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
@@ -220,7 +238,92 @@ function ManagerPortal({ user }: { user: any }) {
           </Badge>
         </div>
 
-        {/* 1. PENDING NAME REQUESTS (ADMIN ONLY) */}
+        {/* 1. DAILY OPERATIONS (ADMIN ONLY) */}
+        {isAdmin && (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Daily Routine Checklist */}
+            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                </div>
+                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Routine</h2>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
+                  { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
+                  { label: "Egg Counter", key: "eggCounter", icon: <Egg className="h-4 w-4" /> },
+                  { label: "Health Check", key: "healthCheck", icon: <Stethoscope className="h-4 w-4" /> },
+                  { label: "Nightly Pen Up", key: "nightlyPenUp", icon: <Clock className="h-4 w-4" /> },
+                ].map((item) => {
+                  const isDone = dailyStatus ? !!(dailyStatus as any)[item.key] : false;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => handleToggleRoutine(item.key as any)}
+                      className={cn(
+                        "w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all group",
+                        isDone 
+                          ? "bg-primary/5 border-primary/30 text-primary" 
+                          : "bg-muted/10 border-border text-muted-foreground hover:border-primary/20"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                      </div>
+                      {isDone ? <CheckCircle2 className="h-4 w-4 fill-primary text-black" /> : <div className="h-4 w-4 rounded-full border-2 border-border" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* Egg Counter */}
+            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-secondary/10 rounded-xl">
+                  <Egg className="h-5 w-5 text-secondary" />
+                </div>
+                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Egg Count</h2>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+                <div className="text-center">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">Today's Harvest</p>
+                  <span className="text-8xl font-headline font-black text-primary leading-none">{eggHistory?.count || 0}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Button 
+                    onClick={() => handleUpdateEggs(-1)} 
+                    variant="outline" 
+                    className="h-16 w-16 rounded-2xl border-2 border-border hover:border-destructive hover:text-destructive transition-all"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </Button>
+                  <Button 
+                    onClick={() => handleUpdateEggs(1)} 
+                    className="h-16 w-32 rounded-2xl bg-secondary text-secondary-foreground font-black text-xl shadow-lg hover:scale-105 transition-transform"
+                  >
+                    <Plus className="h-6 w-6 mr-2" /> ADD
+                  </Button>
+                  <Button 
+                    onClick={() => handleUpdateEggs(1)} 
+                    variant="outline"
+                    className="h-16 w-16 rounded-2xl border-2 border-border hover:border-primary hover:text-primary transition-all"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-[8px] font-black text-muted-foreground text-center uppercase tracking-widest mt-6">
+                Last Updated: {eggHistory?.updatedAt ? format(new Date(eggHistory.updatedAt), 'HH:mm') : 'No data'}
+              </p>
+            </Card>
+          </section>
+        )}
+
+        {/* 2. PENDING NAME REQUESTS (ADMIN ONLY) */}
         {isAdmin && (
           <section className="space-y-4">
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
@@ -248,7 +351,7 @@ function ManagerPortal({ user }: { user: any }) {
           </section>
         )}
 
-        {/* 2. THE FLOCK MANAGEMENT */}
+        {/* 3. THE FLOCK MANAGEMENT */}
         <section className="space-y-4">
           <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
             <Bird className="h-4 w-4" /> The Flock Records
@@ -318,7 +421,7 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 3. SANCTUARY LEDGER */}
+        {/* 4. SANCTUARY LEDGER */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -359,67 +462,36 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* 4. SYSTEM ACTIONS (ADMIN ONLY) */}
+        {/* 5. SYSTEM ACTIONS (ADMIN ONLY) */}
         {isAdmin && (
           <section className="space-y-8 border-t border-border pt-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
-              {/* Provisioning Tool */}
-              <div className="space-y-4">
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-muted-foreground">Admin Entitlements</h2>
-                <div className="flex flex-wrap gap-4">
-                  <Button 
-                    onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
-                    className="bg-primary text-primary-foreground font-black uppercase text-[10px] px-8 h-14 rounded-2xl shadow-xl hover:scale-105 transition-transform"
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Bird
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={async () => {
-                      setIsProvisioning(true);
-                      const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
-                      await setDoc(codeRef, { type: 'bypass_upgrade', targetRole: 'guardian', durationDays: 365, isActive: true, usageCount: 0 }, { merge: true });
-                      setIsProvisioning(false);
-                      toast({ title: "God Code Provisioned" });
-                    }} 
-                    disabled={isProvisioning} 
-                    className="border-secondary text-secondary font-black uppercase text-[10px] px-8 h-14 rounded-2xl hover:bg-secondary/5"
-                  >
-                    {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                    Provision God Code
-                  </Button>
-                </div>
+            <div className="space-y-4">
+              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2">
+                <Settings className="h-4 w-4" /> Admin Entitlements
+              </h2>
+              <div className="flex flex-wrap gap-4">
+                <Button 
+                  onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
+                  className="bg-primary text-primary-foreground font-black uppercase text-[10px] px-8 h-14 rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add Bird
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={async () => {
+                    setIsProvisioning(true);
+                    const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
+                    await setDoc(codeRef, { type: 'bypass_upgrade', targetRole: 'guardian', durationDays: 365, isActive: true, usageCount: 0 }, { merge: true });
+                    setIsProvisioning(false);
+                    toast({ title: "God Code Provisioned" });
+                  }} 
+                  disabled={isProvisioning} 
+                  className="border-secondary text-secondary font-black uppercase text-[10px] px-8 h-14 rounded-2xl hover:bg-secondary/5"
+                >
+                  {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                  Provision God Code
+                </Button>
               </div>
-
-              {/* Hybrid Account Recovery Tool */}
-              <div className="space-y-4">
-                <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary">Role Recovery Tool</h2>
-                <Card className="bg-secondary/5 border-secondary/20 p-6 rounded-2xl space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Enter User UID (e.g. buchebobby62)</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="UID / Account Key"
-                        value={recoveryEmail}
-                        onChange={(e) => setRecoveryEmail(e.target.value)}
-                        className="bg-background border-border h-12 rounded-xl text-xs"
-                      />
-                      <Button 
-                        onClick={handleRoleRecovery}
-                        disabled={isRecovering || !recoveryEmail.trim()}
-                        className="bg-secondary text-secondary-foreground font-black px-6 rounded-xl h-12"
-                      >
-                        {isRecovering ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-[8px] font-bold text-muted-foreground uppercase leading-relaxed">
-                    Manually force-sync a user to Guardian tier. Resolves hybrid transaction conflicts.
-                  </p>
-                </Card>
-              </div>
-
             </div>
           </section>
         )}
