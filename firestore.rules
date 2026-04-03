@@ -5,14 +5,15 @@ service cloud.firestore {
 
     /**
      * DECENT DUCKS SANCTUARY SECURITY RULES
-     * Version: 1.2.1 (Naming Queue Logic Alignment)
+     * Version: 1.2.2 (Master UID Casing & Naming Alignment)
      * Last Updated: 2026-04-03
      */
 
     // --- MASTER OVERRIDE ---
+    // Hard-locked to production owner UIDs. Casing must be exact.
     match /{allPaths=**} {
       allow read, write: if request.auth != null && (
-        request.auth.uid == 'cgQheQMuxqZd4N825PppPl72GtE2' ||
+        request.auth.uid == 'cgQHeQMuxqZd4N825PppPl72GtE2' ||
         request.auth.token.email == 'decentducksorg@gmail.com' || 
         request.auth.token.email == 'flowmarket1@gmail.com'
       );

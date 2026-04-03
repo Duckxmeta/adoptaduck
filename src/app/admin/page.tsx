@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -36,6 +37,8 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 const ADMIN_EMAILS = ['decentducksorg@gmail.com', 'flowmarket1@gmail.com'];
+const ADMIN_UIDS = ['cgQHeQMuxqZd4N825PppPl72GtE2'];
+
 const PRESET_VIBES = [
   { label: 'Chill', emoji: '🌿' },
   { label: 'Energetic', emoji: '⚡' },
@@ -68,7 +71,10 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const isUserAdmin = !!(user.email && ADMIN_EMAILS.includes(user.email));
+  const isUserAdmin = !!(
+    (user.email && ADMIN_EMAILS.includes(user.email)) || 
+    (user.uid && ADMIN_UIDS.includes(user.uid))
+  );
 
   if (isUserAdmin) {
     return <ManagerPortal user={user} />;
@@ -103,7 +109,6 @@ function ManagerPortal({ user }: { user: any }) {
     setTodayDate(format(new Date(), 'yyyy-MM-dd'));
   }, []);
 
-  // Bulletin Board State
   const [bullTitle, setBullTitle] = useState('');
   const [bullContent, setBullContent] = useState('');
   const [bullImage, setBullImage] = useState<File | null>(null);
@@ -139,9 +144,8 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Real-time Naming Request Listener - Hardened for Recovery
   useEffect(() => {
-    if (!user || !ADMIN_EMAILS.includes(user.email || '') || !firestore) return;
+    if (!firestore) return;
 
     const q = query(
       collection(firestore, 'naming_requests'),
@@ -151,13 +155,10 @@ function ManagerPortal({ user }: { user: any }) {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       try {
-        const docs = snapshot.docs.map(doc => {
-          const data = doc.data() || {};
-          return {
-            id: doc.id,
-            ...data
-          } as NamingRequest;
-        });
+        const docs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as NamingRequest[];
         setNamingRequests(docs);
       } catch (err) {
         console.error("Error mapping naming requests:", err);
@@ -171,7 +172,7 @@ function ManagerPortal({ user }: { user: any }) {
     });
 
     return () => unsubscribe();
-  }, [user, firestore]);
+  }, [firestore]);
 
   const handleUpdateStatus = (birdId: string, status: string) => {
     if (!firestore) return;
@@ -237,8 +238,7 @@ function ManagerPortal({ user }: { user: any }) {
 
       toast({ title: "Records Materialized", description: "Founding receipts and test requests seeded." });
     } catch (e) {
-      console.error("Seeding error:", e);
-      toast({ variant: "destructive", title: "Setup Error", description: "Could not file receipts." });
+      toast({ variant: "destructive", title: "Setup Error" });
     } finally {
       setIsInitializingLedger(false);
     }
@@ -287,7 +287,7 @@ function ManagerPortal({ user }: { user: any }) {
       });
       toast({ title: "Request Denied" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Error", description: "Could not deny request." });
+      toast({ variant: "destructive", title: "Error" });
     }
   };
 
@@ -425,7 +425,7 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* PENDING NAME REQUESTS - CRASH RECOVERY PLAIN TEXT VERSION */}
+        {/* PENDING NAME REQUESTS */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-secondary" />
@@ -457,7 +457,7 @@ function ManagerPortal({ user }: { user: any }) {
                             </div>
                             <div className="space-y-1">
                               <p className="text-sm font-bold text-foreground leading-tight">
-                                <span className="text-secondary">{req.userName || 'Member'}</span> suggested <span className="text-primary font-black uppercase">'{req.suggestedName}'</span> for Resident ID: {req.birdId}
+                                <span className="text-secondary">{req.userName || 'Member'}</span> suggested <span className="text-primary font-black uppercase">'{req.suggestedName}'</span> for Resident: <span className="text-primary uppercase">{req.birdName || req.birdId}</span>
                               </p>
                               <p className="text-[9px] font-black uppercase text-muted-foreground">
                                 {req.userEmail}
