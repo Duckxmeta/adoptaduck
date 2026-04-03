@@ -272,7 +272,7 @@ export default function MemberDashboard() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-black uppercase text-primary tracking-tight truncate">{bird.name}</p>
-                      <p className="text-xs font-bold truncate">{bird.liveStatus}</p>
+                      <p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
                       {bird.statusLastUpdated && (
                         <p className="text-[8px] font-bold text-muted-foreground uppercase">
                           {formatDistanceToNow(new Date(bird.statusLastUpdated))} ago

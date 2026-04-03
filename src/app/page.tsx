@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -231,6 +232,10 @@ export default function Home() {
                     <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
                       "{featuredDuck.personalityTraits.split('.')[0]}."
                     </p>
+                    <div className="flex items-center gap-2 bg-background/50 p-3 rounded-xl border border-primary/10 w-fit">
+                      <Zap className="h-4 w-4 text-primary animate-pulse" />
+                      <span className="text-xs font-black uppercase tracking-widest text-primary">{featuredDuck.liveStatus || 'Chilling 🌿'}</span>
+                    </div>
                     <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
                       <Link href={`/residents/${featuredDuck.id}`}>LEARN MORE <ArrowRight className="h-4 w-4" /></Link>
                     </Button>

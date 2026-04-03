@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Loader2, 
   Bird, 
@@ -29,9 +30,21 @@ import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format } from 'date-fns';
-import { getResidentName } from '@/lib/utils';
+import { getResidentName, cn } from '@/lib/utils';
 
 const ADMIN_EMAILS = ['flowmarket1@gmail.com', 'decentducksorg@gmail.com'];
+
+const VIBES = [
+  "Happy ☀️", 
+  "Hungry 🥨", 
+  "Sassy 💅", 
+  "Sleepy 💤", 
+  "Bath Time 🧼", 
+  "Exploring 🌿", 
+  "Relaxing 🛁", 
+  "Zoomies 🏎️", 
+  "Broody 🪺"
+];
 
 export default function AdminDashboard() {
   const { user, isUserLoading } = useUser();
@@ -240,17 +253,33 @@ function ManagerPortal({ user }: { user: any }) {
                   </div>
                   
                   {isAdmin && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-                        <Zap className="h-3 w-3" /> Live Vibe Board
+                        <Zap className="h-3 w-3" /> Update Live Vibe
                       </Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="Current mood/activity..." 
-                          defaultValue={bird.liveStatus}
-                          className="bg-background border-border h-10 rounded-xl text-xs font-bold"
-                          onBlur={(e) => handleUpdateStatus(bird.id, e.target.value)}
-                        />
+                      <div className="flex flex-wrap gap-1.5">
+                        {VIBES.map((vibe) => (
+                          <Button
+                            key={vibe}
+                            size="sm"
+                            variant={bird.liveStatus === vibe ? "default" : "outline"}
+                            className={cn(
+                              "h-7 px-2 text-[9px] font-black uppercase rounded-lg transition-all",
+                              bird.liveStatus === vibe ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"
+                            )}
+                            onClick={() => handleUpdateStatus(bird.id, vibe)}
+                          >
+                            {vibe}
+                          </Button>
+                        ))}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-[9px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
+                          onClick={() => handleUpdateStatus(bird.id, "")}
+                        >
+                          Clear
+                        </Button>
                       </div>
                     </div>
                   )}
