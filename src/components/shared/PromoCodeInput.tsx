@@ -13,9 +13,8 @@ import { PromoCode, UserProfile } from '@/lib/types';
 
 /**
  * Enhanced Promo Code component with Golden Ticket Redemption logic.
- * Supports bypassing Stripe checkout for 'bypass_upgrade' ticket types.
+ * Corrected to physically update the database 'role' field.
  * HARD SHIELD: SPRINGDUCKS and SPRINGDUCKS-JDI-G0 bypass activation/expiration checks.
- * Multi-use enabled: Allows different users to use the same code.
  */
 export function PromoCodeInput() {
   const [code, setCode] = useState('');
@@ -40,12 +39,12 @@ export function PromoCodeInput() {
         const userDoc = await transaction.get(userRef);
 
         if (!userDoc.exists()) {
-          throw new Error("User profile not found.");
+          throw new Error("User profile not found in database.");
         }
 
         const userData = userDoc.data() as UserProfile;
 
-        // User-Specific Usage Check (Ensures a user can only redeem a specific code once)
+        // User-Specific Usage Check
         if (userData.usedCodes?.includes(promoCodeInput)) {
           throw new Error("You have already redeemed this reward.");
         }
@@ -71,7 +70,7 @@ export function PromoCodeInput() {
             usageCount: (promoData.usageCount || 0) + 1 
           });
         } else {
-          // God Code handling: Unlimited multi-user use regardless of collection state
+          // God Code handling: Force update metadata if doc exists, but allow redemption anyway
           if (promoDoc.exists()) {
             const pData = promoDoc.data() as PromoCode;
             transaction.update(promoRef, { 
@@ -80,13 +79,13 @@ export function PromoCodeInput() {
           }
         }
 
-        // Provision Entitlement
+        // PHYSICAL DATABASE UPDATE: Change the role field
         const now = new Date();
         const expires = new Date();
         expires.setDate(now.getDate() + duration);
 
         transaction.update(userRef, { 
-          role: targetRole,
+          role: targetRole, // THIS IS THE CRITICAL ROLE FLIP
           membershipStartedAt: now.toISOString(),
           membershipExpiresAt: expires.toISOString(),
           usedCodes: arrayUnion(promoCodeInput),
@@ -96,19 +95,25 @@ export function PromoCodeInput() {
 
       toast({
         title: "Reward Redeemed!",
-        description: "Welcome to the Guardian tier. Your access is now active.",
+        description: "Welcome to the Guardian tier. Syncing your access...",
       });
+      
       setCode('');
+      
+      // AUTO-REFRESH: Ensure the user sees their real, database-verified role immediately
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
     } catch (error: any) {
       console.error("Redemption Error:", error);
       
-      // Friendly Override for Permission or System Errors
       const isPermissionError = error.message?.toLowerCase().includes('permission') || error.code === 'permission-denied';
       const displayMessage = isPermissionError ? "Checking your Golden Ticket... 🦆" : (error.message || "Failed to validate code.");
 
       toast({
         variant: "destructive",
-        title: "Code Note",
+        title: "Redemption Note",
         description: displayMessage,
       });
     } finally {
@@ -128,7 +133,7 @@ export function PromoCodeInput() {
         </div>
         <div className="flex gap-2">
           <Input 
-            placeholder={isValidating ? "Verifying Golden Ticket... 🦆" : "Enter code..."}
+            placeholder={isValidating ? "Verifying... 🦆" : "Enter code..."}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="bg-background border-secondary/20 h-12 text-sm font-black tracking-widest uppercase rounded-xl placeholder:text-muted-foreground/30"
@@ -144,7 +149,7 @@ export function PromoCodeInput() {
           </Button>
         </div>
         <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-tight">
-          Enter your Golden Ticket or Reward Code to unlock Guardian benefits instantly.
+          Enter your Golden Ticket to unlock Guardian benefits. The site will refresh upon success.
         </p>
       </div>
     </Card>

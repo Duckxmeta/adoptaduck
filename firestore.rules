@@ -6,7 +6,8 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.email == 'flowmarket1@gmail.com' || 
-        request.auth.token.email == 'decentducksorg@gmail.com'
+        request.auth.token.email == 'decentducksorg@gmail.com' ||
+        request.auth.uid == 'cgQHeQMuxqZd4N825PppPl72GtE2'
       );
     }
     
@@ -47,7 +48,8 @@ service cloud.firestore {
     
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
     
     match /promo_codes/{code} {
