@@ -6,21 +6,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   Loader2, 
   Bird, 
   Zap,  
-  ShieldCheck, 
-  Wallet, 
-  Database,
-  Edit3,
   Plus,
   Heart,
   Eye,
-  Lock,
-  Search,
   CheckCircle2,
   Egg,
   Utensils,
@@ -29,15 +22,15 @@ import {
   Clock,
   ChevronRight,
   ChevronLeft,
-  Settings
+  Bell,
+  Edit3
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, Expense, NamingRequest, UserProfile } from '@/lib/types';
+import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot } from 'firebase/firestore';
+import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
-import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { format } from 'date-fns';
 import { getResidentName, cn } from '@/lib/utils';
@@ -89,19 +82,11 @@ function ManagerPortal({ user }: { user: any }) {
 
   const [isResidentDialogOpen, setIsResidentDialogOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
-  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [isProvisioning, setIsProvisioning] = useState(false);
 
   // QUERIES
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
-  }, [firestore]);
-
-  const expensesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
   }, [firestore]);
 
   const dailyStatusRef = useMemoFirebase(() => {
@@ -116,7 +101,6 @@ function ManagerPortal({ user }: { user: any }) {
   }, [firestore, todayStr]);
 
   const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
-  const { data: expenses } = useCollection<Expense>(expensesQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
 
@@ -200,7 +184,11 @@ function ManagerPortal({ user }: { user: any }) {
         await updateDoc(birdRef, { ...data, updatedAt: new Date().toISOString() });
         toast({ title: "Resident Updated" });
       } else {
-        await addDoc(collection(firestore, 'birds'), { ...data, createdAt: new Date().toISOString() });
+        await addDoc(collection(firestore, 'birds'), { 
+          ...data, 
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
         toast({ title: "New Resident Added" });
       }
       setIsResidentDialogOpen(false);
@@ -223,33 +211,64 @@ function ManagerPortal({ user }: { user: any }) {
       <Navbar />
       <main className="container mx-auto p-4 space-y-12 mt-8">
         
-        {/* ACCESS BANNER */}
-        {!isAdmin && (
-          <div className="bg-secondary/10 border-2 border-secondary/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
-            <Eye className="h-5 w-5 text-secondary" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Guardian View-Only Mode Active 🌿</p>
+        {/* HEADER & ACCESS BANNER */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-4 border-b border-border">
+            <h1 className="font-headline font-black text-2xl uppercase tracking-tighter">MANAGER PORTAL</h1>
+            <Badge className={isAdmin ? "bg-primary text-primary-foreground font-black" : "bg-secondary text-secondary-foreground font-black"}>
+              {isAdmin ? "ADMIN" : "GUARDIAN"}
+            </Badge>
           </div>
-        )}
-
-        <div className="flex items-center justify-between pb-6 border-b border-border">
-          <h1 className="font-headline font-black text-2xl uppercase tracking-tighter">MANAGER PORTAL</h1>
-          <Badge className={isAdmin ? "bg-primary text-primary-foreground font-black" : "bg-secondary text-secondary-foreground font-black"}>
-            {isAdmin ? "ADMIN" : "GUARDIAN"}
-          </Badge>
+          {!isAdmin && (
+            <div className="bg-secondary/10 border-2 border-secondary/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-700">
+              <Eye className="h-5 w-5 text-secondary" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-secondary">Guardian View-Only Mode Active 🌿</p>
+            </div>
+          )}
         </div>
 
-        {/* 1. DAILY OPERATIONS (ADMIN ONLY) */}
+        {/* 1. NOTIFICATIONS (NAME REQUESTS) */}
         {isAdmin && (
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Daily Routine Checklist */}
-            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-primary/10 rounded-xl">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Routine</h2>
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-secondary/10 rounded-lg">
+                <Bell className="h-5 w-5 text-secondary" />
               </div>
-              <div className="space-y-3">
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Pending Notifications</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {namingRequests && namingRequests.length > 0 ? namingRequests.map((req) => (
+                <Card key={req.id} className="bg-card p-6 border-border border-2 rounded-2xl flex flex-col justify-between space-y-4 shadow-lg">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Suggestion for {req.birdName || "Resident"}</p>
+                    <p className="text-xl font-headline font-black uppercase text-primary">"{req.suggestedName}"</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">From: {req.userName}</p>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={() => handleApproveRequest(req)} className="flex-1 bg-primary text-primary-foreground font-black uppercase text-[10px] h-12 rounded-xl">Approve</Button>
+                    <Button variant="outline" onClick={() => handleDenyRequest(req.id)} className="flex-1 border-destructive text-destructive hover:bg-destructive/10 font-black uppercase text-[10px] h-12 rounded-xl">Deny</Button>
+                  </div>
+                </Card>
+              )) : (
+                <Card className="col-span-full p-10 text-center bg-muted/10 border-dashed border-2 border-border rounded-2xl">
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">All naming requests processed 🌿</p>
+                </Card>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* 2. DAILY CHECKLIST */}
+        {isAdmin && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Routine</h2>
+            </div>
+            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                 {[
                   { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
                   { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
@@ -263,32 +282,34 @@ function ManagerPortal({ user }: { user: any }) {
                       key={item.key}
                       onClick={() => handleToggleRoutine(item.key as any)}
                       className={cn(
-                        "w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all group",
+                        "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group gap-3",
                         isDone 
                           ? "bg-primary/5 border-primary/30 text-primary" 
                           : "bg-muted/10 border-border text-muted-foreground hover:border-primary/20"
                       )}
                     >
-                      <div className="flex items-center gap-3">
-                        {item.icon}
-                        <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
-                      </div>
-                      {isDone ? <CheckCircle2 className="h-4 w-4 fill-primary text-black" /> : <div className="h-4 w-4 rounded-full border-2 border-border" />}
+                      {item.icon}
+                      <span className="text-[9px] font-black uppercase tracking-widest text-center">{item.label}</span>
+                      {isDone && <CheckCircle2 className="h-4 w-4 fill-primary text-black" />}
                     </button>
                   );
                 })}
               </div>
             </Card>
+          </section>
+        )}
 
-            {/* Egg Counter */}
-            <Card className="bg-card border-2 border-border rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-secondary/10 rounded-xl">
-                  <Egg className="h-5 w-5 text-secondary" />
-                </div>
-                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Egg Count</h2>
+        {/* 3. EGG COUNTER */}
+        {isAdmin && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-secondary/10 rounded-lg">
+                <Egg className="h-5 w-5 text-secondary" />
               </div>
-              <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Daily Egg Count</h2>
+            </div>
+            <Card className="bg-card border-2 border-border rounded-3xl p-8 shadow-xl">
+              <div className="flex flex-col items-center justify-center space-y-8">
                 <div className="text-center">
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">Today's Harvest</p>
                   <span className="text-8xl font-headline font-black text-primary leading-none">{eggHistory?.count || 0}</span>
@@ -316,46 +337,29 @@ function ManagerPortal({ user }: { user: any }) {
                   </Button>
                 </div>
               </div>
-              <p className="text-[8px] font-black text-muted-foreground text-center uppercase tracking-widest mt-6">
-                Last Updated: {eggHistory?.updatedAt ? format(new Date(eggHistory.updatedAt), 'HH:mm') : 'No data'}
-              </p>
             </Card>
           </section>
         )}
 
-        {/* 2. PENDING NAME REQUESTS (ADMIN ONLY) */}
-        {isAdmin && (
-          <section className="space-y-4">
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-secondary flex items-center gap-2">
-              <Heart className="h-4 w-4" /> Pending Name Suggestions
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {namingRequests && namingRequests.length > 0 ? namingRequests.map((req) => (
-                <Card key={req.id} className="bg-card p-6 border-border border-2 rounded-2xl flex flex-col justify-between space-y-4 shadow-lg">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Suggestion for {req.birdName || "Resident"}</p>
-                    <p className="text-xl font-headline font-black uppercase text-primary">"{req.suggestedName}"</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">From: {req.userName} ({req.userEmail})</p>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button onClick={() => handleApproveRequest(req)} className="flex-1 bg-primary text-primary-foreground font-black uppercase text-[10px] h-12 rounded-xl">Approve</Button>
-                    <Button variant="outline" onClick={() => handleDenyRequest(req.id)} className="flex-1 border-destructive text-destructive hover:bg-destructive/10 font-black uppercase text-[10px] h-12 rounded-xl">Deny</Button>
-                  </div>
-                </Card>
-              )) : (
-                <Card className="col-span-full p-10 text-center bg-muted/10 border-dashed border-2 border-border rounded-2xl">
-                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">All naming requests processed 🌿</p>
-                </Card>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* 3. THE FLOCK MANAGEMENT */}
+        {/* 4. FLOCK RECORDS */}
         <section className="space-y-4">
-          <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-            <Bird className="h-4 w-4" /> The Flock Records
-          </h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Bird className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">The Flock Records</h2>
+            </div>
+            {isAdmin && (
+              <Button 
+                onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
+                className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Bird
+              </Button>
+            )}
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {birds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border border-2 rounded-2xl overflow-hidden shadow-xl flex flex-col">
@@ -378,7 +382,7 @@ function ManagerPortal({ user }: { user: any }) {
                     </div>
                   )}
                 </div>
-                <div className="p-6 space-y-4 flex-1">
+                <div className="p-6 space-y-6 flex-1">
                   <div>
                     <h3 className="text-xl font-headline font-black uppercase tracking-tight">{bird.name}</h3>
                     <p className="text-[10px] font-black text-primary uppercase tracking-widest">{bird.breed}</p>
@@ -389,14 +393,14 @@ function ManagerPortal({ user }: { user: any }) {
                       <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                         <Zap className="h-3 w-3" /> Update Live Vibe
                       </Label>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="grid grid-cols-3 gap-1.5">
                         {VIBES.map((vibe) => (
                           <Button
                             key={vibe}
                             size="sm"
                             variant={bird.liveStatus === vibe ? "default" : "outline"}
                             className={cn(
-                              "h-7 px-2 text-[9px] font-black uppercase rounded-lg transition-all",
+                              "h-10 px-1 text-[8px] font-black uppercase rounded-lg transition-all text-center leading-tight whitespace-normal",
                               bird.liveStatus === vibe ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50"
                             )}
                             onClick={() => handleUpdateStatus(bird.id, vibe)}
@@ -407,7 +411,7 @@ function ManagerPortal({ user }: { user: any }) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 px-2 text-[9px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
+                          className="h-10 px-1 text-[8px] font-black uppercase rounded-lg text-destructive hover:bg-destructive/10"
                           onClick={() => handleUpdateStatus(bird.id, "")}
                         >
                           Clear
@@ -420,81 +424,6 @@ function ManagerPortal({ user }: { user: any }) {
             ))}
           </div>
         </section>
-
-        {/* 4. SANCTUARY LEDGER */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
-              <Wallet className="h-4 w-4" /> Sanctuary Ledger
-            </h2>
-            {isAdmin && (
-              <Button onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} size="sm" className="bg-primary text-primary-foreground font-black text-[10px] uppercase h-8 px-4 rounded-lg">
-                <Plus className="h-3 w-3 mr-1" /> Add Expense
-              </Button>
-            )}
-          </div>
-          <Card className="bg-card border-border border-2 rounded-2xl overflow-hidden shadow-xl">
-            <div className="divide-y divide-border">
-              {expenses && expenses.length > 0 ? expenses.map((exp) => (
-                <div key={exp.id} className="p-4 flex items-center justify-between hover:bg-muted/5 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-muted rounded-lg border border-border">
-                      <Database className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black uppercase tracking-tight">{exp.itemName}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[8px] font-black uppercase border-secondary/30 text-secondary">{exp.category}</Badge>
-                        <span className="text-[9px] font-bold text-muted-foreground uppercase">{exp.date}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-headline font-black text-primary">${Number(exp.cost).toFixed(2)}</p>
-                  </div>
-                </div>
-              )) : (
-                <div className="p-12 text-center text-xs font-black uppercase tracking-widest text-muted-foreground opacity-40">
-                  No records materialized.
-                </div>
-              )}
-            </div>
-          </Card>
-        </section>
-
-        {/* 5. SYSTEM ACTIONS (ADMIN ONLY) */}
-        {isAdmin && (
-          <section className="space-y-8 border-t border-border pt-12">
-            <div className="space-y-4">
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-muted-foreground flex items-center gap-2">
-                <Settings className="h-4 w-4" /> Admin Entitlements
-              </h2>
-              <div className="flex flex-wrap gap-4">
-                <Button 
-                  onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} 
-                  className="bg-primary text-primary-foreground font-black uppercase text-[10px] px-8 h-14 rounded-2xl shadow-xl hover:scale-105 transition-transform"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Bird
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={async () => {
-                    setIsProvisioning(true);
-                    const codeRef = doc(firestore, 'promo_codes', 'SPRINGDUCKS-JDI-G0');
-                    await setDoc(codeRef, { type: 'bypass_upgrade', targetRole: 'guardian', durationDays: 365, isActive: true, usageCount: 0 }, { merge: true });
-                    setIsProvisioning(false);
-                    toast({ title: "God Code Provisioned" });
-                  }} 
-                  disabled={isProvisioning} 
-                  className="border-secondary text-secondary font-black uppercase text-[10px] px-8 h-14 rounded-2xl hover:bg-secondary/5"
-                >
-                  {isProvisioning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                  Provision God Code
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
       </main>
 
       <ResidentDialog 
@@ -502,12 +431,6 @@ function ManagerPortal({ user }: { user: any }) {
         onOpenChange={setIsResidentDialogOpen} 
         onSave={handleSaveResident} 
         resident={editingResident} 
-      />
-      
-      <ExpenseDialog 
-        open={isExpenseDialogOpen} 
-        onOpenChange={setIsExpenseDialogOpen} 
-        expense={editingExpense} 
       />
     </div>
   );
