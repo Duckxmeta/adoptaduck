@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -15,7 +14,7 @@ import {
   limit, 
   onSnapshot
 } from 'firebase/firestore';
-import { Resident, DailyStatus, HealthLogEntry, UserProfile, Expense, Donation, BulletinEntry } from '@/lib/types';
+import { Resident, DailyStatus, UserProfile, Expense, Donation, BulletinEntry, EggHistoryEntry } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -23,38 +22,31 @@ import { Button } from '@/components/ui/button';
 import { 
   Heart, 
   Bird, 
-  Egg, 
-  CheckCircle2, 
-  Clock, 
-  ArrowRight, 
   Loader2, 
   Sparkles,
-  Stethoscope,
-  Utensils as ForkKnife,
-  Droplets,
   LayoutDashboard,
   ChevronRight,
   TrendingUp,
-  Activity,
   ScrollText,
-  Users,
   Award,
   Lock,
-  Calendar,
   Database,
   CreditCard,
   ShieldCheck,
-  LogOut
+  LogOut,
+  Zap,
+  Megaphone
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
-import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 import { BulletinBoard } from '@/components/members/BulletinBoard';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
+import { DailyRoutine } from '@/components/DailyRoutine';
+import { EggCounter } from '@/components/EggCounter';
 
 const GOALS = {
   feed: 300,
@@ -75,7 +67,6 @@ export default function MemberDashboard() {
     setIsMounted(true);
   }, []);
 
-  // Profile Fetch with strict null-safety
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return doc(firestore, 'users', user.uid);
@@ -83,25 +74,21 @@ export default function MemberDashboard() {
 
   const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
 
-  // Real-time Bulletin Listener
   useEffect(() => {
     if (!firestore) return;
-    try {
-      const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(5));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const docs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as BulletinEntry[];
-        setBulletins(docs);
-      }, (err) => console.warn("Bulletin broadcast delayed", err));
-      return () => unsubscribe();
-    } catch (e) {
-      console.error("Bulletin initialization failed", e);
-    }
+    const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as BulletinEntry[];
+      setBulletins(docs);
+    });
+    return () => unsubscribe();
   }, [firestore]);
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
+  const isAdmin = user?.email === 'flowmarket1@gmail.com' || user?.email === 'decentducksorg@gmail.com';
 
   // DATA QUERIES
   const expensesQuery = useMemoFirebase(() => {
@@ -125,12 +112,12 @@ export default function MemberDashboard() {
 
   const { data: myDonations } = useCollection<Donation>(myDonationsQuery);
 
-  const allBirdsQuery = useMemoFirebase(() => {
+  const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'birds'));
+    return query(collection(firestore, 'birds'), orderBy('name', 'asc'));
   }, [firestore]);
 
-  const { data: allBirds } = useCollection<Resident>(allBirdsQuery);
+  const { data: birds } = useCollection<Resident>(birdsQuery);
 
   const dailyStatusRef = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -139,7 +126,15 @@ export default function MemberDashboard() {
 
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
 
-  // CALCULATIONS with deep null-safety
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const eggHistoryRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'egg_history', todayStr);
+  }, [firestore, todayStr]);
+
+  const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
+
+  // IMPACT CALCULATIONS
   const myTotalImpact = useMemo(() => {
     if (!myDonations) return 0;
     return myDonations.reduce((sum, d) => sum + (Number(d?.amount) || 0), 0);
@@ -158,9 +153,9 @@ export default function MemberDashboard() {
     });
 
     return {
-      feed: monthly.filter(d => d?.designation === 'feed').reduce((s, d) => s + (Number(d?.amount) || 0), 0),
-      medical: monthly.filter(d => d?.designation === 'medical').reduce((s, d) => s + (Number(d?.amount) || 0), 0),
-      infrastructure: monthly.filter(d => d?.designation === 'infrastructure').reduce((s, d) => s + (Number(d?.amount) || 0), 0)
+      feed: monthly.filter(d => d?.designation === 'feed' || d?.designation?.toLowerCase().includes('feed')).reduce((s, d) => s + (Number(d?.amount) || 0), 0),
+      medical: monthly.filter(d => d?.designation === 'medical' || d?.designation?.toLowerCase().includes('medical')).reduce((s, d) => s + (Number(d?.amount) || 0), 0),
+      infrastructure: monthly.filter(d => d?.designation === 'infrastructure' || d?.designation?.toLowerCase().includes('infra')).reduce((s, d) => s + (Number(d?.amount) || 0), 0)
     };
   }, [donations]);
 
@@ -171,14 +166,6 @@ export default function MemberDashboard() {
     return (completed / tasks.length) * 100;
   }, [dailyStatus]);
 
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      router.push('/login');
-    }
-  };
-
-  // HYDRATION & LOADING SHIELD
   if (isUserLoading || profileLoading || !isMounted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
@@ -188,25 +175,12 @@ export default function MemberDashboard() {
     );
   }
 
-  // LOGGED OUT FALLBACK
   if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center space-y-6">
-        <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center">
-          <Bird className="h-10 w-10 text-primary" />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-headline font-black uppercase">SESSION EXPIRED</h1>
-          <p className="text-muted-foreground font-medium">Please sign in to access the sanctuary hub.</p>
-        </div>
-        <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-lg">
-          <Link href="/login">RETURN TO LOGIN</Link>
-        </Button>
-      </div>
-    );
+    router.push('/login');
+    return null;
   }
 
-  const liveStatusBirds = (allBirds || [])
+  const liveStatusBirds = (birds || [])
     .filter(b => b?.liveStatus)
     .sort((a,b) => (b?.statusLastUpdated || '').localeCompare(a?.statusLastUpdated || ''))
     .slice(0, 4);
@@ -216,7 +190,7 @@ export default function MemberDashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
-        {/* WELCOME BANNER */}
+        {/* MIRROR HEADER: WELCOME BANNER */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
@@ -255,65 +229,45 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* BULLETIN BOARD */}
-        <section className="animate-in fade-in duration-1000">
-          <BulletinBoard bulletins={bulletins} />
-        </section>
-
-        {/* LIVE STATUS - VIBE BROADCAST */}
-        {liveStatusBirds.length > 0 && (
-          <section className="animate-in fade-in slide-in-from-top-4 duration-1000">
-            <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <Zap className="h-24 w-24 text-primary" />
-              </div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(255,215,0,0.4)]">
-                  <Zap className="h-5 w-5 text-primary-foreground fill-current" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Sanctuary Pulse</h2>
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-tight">Real-time energy broadcast</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {liveStatusBirds.map((bird) => (
-                  <div key={bird.id} className="flex items-center justify-between p-3 bg-background/50 rounded-2xl border border-primary/10 hover:border-primary/30 transition-colors gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-border shrink-0 bg-muted flex items-center justify-center">
-                      {bird.primaryImageUrl ? (
-                        <Image src={bird.primaryImageUrl} alt={bird.name} width={40} height={40} className="object-cover h-full" />
-                      ) : (
-                        <span className="text-lg">🦆</span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black uppercase text-primary tracking-tight truncate">{bird.name}</p>
-                      <p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
-                      {bird.statusLastUpdated && (
-                        <p className="text-[8px] font-bold text-muted-foreground uppercase">
-                          {formatDistanceToNow(new Date(bird.statusLastUpdated))} ago
-                        </p>
-                      )}
+        {/* MIRROR SECTION 1: BULLETIN */}
+        {bulletins.length > 0 && (
+          <section className="animate-in fade-in duration-1000">
+            <div className="flex items-center gap-3 mb-6">
+              <Megaphone className="h-5 w-5 text-primary" />
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {bulletins.map(b => (
+                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
+                  <div className="p-6 space-y-4">
+                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
+                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                      <Clock className="h-2.5 w-2.5" />
+                      {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
                     </div>
                   </div>
-                ))}
-              </div>
-            </Card>
+                </Card>
+              ))}
+            </div>
           </section>
         )}
 
-        {/* IMPACT TRACKER */}
+        {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
+        <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
+
+        {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
+        <EggCounter initialCount={eggHistory?.count || 0} readOnly />
+
+        {/* SECTION 4: IMPACT PROGRESS */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-           <Card className="lg:col-span-2 bg-card border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-              <div className="relative z-10 space-y-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-primary" /> COMMUNITY SUSTAINMENT
-                    </h2>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">Monthly funding progress towards direct care</p>
-                  </div>
+           <Card className="lg:col-span-2 bg-card border-border border-2 rounded-3xl p-8 shadow-2xl">
+              <div className="space-y-8">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-primary" /> COMMUNITY SUSTAINMENT
+                  </h2>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Monthly funding progress towards direct care</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -337,71 +291,32 @@ export default function MemberDashboard() {
               </div>
            </Card>
 
-           <Card className="bg-card border-border rounded-3xl p-8 shadow-2xl">
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-headline font-black uppercase tracking-tight">Flock Health</h2>
-                  <span className="text-3xl font-headline font-black text-primary leading-none">{Math.round(globalHealth)}%</span>
+           {/* LIVE PULSE */}
+           <Card className="bg-primary/10 border-primary/20 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse">
+                  <Zap className="h-5 w-5 text-primary-foreground fill-current" />
                 </div>
-                <Progress value={globalHealth} className="h-3" />
-                <div className="grid grid-cols-5 gap-2">
-                  {[
-                    { key: "morningFeeding", icon: <ForkKnife className="h-4 w-4" /> },
-                    { key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
-                    { key: "eggCounter", icon: <Egg className="h-4 w-4" /> },
-                    { key: "healthCheck", icon: <Stethoscope className="h-4 w-4" /> },
-                    { key: "nightlyPenUp", icon: <Clock className="h-4 w-4" /> },
-                  ].map((task) => {
-                    const isCompleted = dailyStatus ? !!(dailyStatus as any)?.[task.key] : false;
-                    return (
-                      <div key={task.key} className={cn(
-                        "flex flex-col items-center gap-1 p-2 rounded-xl border transition-all",
-                        isCompleted ? "bg-[#14F195]/5 border-[#14F195]/20 text-[#14F195]" : "bg-muted/10 border-border opacity-40"
-                      )}>
-                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : task.icon}
-                      </div>
-                    );
-                  })}
+                <div>
+                  <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
+                  <p className="text-[9px] font-bold text-primary uppercase">Real-time Energy</p>
                 </div>
+              </div>
+              <div className="space-y-3">
+                {liveStatusBirds.map(bird => (
+                  <div key={bird.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-xl border border-primary/10">
+                    <span className="text-lg">🦆</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-black uppercase text-primary truncate">{bird.name}</p>
+                      <p className="text-[10px] font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
            </Card>
         </section>
 
-        {/* ROLE-GATED SECTION: ARCHIVAL LEDGER */}
-        <section className="space-y-8">
-           <div className="flex items-center gap-3">
-              <ScrollText className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
-           </div>
-           {isGuardian ? (
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in zoom-in duration-500">
-                <div className="lg:col-span-2">
-                   <SanctuaryCostCard expenses={expenses || []} />
-                </div>
-                <ItemizedLedger expenses={expenses || []} userProfile={userProfile} />
-             </div>
-           ) : (
-             <Card className="bg-card border-border rounded-3xl p-12 text-center space-y-6 shadow-2xl relative overflow-hidden group">
-                <div className="absolute inset-0 bg-primary/5 opacity-50" />
-                <div className="relative z-10 space-y-6">
-                  <div className="mx-auto w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center border-2 border-primary/20">
-                    <Lock className="h-10 w-10 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-3xl font-headline font-black uppercase tracking-tight">GUARDIAN LEDGER ACCESS</h3>
-                    <p className="text-muted-foreground font-medium max-w-sm mx-auto">
-                      Upgrade to Guardian to unlock itemized care logs and track every dollar spent on sanctuary operations.
-                    </p>
-                  </div>
-                  <Button asChild className="bg-primary text-primary-foreground font-black px-12 h-14 rounded-xl shadow-xl hover:scale-105 transition-transform text-xs tracking-widest uppercase">
-                    <Link href="/support#membership">UPGRADE TO GUARDIAN</Link>
-                  </Button>
-                </div>
-             </Card>
-           )}
-        </section>
-
-        {/* FLOCK GRID */}
+        {/* MIRROR SECTION 4: FLOCK RECORDS */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -409,15 +324,31 @@ export default function MemberDashboard() {
               </h2>
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {allBirds?.map((bird) => (
-               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={allBirds?.length || 1} />
+             {birds?.map((bird) => (
+               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
              ))}
            </div>
         </section>
 
+        {/* ROLE-GATED SECTION: ARCHIVAL LEDGER */}
+        {isGuardian && (
+          <section className="space-y-8 pt-12 border-t border-border">
+             <div className="flex items-center gap-3">
+                <ScrollText className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2>
+             </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in zoom-in duration-500">
+                <div className="lg:col-span-2">
+                   <SanctuaryCostCard expenses={expenses || []} />
+                </div>
+                <ItemizedLedger expenses={expenses || []} userProfile={userProfile} />
+             </div>
+          </section>
+        )}
+
         {/* LOGOUT UTILITY */}
         <section className="pt-12 border-t border-border flex justify-center">
-           <Button variant="ghost" onClick={handleLogout} className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive">
+           <Button variant="ghost" onClick={async () => { await signOut(auth!); router.push('/'); }} className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive">
              <LogOut className="h-4 w-4 mr-2" /> Log Out of Sanctuary
            </Button>
         </section>
@@ -431,14 +362,14 @@ export default function MemberDashboard() {
 function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userProfile: UserProfile | null }) {
   const joinDate = userProfile?.membershipStartedAt ? new Date(userProfile.membershipStartedAt) : new Date(0);
   
-  const filteredExpenses = expenses.filter(e => {
+  const filteredExpenses = (expenses || []).filter(e => {
     if (!e?.date) return false;
     const d = new Date(e.date);
     return !isNaN(d.getTime()) && d >= joinDate;
   });
 
   return (
-    <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+    <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
       <div className="p-6 border-b border-border bg-primary/5">
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
         <p className="text-xs font-bold text-muted-foreground">Detailed transparency logs</p>
@@ -484,7 +415,7 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
   }, [expenses, totalBirds, bird.id]);
 
   return (
-    <Card className="bg-card border-border rounded-2xl overflow-hidden shadow-xl flex flex-col h-full group hover:glow-primary transition-all">
+    <Card className="bg-card border-border border-2 rounded-2xl overflow-hidden shadow-xl flex flex-col h-full group hover:glow-primary transition-all">
       <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
         {bird?.primaryImageUrl ? (
           <Image src={bird.primaryImageUrl} alt={bird.name || 'Resident'} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />

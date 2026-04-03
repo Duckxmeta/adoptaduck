@@ -15,10 +15,11 @@ import { cn } from '@/lib/utils';
 
 interface DailyRoutineProps {
   dailyStatus: DailyStatus | null;
-  onToggle: (key: keyof DailyStatus) => void;
+  onToggle?: (key: keyof DailyStatus) => void;
+  readOnly?: boolean;
 }
 
-export function DailyRoutine({ dailyStatus, onToggle }: DailyRoutineProps) {
+export function DailyRoutine({ dailyStatus, onToggle, readOnly = false }: DailyRoutineProps) {
   const tasks = [
     { label: "Morning Feeding", key: "morningFeeding", icon: <Utensils className="h-4 w-4" /> },
     { label: "Fresh Water", key: "freshWater", icon: <Droplets className="h-4 w-4" /> },
@@ -51,21 +52,25 @@ export function DailyRoutine({ dailyStatus, onToggle }: DailyRoutineProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {tasks.map((item) => {
             const isDone = dailyStatus ? !!(dailyStatus as any)[item.key] : false;
+            const Component = readOnly ? 'div' : 'button';
+            
             return (
-              <button
+              <Component
                 key={item.key}
-                onClick={() => onToggle(item.key as any)}
+                {...(!readOnly && onToggle ? { onClick: () => onToggle(item.key as any) } : {})}
                 className={cn(
-                  "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all group gap-3",
+                  "flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all gap-3",
+                  !readOnly && "group cursor-pointer",
                   isDone 
                     ? "bg-primary/5 border-primary/30 text-primary" 
-                    : "bg-muted/10 border-border text-muted-foreground hover:border-primary/20"
+                    : "bg-muted/10 border-border text-muted-foreground",
+                  !readOnly && !isDone && "hover:border-primary/20"
                 )}
               >
                 {item.icon}
                 <span className="text-[9px] font-black uppercase tracking-widest text-center">{item.label}</span>
                 {isDone && <CheckCircle2 className="h-4 w-4 fill-primary text-black" />}
-              </button>
+              </Component>
             );
           })}
         </div>
