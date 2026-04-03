@@ -10,14 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Plus, Minus, Loader2, ClipboardList, 
   LayoutDashboard, Trash2, Bird, Zap,  
   ShieldCheck, Bell, CheckCheck, Inbox, GitBranch,
-  Sparkles, Activity, ChevronRight, Egg, Save, Info, UserCheck, Megaphone, Camera, Star,
-  Wrench, Settings, Wallet, Database, XCircle, Ticket, Calendar
+  Sparkles, Activity, ChevronRight, Egg, Save, UserCheck, Megaphone, Camera, Star,
+  Settings, Wallet, Database, XCircle, Ticket, Calendar
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase, useStorage } from '@/firebase';
@@ -141,7 +140,7 @@ function ManagerPortal({ user }: { user: any }) {
     if (todayEggData) setLocalEggCount(todayEggData.count);
   }, [todayEggData]);
 
-  // Real-time Naming Request Listener - Hardened for Mobile & Data Types
+  // Real-time Naming Request Listener - Hardened for Data Types
   useEffect(() => {
     if (!user || !ADMIN_EMAILS.includes(user.email || '') || !firestore) return;
 
@@ -427,7 +426,7 @@ function ManagerPortal({ user }: { user: any }) {
           </Card>
         </section>
 
-        {/* PENDING NAME REQUESTS - MOBILE OPTIMIZED & HARDENED */}
+        {/* PENDING NAME REQUESTS - STRIPPED BACK FOR RECOVERY */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-secondary" />
@@ -437,50 +436,40 @@ function ManagerPortal({ user }: { user: any }) {
             {Array.isArray(namingRequests) && namingRequests.length > 0 ? (
               <ScrollArea className="h-auto max-h-[500px] pr-4">
                 <div className="space-y-4">
-                  {namingRequests?.map((req) => {
-                    // defensive mapping for timestamp vs string
-                    const dateLabel = req.createdAt?.toDate 
-                      ? req.createdAt.toDate().toLocaleDateString() 
-                      : String(req.createdAt || 'Recent');
-                    
-                    return (
-                      <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-5 rounded-2xl gap-6">
-                        <div className="flex items-start gap-4">
-                          <div className="p-3 bg-secondary/10 rounded-xl shrink-0">
-                            <Inbox className="h-5 w-5 text-secondary" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-bold text-foreground leading-tight">
-                              <span className="text-secondary">{req.userName}</span> suggested <span className="text-primary font-black uppercase">'{req.suggestedName}'</span> for Resident {req.birdName || req.birdId}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-3 pt-1">
-                              <p className="text-[9px] font-black uppercase text-muted-foreground flex items-center gap-1">
-                                <Inbox className="h-2.5 w-2.5" /> {req.userEmail}
-                              </p>
-                              <p className="text-[9px] font-black uppercase text-secondary flex items-center gap-1">
-                                <Calendar className="h-2.5 w-2.5" /> {dateLabel}
-                              </p>
-                            </div>
-                          </div>
+                  {namingRequests?.map((req) => (
+                    <div key={req.id} className="flex flex-col md:flex-row md:items-center justify-between bg-secondary/5 border border-secondary/10 p-5 rounded-2xl gap-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-secondary/10 rounded-xl shrink-0">
+                          <Inbox className="h-5 w-5 text-secondary" />
                         </div>
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                          <Button 
-                            onClick={() => handleApproveRequest(req)} 
-                            className="flex-1 md:flex-none bg-primary text-primary-foreground hover:bg-primary/90 h-12 md:h-10 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg"
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" /> Approve
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            onClick={() => handleDenyRequest(req.id)} 
-                            className="flex-1 md:flex-none text-destructive hover:bg-destructive/10 h-12 md:h-10 px-6 text-[10px] font-black uppercase tracking-widest"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" /> Deny
-                          </Button>
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold text-foreground leading-tight">
+                            <span className="text-secondary">{req.userName || 'Member'}</span> suggested <span className="text-primary font-black uppercase">'{req.suggestedName}'</span> for Resident {req.birdName || req.birdId}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-3 pt-1">
+                            <p className="text-[9px] font-black uppercase text-muted-foreground flex items-center gap-1">
+                              <Inbox className="h-2.5 w-2.5" /> {req.userEmail}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    );
-                  })}
+                      <div className="flex items-center gap-3 w-full md:w-auto">
+                        <Button 
+                          onClick={() => handleApproveRequest(req)} 
+                          className="flex-1 md:flex-none bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg"
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" /> Approve
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleDenyRequest(req.id)} 
+                          className="flex-1 md:flex-none text-destructive hover:bg-destructive/10 h-12 px-6 text-[10px] font-black uppercase tracking-widest"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" /> Deny
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </ScrollArea>
             ) : (
