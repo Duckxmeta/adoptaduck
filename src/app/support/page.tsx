@@ -315,7 +315,7 @@ function SupportContent() {
                 </ul>
                 <div className="pt-4">
                   {isGuardian ? (
-                    <div className="bg-secondary/10 border-2 border-secondary/20 rounded-xl p-4 text-center space-y-2">
+                    <div className="bg-secondary/10 border-2 border-primary/20 rounded-xl p-4 text-center space-y-2">
                       <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Benefit Unlocked</p>
                       <p className="font-headline font-black text-lg text-secondary uppercase">Founding Access</p>
                     </div>
@@ -350,7 +350,7 @@ function SupportContent() {
 
         {/* 4. SANCTUARY GEAR */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" /> 4. Sanctuary Gear
@@ -364,13 +364,10 @@ function SupportContent() {
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
             </div>
           ) : (
-            <div className="space-y-24">
+            <div className="space-y-12 max-w-6xl mx-auto">
               {/* TIER 1: STAPLES */}
-              <div className="space-y-8">
-                <div className="text-center">
-                  <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Sanctuary Staples</h3>
-                  <p className="text-muted-foreground max-w-xl mx-auto font-medium">Always in season. Always mission-ready.</p>
-                </div>
+              <div className="space-y-6">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Sanctuary Staples</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                   {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
                 </div>
@@ -378,12 +375,8 @@ function SupportContent() {
 
               {/* TIER 2: SEASONAL */}
               {seasonalMerch.length > 0 && (
-                <div className="space-y-8">
-                  <div className="text-center">
-                    <Badge className="bg-secondary text-white font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest mb-4">Summer Collection</Badge>
-                    <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Seasonal Selection</h3>
-                    <p className="text-muted-foreground max-w-xl mx-auto font-medium">Limited-time gear for the Nashville heat.</p>
-                  </div>
+                <div className="space-y-6">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Seasonal Selection</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -391,10 +384,8 @@ function SupportContent() {
               )}
 
               {/* TIER 3: ACCESSORIES */}
-              <div className="space-y-8 pt-12 border-t border-border/50">
-                <div className="text-center">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight mb-2 text-muted-foreground">Sanctuary Accessories</h3>
-                </div>
+              <div className="space-y-6">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Sanctuary Accessories</span>
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
                 </div>
