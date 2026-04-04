@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -26,6 +27,8 @@ import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
+import { DOTMSpotlight } from '@/components/DOTMSpotlight';
+import { ResidentCard } from '@/components/residents/ResidentCard';
 
 const STAPLE_IDS = ['390252688', '426252489', '426261731'];
 
@@ -56,12 +59,12 @@ export default function Home() {
     fetchStaples();
   }, []);
 
-  const featuredBirdQuery = useMemoFirebase(() => {
+  const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'birds'), where('isFeatured', '==', true), limit(1));
+    return query(collection(firestore, 'birds'), limit(4));
   }, [firestore]);
 
-  const { data: featuredBirds } = useCollection<Resident>(featuredBirdQuery);
+  const { data: birds } = useCollection<Resident>(birdsQuery);
 
   const checkRedirect = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -165,7 +168,7 @@ export default function Home() {
                 {[
                   { title: "Formal Education", desc: "K-12 & School Programs", icon: GraduationCap },
                   { title: "Home & Community Learning", desc: "Homeschooling, 4-H, Libraries", icon: Users },
-                  { title: "Public Discovery", desc: "Museums, Nature Centers", icon: Globe },
+                  { title: "Public Discovery", desc: "Museums, Youth Centers, Nature Preserves", icon: Globe },
                   { title: "Therapeutic Environments", desc: "Nursing Homes, Memory Care", icon: Heart },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-5 p-6 bg-background/50 border border-border rounded-2xl group hover:border-primary/30 transition-colors">
@@ -183,9 +186,43 @@ export default function Home() {
           </div>
         </section>
 
+        {/* DUCK OF THE MONTH SPOTLIGHT */}
+        <section className="py-12 bg-background border-b border-border">
+          <div className="container mx-auto px-4">
+            <DOTMSpotlight />
+          </div>
+        </section>
+
+        {/* THE FLOCK GALLERY PREVIEW */}
+        <section className="py-24 bg-card/20 border-b border-border">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-12">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-headline font-black uppercase tracking-tighter">Meet the <span className="text-primary">Flock</span></h2>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Sanctuary Residents</p>
+              </div>
+              <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">
+                <Link href="/flock">View All Residents <ArrowRight className="ml-2 h-3 w-3" /></Link>
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {birds && birds.length > 0 ? (
+                birds.map((bird) => (
+                  <ResidentCard key={bird.id} resident={bird} />
+                ))
+              ) : (
+                <div className="col-span-full py-12 text-center text-muted-foreground italic">
+                  Loading the flock...
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* SANCTUARY STAPLES (Curated Merch Mirror) */}
         {stapleMerch.length > 0 && (
-          <section className="py-24 bg-background">
+          <section className="py-24 bg-background border-b border-border">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-12">
                 <div className="space-y-1">
