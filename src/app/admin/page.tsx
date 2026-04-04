@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -31,6 +30,7 @@ import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
+import { LiveBroadcast } from '@/components/LiveBroadcast';
 
 // STRICT ADMIN LOCK
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
@@ -117,12 +117,11 @@ function ManagerPortal({ user }: { user: any }) {
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
   }, [firestore]);
 
-  const { data: birds, isLoading: birdsLoading } = useCollection<Resident>(birdsQuery);
+  const { data: birds } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
   const { data: expenses } = useCollection<Expense>(expensesQuery);
 
-  // Real-time Naming Queue
   const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
   useEffect(() => {
     if (!firestore) return;
@@ -134,7 +133,6 @@ function ManagerPortal({ user }: { user: any }) {
     return () => unsubscribe();
   }, [firestore]);
 
-  // HANDLERS
   const handleUpdateStatus = (birdId: string, status: string) => {
     if (!firestore) return;
     const birdRef = doc(firestore, 'birds', birdId);
@@ -215,7 +213,6 @@ function ManagerPortal({ user }: { user: any }) {
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
-    // Admin Protection: Restriction to Kyle's primary email.
     if (!firestore || user.email !== ADMIN_EMAIL) return;
     try {
       await deleteDoc(doc(firestore, 'ledger', expenseId));
@@ -264,13 +261,16 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 2. DAILY ROUTINE */}
+        {/* 2. LIVE BROADCAST CONTROL */}
+        <LiveBroadcast isAdmin />
+
+        {/* 3. DAILY ROUTINE */}
         <DailyRoutine dailyStatus={dailyStatus || null} onToggle={handleToggleRoutine} />
 
-        {/* 3. EGG COUNTER */}
+        {/* 4. EGG COUNTER */}
         <EggCounter initialCount={eggHistory?.count || 0} onSave={handleSaveEggs} />
 
-        {/* 4. FLOCK RECORDS (Prioritized over Ledger) */}
+        {/* 5. FLOCK RECORDS */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -344,7 +344,7 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 5. EXPENSE LEDGER MANAGEMENT (Bottom Tier) */}
+        {/* 6. EXPENSE LEDGER MANAGEMENT */}
         <section className="space-y-8">
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

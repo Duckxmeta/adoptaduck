@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -44,6 +43,7 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
+import { LiveBroadcast, LiveStreamTeaser } from '@/components/LiveBroadcast';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -66,10 +66,10 @@ export default function MemberDashboard() {
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isGuardian = userProfile?.role === 'guardian' || isAdmin;
 
-  // STRICT ACCESS GATING: Non-Guardians redirect to /support
+  // ACCESS GATING: Non-Guardians are redirected to support to upgrade
   useEffect(() => {
     if (isMounted && !isUserLoading && !profileLoading && user && userProfile) {
-      if (!isGuardian) {
+      if (!isGuardian && userProfile.role !== 'admin') {
         router.replace('/support');
       }
     }
@@ -88,8 +88,6 @@ export default function MemberDashboard() {
     return () => unsubscribe();
   }, [firestore]);
 
-  // DATA QUERIES (Bypassed for non-guardians)
-  // LOGIC UPDATE: Removing date filters. Indefinite history.
   const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !isGuardian) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
@@ -135,7 +133,7 @@ export default function MemberDashboard() {
     );
   }
 
-  if (!user || !isGuardian) {
+  if (!user || (!isGuardian && !isAdmin)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -178,7 +176,10 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* MIRROR SECTION 1: BULLETIN */}
+        {/* 1. SANCTUARY CAM - TIER GATED */}
+        {isGuardian ? <LiveBroadcast /> : <LiveStreamTeaser />}
+
+        {/* 2. BULLETIN */}
         {bulletins.length > 0 && (
           <section className="animate-in fade-in duration-1000">
             <div className="flex items-center gap-3 mb-6">
@@ -202,10 +203,10 @@ export default function MemberDashboard() {
           </section>
         )}
 
-        {/* MIRROR SECTION 2: DAILY ROUTINE (READ-ONLY) */}
+        {/* 3. DAILY ROUTINE (READ-ONLY MIRROR) */}
         <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
 
-        {/* MIRROR SECTION 3: EGG COUNTER (READ-ONLY) */}
+        {/* 4. EGG COUNTER (READ-ONLY MIRROR) */}
         <EggCounter initialCount={eggHistory?.count || 0} readOnly />
 
         {/* LIVE PULSE */}
@@ -229,7 +230,7 @@ export default function MemberDashboard() {
           </div>
         </section>
 
-        {/* MIRROR SECTION 4: FLOCK RECORDS */}
+        {/* 5. FLOCK RECORDS (MIRROR) */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -243,7 +244,7 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* ARCHIVAL LEDGER (GUARDIAN ONLY) */}
+        {/* 6. ARCHIVAL LEDGER (GUARDIAN ONLY) */}
         <section className="space-y-8 pt-12 border-t border-border">
            <div className="flex items-center gap-3">
               <ScrollText className="h-5 w-5 text-primary" />
@@ -271,7 +272,6 @@ export default function MemberDashboard() {
 }
 
 function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userProfile: UserProfile | null }) {
-  // Logic Update: Indefinite history visibility for Guardians.
   const filteredExpenses = (expenses || []).filter(e => !!e?.date);
 
   return (
@@ -280,7 +280,6 @@ function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userPr
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
         <p className="text-xs font-bold text-muted-foreground">Detailed transparency logs</p>
       </div>
-      {/* UI Scaling: max-h-[500px] with custom-scrollbar for long item lists */}
       <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
         {filteredExpenses.length > 0 ? filteredExpenses.map((exp) => (
           <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center">
@@ -307,7 +306,6 @@ function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userPr
 function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[], totalBirds: number }) {
   const careCosts = useMemo(() => {
     if (!expenses || !totalBirds || totalBirds === 0) return 0;
-    // Calculation Update: Now reflects lifetime cumulative care share.
     const specific = expenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + (Number(e.cost) || 0), 0);
     const shared = expenses.filter(e => !e.birdId).reduce((s, e) => s + (Number(e.cost) || 0), 0);
     return specific + (shared / totalBirds);
