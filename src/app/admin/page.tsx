@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -15,22 +16,24 @@ import {
   Edit3,
   ScrollText,
   Trash2,
-  Wallet
+  Megaphone,
+  Clock
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, deleteDoc } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile, Expense } from '@/lib/types';
+import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile, Expense, BulletinEntry } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { LiveBroadcast } from '@/components/LiveBroadcast';
+import { BulletinDialog } from '@/components/admin/BulletinDialog';
 
 // STRICT ADMIN LOCK
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
@@ -82,6 +85,8 @@ function ManagerPortal({ user }: { user: any }) {
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [isBulletinDialogOpen, setIsBulletinDialogOpen] = useState(false);
+  const [editingBulletin, setEditingBulletin] = useState<BulletinEntry | null>(null);
 
   const VIBES = [
     "Happy ☀️", 
@@ -117,10 +122,16 @@ function ManagerPortal({ user }: { user: any }) {
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
   }, [firestore]);
 
+  const bulletinQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'));
+  }, [firestore]);
+
   const { data: birds } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
   const { data: expenses } = useCollection<Expense>(expensesQuery);
+  const { data: bulletins } = useCollection<BulletinEntry>(bulletinQuery);
 
   const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
   useEffect(() => {
@@ -138,7 +149,7 @@ function ManagerPortal({ user }: { user: any }) {
     const birdRef = doc(firestore, 'birds', birdId);
     updateDoc(birdRef, {
       liveStatus: status || "",
-      statusLastUpdated: status ? new Date().toISOString() : null
+      statusLastUpdated: new Date().toISOString()
     });
     toast({ title: "Vibe Updated" });
   };
@@ -159,6 +170,38 @@ function ManagerPortal({ user }: { user: any }) {
       updatedAt: new Date().toISOString() 
     }, { merge: true });
     toast({ title: "Egg Count Saved" });
+  };
+
+  const handleDeleteBulletin = async (bulletinId: string) => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'bulletin', bulletinId));
+      toast({ title: "Update Removed" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error" });
+    }
+  };
+
+  const handleSaveBulletin = async (data: Partial<BulletinEntry>) => {
+    if (!firestore) return;
+    try {
+      if (editingBulletin) {
+        await updateDoc(doc(firestore, 'bulletin', editingBulletin.id), {
+          ...data,
+          timestamp: serverTimestamp()
+        });
+        toast({ title: "Update Edited" });
+      } else {
+        await addDoc(collection(firestore, 'bulletin'), {
+          ...data,
+          timestamp: serverTimestamp()
+        });
+        toast({ title: "Update Published" });
+      }
+      setIsBulletinDialogOpen(false);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error Publishing" });
+    }
   };
 
   const handleApproveRequest = async (req: NamingRequest) => {
@@ -212,16 +255,6 @@ function ManagerPortal({ user }: { user: any }) {
     }
   };
 
-  const handleDeleteExpense = async (expenseId: string) => {
-    if (!firestore || user.email !== ADMIN_EMAIL) return;
-    try {
-      await deleteDoc(doc(firestore, 'ledger', expenseId));
-      toast({ title: "Expense Deleted" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Deletion Failed" });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground pb-32">
       <Navbar />
@@ -238,7 +271,7 @@ function ManagerPortal({ user }: { user: any }) {
             <div className="p-2 bg-secondary/10 rounded-lg">
               <Bell className="h-5 w-5 text-secondary" />
             </div>
-            <h2 className="text-sm font-headline font-black uppercase tracking-widest">Pending Notifications</h2>
+            <h2 className="text-sm font-headline font-black uppercase tracking-widest">Pending Requests</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {namingRequests && namingRequests.length > 0 ? namingRequests.map((req) => (
@@ -261,16 +294,71 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 2. LIVE BROADCAST CONTROL */}
+        {/* 2. SANCTUARY NEWSROOM (LATEST UPDATES) */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Megaphone className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Sanctuary Updates</h2>
+            </div>
+            <Button 
+              onClick={() => { setEditingBulletin(null); setIsBulletinDialogOpen(true); }} 
+              className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"
+            >
+              <Plus className="h-4 w-4 mr-2" /> New Broadcast
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {bulletins?.map((b) => (
+              <Card key={b.id} className="bg-card border-border border-2 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-1">{b.title}</h3>
+                  <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+                    <Clock className="h-3 w-3" /> {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recently'} ago
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground line-clamp-3 font-medium">{b.content}</p>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 h-9 rounded-xl text-[10px] font-black border-border hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => { setEditingBulletin(b); setIsBulletinDialogOpen(true); }}
+                  >
+                    <Edit3 className="h-3.5 w-3.5 mr-1.5" /> Edit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 w-9 rounded-xl border-border text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteBulletin(b.id)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+            {(!bulletins || bulletins.length === 0) && (
+              <Card className="col-span-full p-12 text-center bg-muted/10 border-dashed border-2 border-border rounded-2xl">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground opacity-50">No updates published yet</p>
+              </Card>
+            )}
+          </div>
+        </section>
+
+        {/* 3. LIVE BROADCAST CONTROL */}
         <LiveBroadcast isAdmin />
 
-        {/* 3. DAILY ROUTINE */}
+        {/* 4. DAILY ROUTINE */}
         <DailyRoutine dailyStatus={dailyStatus || null} onToggle={handleToggleRoutine} />
 
-        {/* 4. EGG COUNTER */}
+        {/* 5. EGG COUNTER */}
         <EggCounter initialCount={eggHistory?.count || 0} onSave={handleSaveEggs} />
 
-        {/* 5. FLOCK RECORDS */}
+        {/* 6. FLOCK RECORDS */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -344,7 +432,7 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 6. EXPENSE LEDGER MANAGEMENT */}
+        {/* 7. SANCTUARY LEDGER */}
         <section className="space-y-8">
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -395,7 +483,12 @@ function ManagerPortal({ user }: { user: any }) {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDeleteExpense(exp.id)}
+                            onClick={() => {
+                              if (confirm('Delete this archival expense?')) {
+                                deleteDoc(doc(firestore, 'ledger', exp.id));
+                                toast({ title: "Expense Removed" });
+                              }
+                            }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -424,6 +517,13 @@ function ManagerPortal({ user }: { user: any }) {
         open={isExpenseDialogOpen} 
         onOpenChange={setIsExpenseDialogOpen} 
         expense={editingExpense} 
+      />
+
+      <BulletinDialog
+        open={isBulletinDialogOpen}
+        onOpenChange={setIsBulletinDialogOpen}
+        onSave={handleSaveBulletin}
+        bulletin={editingBulletin}
       />
     </div>
   );

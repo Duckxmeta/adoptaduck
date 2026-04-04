@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,7 +9,6 @@ import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@
 import { 
   collection, 
   query, 
-  where, 
   orderBy, 
   doc, 
   limit, 
@@ -31,7 +31,6 @@ import {
   Zap,
   Megaphone,
   Clock,
-  ArrowRight,
   Database,
   TrendingUp
 } from 'lucide-react';
@@ -75,6 +74,7 @@ export default function MemberDashboard() {
     }
   }, [user, userProfile, isGuardian, isUserLoading, profileLoading, isMounted, router]);
 
+  // Bulletin Sync: Migrated to top of dashboard
   useEffect(() => {
     if (!firestore) return;
     const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
@@ -127,18 +127,14 @@ export default function MemberDashboard() {
   if (isUserLoading || profileLoading || !isMounted) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary gap-4">
-        <Loader2 className="h-12 w-12 animate-spin" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Syncing Sanctuary Pulse...</p>
       </div>
     );
   }
 
   if (!user || (!isGuardian && !isAdmin)) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return null; // Handle via redirect in useEffect
   }
 
   const liveStatusBirds = (birds || [])
@@ -176,32 +172,41 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* 1. SANCTUARY CAM - TIER GATED */}
-        {isGuardian ? <LiveBroadcast /> : <LiveStreamTeaser />}
-
-        {/* 2. BULLETIN */}
+        {/* 1. LATEST UPDATES (NEWS) */}
         {bulletins.length > 0 && (
-          <section className="animate-in fade-in duration-1000">
-            <div className="flex items-center gap-3 mb-6">
-              <Megaphone className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-headline font-black uppercase tracking-widest">Latest Broadcasts</h2>
+          <section className="animate-in fade-in duration-1000 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Megaphone className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-sm font-headline font-black uppercase tracking-widest">The Sanctuary Bulletin</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {bulletins.map(b => (
-                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all">
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-3">{b.content}</p>
-                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
-                      <Clock className="h-2.5 w-2.5" />
-                      {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
+                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all flex flex-col">
+                  {b.imageUrl && (
+                    <div className="relative aspect-video w-full border-b border-border">
+                      <Image src={b.imageUrl} alt={b.title} fill className="object-cover" />
                     </div>
+                  )}
+                  <div className="p-6 space-y-4 flex-1">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                      <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60">
+                        <Clock className="h-2.5 w-2.5" />
+                        {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-3 font-medium leading-relaxed">{b.content}</p>
                   </div>
                 </Card>
               ))}
             </div>
           </section>
         )}
+
+        {/* 2. SANCTUARY CAM - TIER GATED */}
+        {isGuardian ? <LiveBroadcast /> : <LiveStreamTeaser />}
 
         {/* 3. DAILY ROUTINE (READ-ONLY MIRROR) */}
         <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
@@ -218,7 +223,7 @@ export default function MemberDashboard() {
             <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {liveStatusBirds.map(bird => (
+            {liveStatusBirds?.map(bird => (
               <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
                 <span className="text-2xl">🦆</span>
                 <div className="min-w-0 flex-1">
@@ -254,7 +259,7 @@ export default function MemberDashboard() {
               <div className="lg:col-span-2">
                  <SanctuaryCostCard expenses={expenses || []} />
               </div>
-              <ItemizedLedger expenses={expenses || []} userProfile={userProfile || null} />
+              <ItemizedLedger expenses={expenses || []} />
            </div>
         </section>
 
@@ -271,7 +276,7 @@ export default function MemberDashboard() {
   );
 }
 
-function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userProfile: UserProfile | null }) {
+function ItemizedLedger({ expenses }: { expenses: Expense[] }) {
   const filteredExpenses = (expenses || []).filter(e => !!e?.date);
 
   return (

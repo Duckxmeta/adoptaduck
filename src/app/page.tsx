@@ -15,24 +15,21 @@ import {
   ArrowRight,
   Loader2,
   Trophy,
-  Zap,
-  Megaphone,
-  Clock
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit, onSnapshot } from 'firebase/firestore';
-import { Resident, BulletinEntry } from '@/lib/types';
+import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
+import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
 
 /**
  * @fileOverview Decent Ducks Sanctuary Home Page.
- * Restored to original branding with hard-fixed Hero focal point.
+ * Cleaned and optimized: 'Latest Updates' and 'Live Cam' migrated to gated dashboards.
  * Maintains strict content lock on mission and $75/yr pricing.
  */
 
@@ -43,25 +40,10 @@ export default function Home() {
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [bulletins, setBulletins] = useState<BulletinEntry[]>([]);
   
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Fetch Bulletins (3 Most Recent)
-  useEffect(() => {
-    if (!firestore) return;
-    const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as BulletinEntry[];
-      setBulletins(docs);
-    });
-    return () => unsubscribe();
-  }, [firestore]);
 
   const featuredBirdQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -120,7 +102,7 @@ export default function Home() {
   if (isVerifying) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-primary space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="font-headline font-black uppercase tracking-[0.3em] text-[10px]">Entering Sanctuary...</p>
       </div>
     );
@@ -169,43 +151,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        {/* Latest Updates - Sanctuary Bulletin */}
-        {bulletins.length > 0 && (
-          <section className="py-24 container mx-auto px-4">
-            <div className="flex items-center gap-4 mb-12">
-              <div className="h-px bg-border flex-1" />
-              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-                <Megaphone className="h-4 w-4" /> Latest Updates
-              </h2>
-              <div className="h-px bg-border flex-1" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {bulletins.map((b) => (
-                <Card key={b.id} className="bg-card border-2 border-border/50 rounded-3xl overflow-hidden shadow-xl hover:border-primary/30 transition-all group flex flex-col h-full">
-                  {b.imageUrl && (
-                    <div className="relative aspect-video w-full overflow-hidden border-b border-border">
-                      <Image src={b.imageUrl} alt={b.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                    </div>
-                  )}
-                  <div className="p-6 space-y-4 flex-1 flex flex-col">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
-                      <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground">
-                        <Clock className="h-2.5 w-2.5" />
-                        {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 font-medium">
-                      {b.content}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Featured Resident Spotlight */}
         {featuredDuck && (
