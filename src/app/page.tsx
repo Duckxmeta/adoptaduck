@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Loader2,
   Trophy,
-  Zap
+  Zap,
+  Radio
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -203,6 +204,21 @@ export default function Home() {
               <Button asChild variant="outline" className="border-primary text-primary font-black h-8 px-6 text-xs rounded-xl hover:bg-primary/10">
                 <Link href="/our-story">OUR STORY</Link>
               </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Coming Soon: Live Cam Teaser */}
+        <section className="py-16 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto bg-muted/10 border-2 border-dashed border-border rounded-3xl p-8 flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-left shadow-inner">
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center border border-destructive/20 animate-pulse">
+                <Radio className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Coming Soon: Sanctuary Live Cam 🦆</h3>
+                <p className="text-muted-foreground text-sm font-medium">Real-time enrichment broadcasting for our verified Guardians. Stay tuned for the first stream.</p>
+              </div>
             </div>
           </div>
         </section>

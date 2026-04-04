@@ -22,7 +22,7 @@ import {
 import Image from 'next/image';
 import { useCollection, useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, setDoc, addDoc, where, updateDoc, writeBatch, onSnapshot, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { Resident, DailyStatus, EggHistoryEntry, NamingRequest, UserProfile, Expense, BulletinEntry } from '@/lib/types';
+import { Resident, DailyStatus, EggHistoryEntry, UserProfile, Expense, BulletinEntry, NamingRequest } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { ResidentDialog } from '@/components/admin/ResidentDialog';
 import { Navbar } from '@/components/layout/Navbar';
@@ -32,7 +32,6 @@ import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
-import { LiveBroadcast } from '@/components/LiveBroadcast';
 import { BulletinDialog } from '@/components/admin/BulletinDialog';
 
 // STRICT ADMIN LOCK
@@ -349,16 +348,13 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 3. LIVE BROADCAST CONTROL */}
-        <LiveBroadcast isAdmin />
-
-        {/* 4. DAILY ROUTINE */}
+        {/* 3. DAILY ROUTINE */}
         <DailyRoutine dailyStatus={dailyStatus || null} onToggle={handleToggleRoutine} />
 
-        {/* 5. EGG COUNTER */}
+        {/* 4. EGG COUNTER */}
         <EggCounter initialCount={eggHistory?.count || 0} onSave={handleSaveEggs} />
 
-        {/* 6. FLOCK RECORDS */}
+        {/* 5. FLOCK RECORDS */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -432,7 +428,7 @@ function ManagerPortal({ user }: { user: any }) {
           </div>
         </section>
 
-        {/* 7. SANCTUARY LEDGER */}
+        {/* 6. SANCTUARY LEDGER */}
         <section className="space-y-8">
            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

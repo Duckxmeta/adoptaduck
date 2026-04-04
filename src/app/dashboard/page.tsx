@@ -42,7 +42,6 @@ import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
 import { EggCounter } from '@/components/EggCounter';
-import { LiveBroadcast, LiveStreamTeaser } from '@/components/LiveBroadcast';
 
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
 
@@ -205,13 +204,10 @@ export default function MemberDashboard() {
           </section>
         )}
 
-        {/* 2. SANCTUARY CAM - TIER GATED */}
-        {isGuardian ? <LiveBroadcast /> : <LiveStreamTeaser />}
-
-        {/* 3. DAILY ROUTINE (READ-ONLY MIRROR) */}
+        {/* 2. DAILY ROUTINE (READ-ONLY MIRROR) */}
         <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
 
-        {/* 4. EGG COUNTER (READ-ONLY MIRROR) */}
+        {/* 3. EGG COUNTER (READ-ONLY MIRROR) */}
         <EggCounter initialCount={eggHistory?.count || 0} readOnly />
 
         {/* LIVE PULSE */}
@@ -235,7 +231,7 @@ export default function MemberDashboard() {
           </div>
         </section>
 
-        {/* 5. FLOCK RECORDS (MIRROR) */}
+        {/* 4. FLOCK RECORDS (MIRROR) */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -249,7 +245,7 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* 6. ARCHIVAL LEDGER (GUARDIAN ONLY) */}
+        {/* 5. ARCHIVAL LEDGER (GUARDIAN ONLY) */}
         <section className="space-y-8 pt-12 border-t border-border">
            <div className="flex items-center gap-3">
               <ScrollText className="h-5 w-5 text-primary" />
