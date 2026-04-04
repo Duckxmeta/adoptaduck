@@ -28,7 +28,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
-import { ResidentCard } from '@/components/residents/ResidentCard';
 
 const STAPLE_IDS = ['390252688', '426252489', '426261731'];
 
@@ -58,13 +57,6 @@ export default function Home() {
     }
     fetchStaples();
   }, []);
-
-  const birdsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'birds'), limit(4));
-  }, [firestore]);
-
-  const { data: birds } = useCollection<Resident>(birdsQuery);
 
   const checkRedirect = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -187,42 +179,18 @@ export default function Home() {
         </section>
 
         {/* DUCK OF THE MONTH SPOTLIGHT */}
-        <section className="py-12 bg-background border-b border-border">
-          <div className="container mx-auto px-4">
+        <section className="py-24 bg-background border-b border-border">
+          <div className="container mx-auto px-4 flex flex-col items-center gap-12">
             <DOTMSpotlight />
-          </div>
-        </section>
-
-        {/* THE FLOCK GALLERY PREVIEW */}
-        <section className="py-24 bg-card/20 border-b border-border">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-12">
-              <div className="space-y-1">
-                <h2 className="text-3xl font-headline font-black uppercase tracking-tighter">Meet the <span className="text-primary">Flock</span></h2>
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Sanctuary Residents</p>
-              </div>
-              <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">
-                <Link href="/flock">View All Residents <ArrowRight className="ml-2 h-3 w-3" /></Link>
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {birds && birds.length > 0 ? (
-                birds.map((bird) => (
-                  <ResidentCard key={bird.id} resident={bird} />
-                ))
-              ) : (
-                <div className="col-span-full py-12 text-center text-muted-foreground italic">
-                  Loading the flock...
-                </div>
-              )}
-            </div>
+            <Button asChild variant="outline" size="lg" className="border-primary text-primary font-black h-16 px-10 rounded-2xl hover:bg-primary/10 transition-transform hover:scale-105 shadow-xl uppercase text-xs tracking-widest">
+              <Link href="/flock">Meet the Rest of the Flock <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
           </div>
         </section>
 
         {/* SANCTUARY STAPLES (Curated Merch Mirror) */}
         {stapleMerch.length > 0 && (
-          <section className="py-24 bg-background border-b border-border">
+          <section className="py-24 bg-card/20 border-b border-border">
             <div className="container mx-auto px-4">
               <div className="flex items-center justify-between mb-12">
                 <div className="space-y-1">

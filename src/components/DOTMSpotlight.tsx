@@ -33,7 +33,7 @@ export function DOTMSpotlight() {
 
   const { data: bird, isLoading: birdLoading } = useDoc<Resident>(birdRef);
 
-  // FALLBACK QUERY: If no DOTM setting exists, find Cocoa or Puff
+  // FALLBACK QUERY: If no DOTM setting exists, find Founding members
   const fallbackQuery = useMemoFirebase(() => {
     if (!firestore || settings?.birdId) return null;
     return query(collection(firestore, 'birds'), where('isFoundingResident', '==', true), limit(1));
@@ -61,7 +61,7 @@ export function DOTMSpotlight() {
   const displayName = getResidentName(activeBird);
 
   return (
-    <Card className="relative overflow-hidden bg-card border-4 border-primary/50 shadow-2xl shadow-primary/10 rounded-[2.5rem] group animate-in fade-in slide-in-from-top-4 duration-1000">
+    <Card className="relative w-full max-w-5xl overflow-hidden bg-card border-4 border-primary/50 shadow-2xl shadow-primary/10 rounded-[2.5rem] group animate-in fade-in slide-in-from-top-4 duration-1000">
       {/* Decorative Glow */}
       <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -90,7 +90,7 @@ export function DOTMSpotlight() {
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2 mb-2">
               <Badge className="bg-primary text-primary-foreground font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 shadow-lg flex items-center w-fit gap-2">
-                <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
+                <Trophy className="h-3.5 w-3.5" /> APRIL SPOTLIGHT
               </Badge>
               {activeBird.liveStatus && (
                 <Badge variant="outline" className="border-secondary/50 text-secondary font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 bg-secondary/5">
@@ -105,7 +105,7 @@ export function DOTMSpotlight() {
 
           <div className="space-y-4">
             <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
-              "{activeBird.personalityTraits.split('.')[0]}."
+              "{activeBird.personalityTraits}"
             </p>
             
             <div className="bg-primary/10 border-l-4 border-primary p-6 rounded-r-2xl space-y-2">
@@ -113,7 +113,7 @@ export function DOTMSpotlight() {
                 <Sparkles className="h-3.5 w-3.5" /> Monthly Mission
               </p>
               <p className="text-sm font-bold text-foreground/80 leading-relaxed">
-                {settings?.monthlyMission || `Support our inaugural G0 founder, ${displayName}, this month!`}
+                {settings?.monthlyMission || `Support our featured resident, ${displayName}, this month and join the digital flock!`}
               </p>
             </div>
           </div>
@@ -127,8 +127,8 @@ export function DOTMSpotlight() {
               SUPPORT {displayName.toUpperCase()}
             </Button>
             <Button asChild variant="outline" className="border-primary text-primary font-black h-14 px-8 rounded-2xl hover:bg-primary/10 flex-1 flex items-center justify-center gap-2">
-              <Link href="/flock">
-                LEARN MORE <ArrowRight className="h-4 w-4" />
+              <Link href={`/residents/${activeBird.id}`}>
+                VIEW PROFILE <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
