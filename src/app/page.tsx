@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -21,7 +20,9 @@ import {
   GraduationCap,
   Globe,
   Home as HomeIcon,
-  BookOpen
+  BookOpen,
+  ShoppingBag,
+  ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,12 +34,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 
-/**
- * @fileOverview Decent Ducks Sanctuary Home Page.
- * DuckTV Teaser implemented: Moving towards a public-only live feature.
- * Maintains strict content lock on mission and $75/yr pricing.
- */
-
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
@@ -46,9 +41,24 @@ export default function Home() {
   const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [stapleMerch, setStapleMerch] = useState<any[]>([]);
+  const [merchLoading, setMerchLoading] = useState(true);
   
   useEffect(() => {
     setMounted(true);
+    async function fetchStaples() {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) return;
+        const data = await res.json();
+        setStapleMerch(data.filter((m: any) => m.tier === 1).slice(0, 3));
+      } catch (e) {
+        console.error("Home merch fetch failed");
+      } finally {
+        setMerchLoading(false);
+      }
+    }
+    fetchStaples();
   }, []);
 
   const featuredBirdQuery = useMemoFirebase(() => {
@@ -75,24 +85,14 @@ export default function Home() {
             updatedAt: serverTimestamp()
           }, { merge: true });
         }
-
-        toast({
-          title: "Access Verified",
-          description: `Welcome back!`,
-        });
-        
         router.push('/admin'); 
       }
     } catch (error: any) {
-      if (error.message?.includes('JSON')) {
-        console.warn("Auth redirect state was empty or malformed.");
-      } else {
-        console.error("Auth Error:", error);
-      }
+      console.error("Auth Error:", error);
     } finally {
       setIsVerifying(false);
     }
-  }, [auth, firestore, router, toast]);
+  }, [auth, firestore, router]);
 
   useEffect(() => {
     if (!auth || !mounted) return;
@@ -149,21 +149,13 @@ export default function Home() {
               </Button>
             </div>
           </div>
-
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-            <div className="flex flex-col items-center gap-2 opacity-50">
-              <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
-              <div className="w-0.5 h-10 bg-primary/50" />
-            </div>
-          </div>
         </section>
 
         {/* MISSION NARRATIVE SECTION */}
         <section className="py-24 bg-card/30 border-b border-border">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="space-y-20">
-              {/* Section 1: The Digital Flock */}
-              <div className="text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="text-center space-y-8">
                 <div className="inline-block p-3 bg-primary/10 rounded-2xl border border-primary/20 mb-2">
                   <Bird className="h-8 w-8 text-primary" />
                 </div>
@@ -171,106 +163,74 @@ export default function Home() {
                   The Digital Flock: <span className="text-primary">No Pond Required 🦆</span>
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed">
-                  Just landing at the Decent Ducks Sanctuary? There is always room for one more in the pond! Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion. No coop to build, no grain to buy. Your donation-based adoption provides the 'wings' we need to rescue and rehome even more birds.
+                  Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion.
                 </p>
               </div>
 
-              {/* Section 2: Sponsored Access */}
-              <div className="space-y-10">
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl md:text-3xl font-headline font-black uppercase tracking-tight text-secondary">
-                    Bringing the Sanctuary to You (For Free!)
-                  </h3>
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Community & Educational Outreach</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { title: "Formal Education", desc: "K-12 & School Programs", icon: GraduationCap },
-                    { title: "Home & Community Learning", desc: "Homeschooling, 4-H, Libraries", icon: Users },
-                    { title: "Public Discovery", desc: "Museums, Youth Centers, Nature Preserves", icon: Globe },
-                    { title: "Therapeutic Environments", desc: "Nursing Homes, Memory Care Units", icon: Heart },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-5 p-6 bg-background/50 border border-border rounded-2xl group hover:border-primary/30 transition-colors">
-                      <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
-                        <item.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-headline font-black text-sm uppercase tracking-tight">{item.title}</h4>
-                        <p className="text-xs text-muted-foreground font-medium">{item.desc}</p>
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { title: "Formal Education", desc: "K-12 & School Programs", icon: GraduationCap },
+                  { title: "Home & Community Learning", desc: "Homeschooling, 4-H, Libraries", icon: Users },
+                  { title: "Public Discovery", desc: "Museums, Nature Centers", icon: Globe },
+                  { title: "Therapeutic Environments", desc: "Nursing Homes, Memory Care", icon: Heart },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-5 p-6 bg-background/50 border border-border rounded-2xl group hover:border-primary/30 transition-colors">
+                    <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
+                      <item.icon className="h-6 w-6 text-primary" />
                     </div>
-                  ))}
-                </div>
-                <div className="text-center pt-4">
-                  <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-primary">
-                    <Link href="/support#community">Learn More About Sponsored Access <ArrowRight className="ml-2 h-3 w-3" /></Link>
-                  </Button>
-                </div>
+                    <div>
+                      <h4 className="font-headline font-black text-sm uppercase tracking-tight">{item.title}</h4>
+                      <p className="text-xs text-muted-foreground font-medium">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Featured Resident Spotlight */}
-        {featuredDuck && (
-          <section className="bg-primary/5 border-y border-primary/10 py-24">
+        {/* SANCTUARY STAPLES (Curated Merch Mirror) */}
+        {stapleMerch.length > 0 && (
+          <section className="py-24 bg-background">
             <div className="container mx-auto px-4">
-              <Card className="bg-card border-2 border-primary/30 rounded-[2.5rem] overflow-hidden shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-12 items-center">
-                  <div className="md:col-span-5 relative aspect-square md:aspect-auto md:h-[450px] overflow-hidden bg-muted flex items-center justify-center">
-                    {featuredDuck.primaryImageUrl ? (
-                      <Image src={featuredDuck.primaryImageUrl} alt={featuredDuck.name} fill className="object-cover" />
-                    ) : (
-                      <span className="text-9xl">🦆</span>
-                    )}
-                  </div>
-                  <div className="md:col-span-7 p-8 md:p-12 space-y-6">
-                    <div className="space-y-2">
-                      <Badge className="bg-primary text-black font-black text-[10px] uppercase tracking-[0.3em] px-4 py-1 flex items-center w-fit gap-2">
-                        <Trophy className="h-3.5 w-3.5" /> DUCK OF THE MONTH
-                      </Badge>
-                      <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-none">
-                        Meet <span className="text-primary">{featuredDuck.name}</span>
-                      </h2>
-                    </div>
-                    <p className="text-lg md:text-xl font-medium text-foreground/90 italic leading-relaxed">
-                      "{featuredDuck.personalityTraits.split('.')[0]}."
-                    </p>
-                    <div className="flex items-center gap-2 bg-background/50 p-3 rounded-xl border border-primary/10 w-fit">
-                      <Zap className="h-4 w-4 text-primary animate-pulse" />
-                      <span className="text-xs font-black uppercase tracking-widest text-primary">{featuredDuck.liveStatus || 'Chilling 🌿'}</span>
-                    </div>
-                    <Button asChild size="lg" className="bg-primary text-primary-foreground font-black h-14 px-10 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3">
-                      <Link href={`/residents/${featuredDuck.id}`}>LEARN MORE <ArrowRight className="h-4 w-4" /></Link>
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between mb-12">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-headline font-black uppercase tracking-tighter">Sanctuary <span className="text-primary">Staples</span></h2>
+                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Official Mission Gear</p>
                 </div>
-              </Card>
+                <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">
+                  <Link href="/support#merch">View All Gear <ArrowRight className="ml-2 h-3 w-3" /></Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                {stapleMerch.map(product => (
+                  <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
+                    <div className="relative aspect-square">
+                      <Image src={product.thumbnailUrl} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <Button onClick={() => window.open(product.redirectUrl, '_blank')} variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+                          <ExternalLink className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <h4 className="font-headline font-black text-[10px] uppercase tracking-widest line-clamp-1">{product.name}</h4>
+                      <div className="flex items-center justify-between">
+                        <p className="font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
+                        <Button onClick={() => window.open(product.redirectUrl, '_blank')} className="bg-secondary text-white font-black h-8 px-4 text-[8px] uppercase tracking-widest rounded-lg">BUY</Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </div>
           </section>
         )}
 
-        {/* Support CTA */}
-        <section className="py-24 bg-card/50 border-y border-border">
-          <div className="container mx-auto px-4 text-center space-y-8">
-            <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter">Support the <span className="text-primary">Mission</span></h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">From emergency rescues to daily layers, your contributions keep the sanctuary running.</p>
-            <div className="flex flex-col items-center gap-4">
-              <Button asChild size="lg" className="bg-secondary text-secondary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                <Link href="/support#donate">SUPPORT THE FLOCK <Heart className="ml-2 h-5 w-5 fill-current" /></Link>
-              </Button>
-              <Button asChild variant="outline" className="border-primary text-primary font-black h-8 px-6 text-xs rounded-xl hover:bg-primary/10">
-                <Link href="/our-story">OUR STORY</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-
         {/* DuckTV: Public Teaser */}
-        <section className="py-16 bg-background">
+        <section className="py-16 bg-card/50 border-y border-border">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto bg-secondary/5 border-2 border-dashed border-secondary/30 rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-center gap-8 text-center md:text-left shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-secondary/5 opacity-50 group-hover:opacity-100 transition-opacity" />
               <div className="relative z-10 w-20 h-20 bg-secondary/20 rounded-2xl flex items-center justify-center border-2 border-secondary/40 animate-pulse">
                 <Tv className="h-10 w-10 text-secondary" />
               </div>

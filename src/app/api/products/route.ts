@@ -1,71 +1,82 @@
-
 import { NextResponse } from 'next/server';
 
 /**
- * @fileOverview API route to fetch live products from Printful.
- * Optimized to perform variant array scans for accurate price range calculation.
+ * @fileOverview Curated Merch API Controller.
+ * Synchronizes specific Printful IDs into Tiered Categories.
+ * Tier 1: Staples (Always ON)
+ * Tier 2: Seasonal (Summer: April-Sept)
+ * Tier 3: Accessories (Footer Row)
  */
+
+const STAPLE_IDS = ['68a540b74ab376', '69cbfd8a5d8938', '69cc0bf0eb8546'];
+const SEASONAL_SUMMER_IDS = ['69d140ea45fe28', '69d13cef0d5c46', '69d13d58b1b314'];
+const ACCESSORY_IDS = ['69cc02a0a31cc9', '69cc0475957615', '69cc004ee58d81', '69cc05e38a0234'];
 
 export async function GET() {
   const apiKey = process.env.PRINTFUL_API_KEY;
 
   if (!apiKey) {
-    return NextResponse.json({ error: 'Printful API Key not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'Sanctuary store mirror not configured' }, { status: 500 });
   }
 
   try {
-    const headers = {
-      'Authorization': `Bearer ${apiKey}`,
-    };
-
-    // Fetch basic sync products
+    const headers = { 'Authorization': `Bearer ${apiKey}` };
+    
+    // Fetch all sync products to find our curated set
     const response = await fetch('https://api.printful.com/store/products', { headers });
-
-    if (!response.ok) {
-      throw new Error(`Printful API error: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Printful Error: ${response.statusText}`);
 
     const data = await response.json();
-    const products = data.result || [];
+    const allProducts = data.result || [];
 
-    // Detailed scan for top 10 products to get variants and pricing
-    const detailedProducts = await Promise.all(products.slice(0, 10).map(async (p: any) => {
-      try {
-        const detailRes = await fetch(`https://api.printful.com/store/products/${p.id}`, { headers });
-        if (!detailRes.ok) return null;
+    // Seasonal Logic: Summer = April (3) to September (8)
+    const currentMonth = new Date().getMonth();
+    const isSummer = currentMonth >= 3 && currentMonth <= 8;
 
-        const detailData = await detailRes.json();
-        const syncProduct = detailData.result?.sync_product || {};
-        const variants = detailData.result?.sync_variants || [];
-        
-        const prices = variants
-          .map((v: any) => parseFloat(v.retail_price))
-          .filter((price: number) => !isNaN(price));
+    const curatedIds = [
+      ...STAPLE_IDS,
+      ...(isSummer ? SEASONAL_SUMMER_IDS : []),
+      ...ACCESSORY_IDS
+    ];
 
-        if (prices.length === 0) return null;
+    const finalProducts = await Promise.all(
+      allProducts
+        .filter((p: any) => curatedIds.includes(p.id.toString()) || curatedIds.includes(p.external_id))
+        .map(async (p: any) => {
+          const detailRes = await fetch(`https://api.printful.com/store/products/${p.id}`, { headers });
+          if (!detailRes.ok) return null;
 
-        return {
-          id: p.id,
-          name: p.name,
-          thumbnailUrl: p.thumbnail_url,
-          // Map external ID or store URL for the Buy Now button
-          redirectUrl: syncProduct.external_url || `https://decent-ducks.printful.me/product/${p.id}`,
-          minPrice: Math.min(...prices),
-          maxPrice: Math.max(...prices),
-          description: syncProduct.description || 'Official Sanctuary Gear'
-        };
-      } catch (error) {
-        console.error(`Error scanning product ${p.id}:`, error);
-        return null;
-      }
-    }));
+          const detailData = await detailRes.json();
+          const syncProduct = detailData.result?.sync_product || {};
+          const variants = detailData.result?.sync_variants || [];
+          
+          const prices = variants
+            .map((v: any) => parseFloat(v.retail_price))
+            .filter((price: number) => !isNaN(price));
 
-    // Filter out failed scans
-    const finalCatalog = detailedProducts.filter(Boolean);
+          if (prices.length === 0) return null;
 
-    return NextResponse.json(finalCatalog);
+          // Categorization
+          let tier = 3;
+          if (STAPLE_IDS.includes(p.id.toString()) || STAPLE_IDS.includes(p.external_id)) tier = 1;
+          else if (SEASONAL_SUMMER_IDS.includes(p.id.toString()) || SEASONAL_SUMMER_IDS.includes(p.external_id)) tier = 2;
+
+          return {
+            id: p.id,
+            name: p.name,
+            thumbnailUrl: p.thumbnail_url,
+            redirectUrl: syncProduct.external_url || `https://decent-ducks.printful.me/product/${p.id}`,
+            minPrice: Math.min(...prices),
+            maxPrice: Math.max(...prices),
+            description: syncProduct.description || 'Official Sanctuary Gear',
+            tier
+          };
+        })
+    );
+
+    return NextResponse.json(finalProducts.filter(Boolean));
   } catch (error: any) {
-    console.error('Error fetching live merch catalog:', error);
-    return NextResponse.json({ error: 'Failed to fetch live catalog' }, { status: 500 });
+    console.error('Merch Sync Error:', error);
+    return NextResponse.json({ error: 'Failed to sync curated inventory' }, { status: 500 });
   }
 }

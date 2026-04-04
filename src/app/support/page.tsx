@@ -35,7 +35,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
-// PRODUCTION STRIPE PRICE IDS (SYNCED 2026)
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
   SPLASH_10: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_10 || 'price_1THAidGyzCRtb3HxaeBUkg33',
@@ -62,14 +61,11 @@ function SupportContent() {
   const [merch, setMerch] = useState<any[]>([]);
   const [merchLoading, setMerchLoading] = useState(true);
 
-  // Live Mirror: Synchronize Sanctuary Gear with Printful API
   useEffect(() => {
     async function fetchLiveCatalog() {
       try {
         const response = await fetch('/api/products');
-        if (!response.ok) {
-          throw new Error('Store mirror unreachable');
-        }
+        if (!response.ok) throw new Error('Store mirror unreachable');
         const data = await response.json();
         setMerch(data);
       } catch (e) {
@@ -92,9 +88,7 @@ function SupportContent() {
 
       if (priceId === STRIPE_PRICES.SPLASH_CUSTOM) {
         const amt = parseFloat(customAmount);
-        if (isNaN(amt) || amt < 1) {
-          throw new Error("Please enter a custom amount of at least $1.");
-        }
+        if (isNaN(amt) || amt < 1) throw new Error("Min donation: $1");
         body.amount = amt;
       }
 
@@ -104,28 +98,49 @@ function SupportContent() {
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server error: ${response.status}`);
-      }
-
       const data = await response.json();
-      if (data.url) {
-        window.location.assign(data.url);
-      } else {
-        throw new Error('No checkout URL received from sanctuary engine.');
-      }
+      if (data.url) window.location.assign(data.url);
+      else throw new Error('Checkout failure');
     } catch (error: any) {
-      console.error('Checkout error:', error);
       toast({
         variant: "destructive",
         title: "Checkout Unavailable",
-        description: error.message || "Financial system communication error. Please retry.",
+        description: error.message || "Financial system error.",
       });
     } finally {
       setIsRedirecting(false);
     }
   };
+
+  const stapleMerch = merch.filter(m => m.tier === 1);
+  const seasonalMerch = merch.filter(m => m.tier === 2);
+  const accessoryMerch = merch.filter(m => m.tier === 3);
+
+  const ProductCard = ({ product }: { product: any }) => (
+    <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full">
+      <div className="relative aspect-square bg-muted">
+        {product.thumbnailUrl ? (
+          <Image src={product.thumbnailUrl} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="h-12 w-12" /></div>
+        )}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <Button onClick={() => window.open(product.redirectUrl, '_blank')} variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+            <ExternalLink className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+      <CardContent className="p-6 space-y-4 flex flex-col flex-1">
+        <div className="space-y-1 flex-1">
+          <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
+          <p className="text-lg font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
+        </div>
+        <Button onClick={() => window.open(product.redirectUrl, '_blank')} className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
+          BUY NOW
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body pb-32">
@@ -229,7 +244,6 @@ function SupportContent() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Flock Member */}
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl opacity-90 border-t-4 border-t-muted">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Flock Member</h3>
@@ -248,7 +262,6 @@ function SupportContent() {
                 </Button>
               </Card>
 
-              {/* Guardian Monthly */}
               <Card className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-primary/10 scale-105 z-10 border-t-8 border-t-primary">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart className="h-20 w-20 text-primary fill-primary" /></div>
                 <div className="space-y-1 relative z-10">
@@ -284,7 +297,6 @@ function SupportContent() {
                 </div>
               </Card>
 
-              {/* Founding Member (Yearly) */}
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl border-t-4 border-t-secondary">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Founding Member</h3>
@@ -336,76 +348,14 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 4. EDUCATIONAL OUTREACH */}
-        <section id="community" className="container mx-auto px-4 scroll-mt-24 mb-32 h-auto">
-          <div className="flex items-center gap-4 mb-12">
-            <div className="h-px bg-border flex-1" />
-            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2 whitespace-normal">
-              <Globe className="h-4 w-4" /> 4. Educational Outreach
-            </h2>
-            <div className="h-px bg-border flex-1" />
-          </div>
-          <Card className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-[3rem] p-8 md:p-16 shadow-2xl relative overflow-hidden group h-auto">
-            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
-              <Users className="h-40 w-40 text-primary" />
-            </div>
-            <div className="space-y-10 relative z-10 text-center">
-              <div className="space-y-4">
-                <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Sponsored Access</Badge>
-                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-tight">Bringing the Sanctuary to Your Classroom & <span className="text-primary">Community</span></h2>
-                <p className="text-muted-foreground text-lg mx-auto font-medium">We provide Full Membership Access at no cost for organizations focused on learning, growth, and care.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left max-w-3xl mx-auto">
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
-                  <div className="flex items-center gap-3 text-primary mb-2">
-                    <ShieldCheck className="h-5 w-5" />
-                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Formal Education</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Traditional K-12 classrooms and dedicated school programs.</p>
-                </div>
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
-                  <div className="flex items-center gap-3 text-primary mb-2">
-                    <Users className="h-5 w-5" />
-                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Home & Community Learning</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Homeschooling collectives, after-school clubs, and 4-H or library-based initiatives.</p>
-                </div>
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
-                  <div className="flex items-center gap-3 text-primary mb-2">
-                    <Globe className="h-5 w-5" />
-                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Public Discovery</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Agricultural programs at museums, youth centers, and nature preserves.</p>
-                </div>
-                <div className="p-6 bg-background/40 rounded-[2rem] border border-border space-y-2 h-auto">
-                  <div className="flex items-center gap-3 text-primary mb-2">
-                    <Heart className="h-5 w-5" />
-                    <h4 className="font-headline font-black text-xs uppercase tracking-widest">Therapeutic Environments</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed font-medium">Nursing homes, assisted living facilities, and memory care units.</p>
-                </div>
-              </div>
-              <div className="pt-8">
-                <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                  <a href="mailto:decentducksorg@gmail.com?subject=Community Access Request">REQUEST SPONSORED ACCESS <ArrowRight className="ml-2 h-5 w-5" /></a>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        {/* 5. SANCTUARY GEAR */}
+        {/* 4. SANCTUARY GEAR */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" /> 5. Sanctuary Gear
+              <ShoppingBag className="h-4 w-4" /> 4. Sanctuary Gear
             </h2>
             <div className="h-px bg-border flex-1" />
-          </div>
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Wear the Mission</h3>
-            <p className="text-muted-foreground max-w-xl mx-auto font-medium">Proceeds from every order go directly to the sanctuary feed and medical fund.</p>
           </div>
           
           {merchLoading ? (
@@ -414,67 +364,51 @@ function SupportContent() {
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {merch.map((product) => (
-                <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full">
-                  <div className="relative aspect-square bg-muted">
-                    {product.thumbnailUrl ? (
-                      <Image 
-                        src={product.thumbnailUrl} 
-                        alt={product.name} 
-                        fill 
-                        className="object-cover transition-transform duration-700 group-hover:scale-110" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center opacity-20">
-                        <ShoppingBag className="h-12 w-12" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button 
-                        onClick={() => window.open(product.redirectUrl, '_blank')}
-                        variant="outline" 
-                        className="border-primary text-primary font-black rounded-full h-12 w-12 p-0"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                      </Button>
-                    </div>
+            <div className="space-y-24">
+              {/* TIER 1: STAPLES */}
+              <div className="space-y-8">
+                <div className="text-center">
+                  <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Sanctuary Staples</h3>
+                  <p className="text-muted-foreground max-w-xl mx-auto font-medium">Always in season. Always mission-ready.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                </div>
+              </div>
+
+              {/* TIER 2: SEASONAL */}
+              {seasonalMerch.length > 0 && (
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <Badge className="bg-secondary text-white font-black px-4 py-1 rounded-full text-[10px] uppercase tracking-widest mb-4">Summer Collection</Badge>
+                    <h3 className="text-3xl font-headline font-black uppercase tracking-tight mb-2">Seasonal Selection</h3>
+                    <p className="text-muted-foreground max-w-xl mx-auto font-medium">Limited-time gear for the Nashville heat.</p>
                   </div>
-                  <CardContent className="p-6 space-y-4 flex flex-col flex-1">
-                    <div className="space-y-1 flex-1">
-                      <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">{product.description}</p>
-                      <p className="text-lg font-headline font-black text-primary">
-                        ${product.minPrice === product.maxPrice 
-                          ? Number(product.minPrice).toFixed(2) 
-                          : `${Number(product.minPrice).toFixed(2)} - ${Number(product.maxPrice).toFixed(2)}`}
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={() => window.open(product.redirectUrl, '_blank')}
-                      className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl"
-                    >
-                      BUY NOW
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-              {merch.length === 0 && (
-                <div className="col-span-full py-20 text-center space-y-4 opacity-40">
-                  <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <p className="text-sm font-black uppercase tracking-[0.4em] text-muted-foreground">Catalog items arriving soon...</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                  </div>
                 </div>
               )}
+
+              {/* TIER 3: ACCESSORIES */}
+              <div className="space-y-8 pt-12 border-t border-border/50">
+                <div className="text-center">
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight mb-2 text-muted-foreground">Sanctuary Accessories</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                </div>
+              </div>
             </div>
           )}
         </section>
 
-        {/* 6. EXCLUSIVE BOUTIQUE */}
+        {/* 5. EXCLUSIVE BOUTIQUE */}
         <section id="boutique" className="container mx-auto px-4 scroll-mt-24">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-primary/20 flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-              <Star className="h-4 w-4" /> 6. Exclusive Boutique
+              <Star className="h-4 w-4" /> 5. Exclusive Boutique
             </h2>
             <div className="h-px bg-primary/20 flex-1" />
           </div>
@@ -503,17 +437,6 @@ function SupportContent() {
                   <p className="text-muted-foreground text-lg font-medium leading-relaxed">
                     Elevate your space with the 'Decent Duck Premium Duck Desk Decor Jars'. A high-end artisan collaboration for the most dedicated sanctuary supporters.
                   </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 justify-center lg:justify-start text-primary">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="text-sm font-black uppercase tracking-widest">Artisan Craftsmanship</span>
-                  </div>
-                  <div className="flex items-center gap-3 justify-center lg:justify-start text-primary">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="text-sm font-black uppercase tracking-widest">Exclusivo One Collection</span>
-                  </div>
                 </div>
 
                 <div className="pt-4">
