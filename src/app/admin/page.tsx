@@ -270,75 +270,7 @@ function ManagerPortal({ user }: { user: any }) {
         {/* 3. EGG COUNTER */}
         <EggCounter initialCount={eggHistory?.count || 0} onSave={handleSaveEggs} />
 
-        {/* 4. EXPENSE LEDGER MANAGEMENT */}
-        <section className="space-y-8">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <ScrollText className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Sanctuary Archives</h2>
-              </div>
-              <Button 
-                onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} 
-                className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add Expense
-              </Button>
-           </div>
-
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                 <SanctuaryCostCard expenses={expenses || []} />
-              </div>
-              <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
-                <div className="p-6 border-b border-border bg-primary/5">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">Itemized History</p>
-                  <p className="text-xs font-bold text-muted-foreground">Indefinite transparency logs</p>
-                </div>
-                <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
-                  {expenses && expenses.length > 0 ? expenses.map((exp) => (
-                    <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center group">
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-black uppercase text-foreground">{exp.itemName}</p>
-                        <Badge variant="outline" className="text-[8px] border-secondary/30 text-secondary uppercase px-1.5 py-0">{exp.category}</Badge>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm font-headline font-black text-primary">${(Number(exp.cost) || 0).toFixed(2)}</p>
-                          <p className="text-[8px] font-bold text-muted-foreground uppercase">{exp.date}</p>
-                        </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-primary"
-                            onClick={() => { setEditingExpense(exp); setIsExpenseDialogOpen(true); }}
-                          >
-                            <Edit3 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDeleteExpense(exp.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="p-12 text-center text-muted-foreground/50 text-[10px] font-black uppercase tracking-widest">
-                      No ledger entries found
-                    </div>
-                  )}
-                </div>
-              </Card>
-           </div>
-        </section>
-
-        {/* 5. FLOCK RECORDS */}
+        {/* 4. FLOCK RECORDS (Prioritized over Ledger) */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -410,6 +342,74 @@ function ManagerPortal({ user }: { user: any }) {
               </Card>
             ))}
           </div>
+        </section>
+
+        {/* 5. EXPENSE LEDGER MANAGEMENT (Bottom Tier) */}
+        <section className="space-y-8">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ScrollText className="h-5 w-5 text-primary" />
+                </div>
+                <h2 className="text-sm font-headline font-black uppercase tracking-widest">Sanctuary Archives</h2>
+              </div>
+              <Button 
+                onClick={() => { setEditingExpense(null); setIsExpenseDialogOpen(true); }} 
+                className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Expense
+              </Button>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                 <SanctuaryCostCard expenses={expenses || []} />
+              </div>
+              <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
+                <div className="p-6 border-b border-border bg-primary/5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary">Itemized History</p>
+                  <p className="text-xs font-bold text-muted-foreground">Indefinite transparency logs</p>
+                </div>
+                <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
+                  {expenses && expenses.length > 0 ? expenses.map((exp) => (
+                    <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center group">
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black uppercase text-foreground">{exp.itemName}</p>
+                        <Badge variant="outline" className="text-[8px] border-secondary/30 text-secondary uppercase px-1.5 py-0">{exp.category}</Badge>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-sm font-headline font-black text-primary">${(Number(exp.cost) || 0).toFixed(2)}</p>
+                          <p className="text-[8px] font-bold text-muted-foreground uppercase">{exp.date}</p>
+                        </div>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => { setEditingExpense(exp); setIsExpenseDialogOpen(true); }}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDeleteExpense(exp.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="p-12 text-center text-muted-foreground/50 text-[10px] font-black uppercase tracking-widest">
+                      No ledger entries found
+                    </div>
+                  )}
+                </div>
+              </Card>
+           </div>
         </section>
       </main>
 
