@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expense } from '@/lib/types';
-import { Wallet, Info, Sparkles } from 'lucide-react';
+import { Wallet, Info, Sparkles, Database } from 'lucide-react';
 
 interface SanctuaryCostCardProps {
   expenses: Expense[] | null;
@@ -25,39 +25,36 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
   const chartData = useMemo(() => {
     if (!expenses) return [];
     
-    const now = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(now.getDate() - 30);
-    
-    const rollingExpenses = expenses.filter(e => {
-      if (!e.date) return false;
-      const d = new Date(e.date);
-      // Logic Update: Show expenses from the last 30 days
-      return d >= thirtyDaysAgo && d <= now;
-    });
-
+    // Logic Update: Removed 30-day filter. Now representing lifetime totals.
     const categories = ['Feed', 'Medical', 'Bedding', 'Infrastructure', 'Acquisition', 'Hardware', 'Logistics'];
     return categories.map(cat => ({
       name: cat,
-      value: rollingExpenses.filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.cost), 0)
+      value: (expenses || []).filter(e => e.category === cat).reduce((sum, e) => sum + Number(e.cost), 0)
     })).filter(d => d.value > 0);
   }, [expenses]);
 
-  const totalPeriod = useMemo(() => chartData.reduce((sum, d) => sum + d.value, 0), [chartData]);
+  const totalLifetime = useMemo(() => chartData.reduce((sum, d) => sum + d.value, 0), [chartData]);
 
   return (
-    <Card className="bg-card border-border rounded-3xl overflow-hidden shadow-2xl">
+    <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl">
       <CardHeader className="p-8 border-b border-border bg-primary/5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <CardTitle className="text-2xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" /> SANCTUARY LEDGER
             </CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rolling 30-Day Transparency</CardDescription>
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Total Lifetime Transparency</CardDescription>
           </div>
-          <div className="text-right">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Cumulative Spend</p>
-            <p className="text-3xl font-headline font-black text-primary">${totalPeriod.toFixed(2)}</p>
+          
+          {/* Running Total Component: Lifetime Sanctuary Investment */}
+          <div className="bg-background/50 border border-primary/20 p-4 rounded-2xl flex items-center gap-4 shadow-inner">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Database className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Lifetime Investment</p>
+              <p className="text-2xl font-headline font-black text-primary leading-none">${totalLifetime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -103,7 +100,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
                   </div>
                 ))}
                 {chartData.length === 0 && (
-                  <p className="text-xs text-muted-foreground italic text-center py-8">No ledger entries for this period.</p>
+                  <p className="text-xs text-muted-foreground italic text-center py-8">No ledger entries recorded.</p>
                 )}
               </div>
             </div>
@@ -111,7 +108,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
             <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 flex gap-3">
               <Info className="h-5 w-5 text-primary shrink-0" />
               <p className="text-[10px] font-medium leading-relaxed italic">
-                100% of your donations fund these direct costs. Our ledger is updated in real-time as purchases are made for the flock.
+                100% of contributions fund these direct costs. Our ledger provides a permanent, indefinite record of sanctuary stewardship.
               </p>
             </div>
           </div>

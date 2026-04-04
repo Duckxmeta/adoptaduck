@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -88,6 +89,7 @@ export default function MemberDashboard() {
   }, [firestore]);
 
   // DATA QUERIES (Bypassed for non-guardians)
+  // LOGIC UPDATE: Removing date filters. Indefinite history.
   const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !isGuardian) return null;
     return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
@@ -269,13 +271,8 @@ export default function MemberDashboard() {
 }
 
 function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userProfile: UserProfile | null }) {
-  const joinDate = userProfile?.membershipStartedAt ? new Date(userProfile.membershipStartedAt) : new Date(0);
-  
-  const filteredExpenses = (expenses || []).filter(e => {
-    if (!e?.date) return false;
-    const d = new Date(e.date);
-    return !isNaN(d.getTime()) && d >= joinDate;
-  });
+  // Logic Update: Indefinite history visibility for Guardians.
+  const filteredExpenses = (expenses || []).filter(e => !!e?.date);
 
   return (
     <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
@@ -283,7 +280,8 @@ function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userPr
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
         <p className="text-xs font-bold text-muted-foreground">Detailed transparency logs</p>
       </div>
-      <div className="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar divide-y divide-border">
+      {/* UI Scaling: max-h-[500px] with custom-scrollbar for long item lists */}
+      <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
         {filteredExpenses.length > 0 ? filteredExpenses.map((exp) => (
           <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center">
             <div className="space-y-1">
@@ -309,17 +307,9 @@ function ItemizedLedger({ expenses, userProfile }: { expenses: Expense[], userPr
 function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[], totalBirds: number }) {
   const careCosts = useMemo(() => {
     if (!expenses || !totalBirds || totalBirds === 0) return 0;
-    const now = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(now.getDate() - 30);
-
-    const monthlyExpenses = expenses.filter(e => {
-      if (!e?.date) return false;
-      const d = new Date(e.date);
-      return !isNaN(d.getTime()) && d >= thirtyDaysAgo;
-    });
-    const specific = monthlyExpenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + (Number(e.cost) || 0), 0);
-    const shared = monthlyExpenses.filter(e => !e.birdId).reduce((s, e) => s + (Number(e.cost) || 0), 0);
+    // Calculation Update: Now reflects lifetime cumulative care share.
+    const specific = expenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + (Number(e.cost) || 0), 0);
+    const shared = expenses.filter(e => !e.birdId).reduce((s, e) => s + (Number(e.cost) || 0), 0);
     return specific + (shared / totalBirds);
   }, [expenses, totalBirds, bird.id]);
 
@@ -339,7 +329,7 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
       </div>
       <CardContent className="p-6 space-y-4 flex-1 flex flex-col">
         <div className="flex justify-between items-center">
-           <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">30-Day Care Share</span>
+           <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Lifetime Care Share</span>
            <p className="text-lg font-headline font-black text-primary">${careCosts.toFixed(2)}</p>
         </div>
         <div className="space-y-1">
