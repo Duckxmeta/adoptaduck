@@ -17,7 +17,11 @@ import {
   Trophy,
   Zap,
   Radio,
-  Tv
+  Tv,
+  GraduationCap,
+  Globe,
+  Home as HomeIcon,
+  BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -150,6 +154,59 @@ export default function Home() {
             <div className="flex flex-col items-center gap-2 opacity-50">
               <span className="text-[8px] font-black uppercase tracking-widest">Scroll to Explore</span>
               <div className="w-0.5 h-10 bg-primary/50" />
+            </div>
+          </div>
+        </section>
+
+        {/* MISSION NARRATIVE SECTION */}
+        <section className="py-24 bg-card/30 border-b border-border">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="space-y-20">
+              {/* Section 1: The Digital Flock */}
+              <div className="text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="inline-block p-3 bg-primary/10 rounded-2xl border border-primary/20 mb-2">
+                  <Bird className="h-8 w-8 text-primary" />
+                </div>
+                <h2 className="text-4xl md:text-6xl font-headline font-black uppercase tracking-tighter leading-tight">
+                  The Digital Flock: <span className="text-primary">No Pond Required 🦆</span>
+                </h2>
+                <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed">
+                  Just landing at the Decent Ducks Sanctuary? There is always room for one more in the pond! Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Big Green and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion. No coop to build, no grain to buy. Your donation-based adoption provides the 'wings' we need to rescue and rehome even more birds.
+                </p>
+              </div>
+
+              {/* Section 2: Sponsored Access */}
+              <div className="space-y-10">
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl md:text-3xl font-headline font-black uppercase tracking-tight text-secondary">
+                    Bringing the Sanctuary to You (For Free!)
+                  </h3>
+                  <p className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground">Community & Educational Outreach</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { title: "Formal Education", desc: "K-12 & School Programs", icon: GraduationCap },
+                    { title: "Home & Community Learning", desc: "Homeschooling, 4-H, Libraries", icon: Users },
+                    { title: "Public Discovery", desc: "Museums, Youth Centers, Nature Preserves", icon: Globe },
+                    { title: "Therapeutic Environments", desc: "Nursing Homes, Memory Care Units", icon: Heart },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-5 p-6 bg-background/50 border border-border rounded-2xl group hover:border-primary/30 transition-colors">
+                      <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
+                        <item.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-headline font-black text-sm uppercase tracking-tight">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground font-medium">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-center pt-4">
+                  <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground hover:text-primary">
+                    <Link href="/support#community">Learn More About Sponsored Access <ArrowRight className="ml-2 h-3 w-3" /></Link>
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
