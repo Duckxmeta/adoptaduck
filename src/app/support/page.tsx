@@ -15,16 +15,11 @@ import {
   Loader2,
   Waves,
   Trophy,
-  ShieldCheck,
   CheckCircle2,
-  Users,
-  Globe,
   Star,
   ShoppingBag,
   ExternalLink,
-  Ticket,
-  BookOpen,
-  Home
+  Ticket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -210,7 +205,7 @@ function SupportContent() {
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <span className={cn("font-black text-lg transition-colors", selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "text-secondary" : "text-muted-foreground")}>$</span>
                   </div>
-                  <Input 
+                  <input 
                     type="number"
                     min="1"
                     placeholder="0.00"
@@ -221,7 +216,7 @@ function SupportContent() {
                       setSplashAmountLabel(e.target.value || 'Custom');
                     }}
                     className={cn(
-                      "pl-10 bg-background border-2 h-14 rounded-xl font-black text-lg transition-all",
+                      "flex h-14 w-full pl-10 bg-background border-2 font-black text-lg rounded-xl transition-all outline-none",
                       selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "border-secondary ring-2 ring-secondary/10" : "border-border"
                     )}
                   />
@@ -376,8 +371,8 @@ function SupportContent() {
             <div className="max-w-6xl mx-auto space-y-0">
               {/* TIER 1: STAPLES */}
               {stapleMerch.length > 0 && (
-                <div className="space-y-4">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Staples</span>
+                <div className="mb-12">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Sanctuary Staples</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -386,8 +381,8 @@ function SupportContent() {
 
               {/* TIER 2: SEASONAL */}
               {seasonalMerch.length > 0 && (
-                <div className="space-y-4">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Seasonal Selection</span>
+                <div className="mb-12">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Seasonal Selection</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -396,8 +391,8 @@ function SupportContent() {
 
               {/* TIER 3: ACCESSORIES */}
               {accessoryMerch.length > 0 && (
-                <div className="space-y-4">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Gear</span>
+                <div>
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Sanctuary Gear</span>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>

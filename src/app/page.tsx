@@ -9,36 +9,28 @@ import {
   Sparkles, 
   Bird, 
   Heart, 
-  ShieldCheck, 
   Users, 
   ArrowRight,
   Loader2,
-  Trophy,
-  Zap,
-  Radio,
   Tv,
   GraduationCap,
   Globe,
-  Home as HomeIcon,
-  BookOpen,
   ShoppingBag,
   ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useAuth, useUser } from '@/firebase';
-import { collection, query, orderBy, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
+import { collection, query, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
-import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [stapleMerch, setStapleMerch] = useState<any[]>([]);
@@ -51,6 +43,7 @@ export default function Home() {
         const res = await fetch('/api/products');
         if (!res.ok) return;
         const data = await res.json();
+        // Homepage Mirror: Ensure ONLY the 3 Staple IDs appear on the homepage
         setStapleMerch(data.filter((m: any) => m.tier === 1).slice(0, 3));
       } catch (e) {
         console.error("Home merch fetch failed");
@@ -67,7 +60,6 @@ export default function Home() {
   }, [firestore]);
 
   const { data: featuredBirds } = useCollection<Resident>(featuredBirdQuery);
-  const featuredDuck = featuredBirds && featuredBirds.length > 0 ? featuredBirds[0] : null;
 
   const checkRedirect = useCallback(async () => {
     if (!auth || !firestore) return;
@@ -204,11 +196,11 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
                 {stapleMerch.map(product => (
-                  <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500">
+                  <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 cursor-pointer" onClick={() => window.open(product.redirectUrl, '_blank')}>
                     <div className="relative aspect-square">
                       <Image src={product.thumbnailUrl} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Button onClick={() => window.open(product.redirectUrl, '_blank')} variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+                        <Button variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
                           <ExternalLink className="h-5 w-5" />
                         </Button>
                       </div>
@@ -217,7 +209,7 @@ export default function Home() {
                       <h4 className="font-headline font-black text-[10px] uppercase tracking-widest line-clamp-1">{product.name}</h4>
                       <div className="flex items-center justify-between">
                         <p className="font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
-                        <Button onClick={() => window.open(product.redirectUrl, '_blank')} className="bg-secondary text-white font-black h-8 px-4 text-[8px] uppercase tracking-widest rounded-lg">BUY</Button>
+                        <Button className="bg-secondary text-white font-black h-8 px-4 text-[8px] uppercase tracking-widest rounded-lg">BUY</Button>
                       </div>
                     </div>
                   </Card>
