@@ -171,7 +171,7 @@ export default function Home() {
                   The Digital Flock: <span className="text-primary">No Pond Required 🦆</span>
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed">
-                  Just landing at the Decent Ducks Sanctuary? There is always room for one more in the pond! Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Big Green and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion. No coop to build, no grain to buy. Your donation-based adoption provides the 'wings' we need to rescue and rehome even more birds.
+                  Just landing at the Decent Ducks Sanctuary? There is always room for one more in the pond! Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion. No coop to build, no grain to buy. Your donation-based adoption provides the 'wings' we need to rescue and rehome even more birds.
                 </p>
               </div>
 
