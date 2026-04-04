@@ -22,7 +22,7 @@ export async function GET() {
   try {
     const headers = { 'Authorization': `Bearer ${apiKey}` };
     
-    // Fetch all sync products to find our curated set
+    // Fetch all sync products
     const response = await fetch('https://api.printful.com/store/products', { headers });
     if (!response.ok) throw new Error(`Printful Error: ${response.statusText}`);
 
@@ -41,7 +41,11 @@ export async function GET() {
 
     const finalProducts = await Promise.all(
       allProducts
-        .filter((p: any) => curatedIds.includes(p.id.toString()) || curatedIds.includes(p.external_id))
+        .filter((p: any) => {
+          const idStr = p.id?.toString() || "";
+          const extId = p.external_id?.replace(/^#/, "") || "";
+          return curatedIds.includes(idStr) || curatedIds.includes(extId);
+        })
         .map(async (p: any) => {
           const detailRes = await fetch(`https://api.printful.com/store/products/${p.id}`, { headers });
           if (!detailRes.ok) return null;
@@ -56,15 +60,18 @@ export async function GET() {
 
           if (prices.length === 0) return null;
 
-          // Categorization
+          // Categorization Logic
+          const idStr = p.id?.toString() || "";
+          const extId = p.external_id?.replace(/^#/, "") || "";
+          
           let tier = 3;
-          if (STAPLE_IDS.includes(p.id.toString()) || STAPLE_IDS.includes(p.external_id)) tier = 1;
-          else if (SEASONAL_SUMMER_IDS.includes(p.id.toString()) || SEASONAL_SUMMER_IDS.includes(p.external_id)) tier = 2;
+          if (STAPLE_IDS.includes(idStr) || STAPLE_IDS.includes(extId)) tier = 1;
+          else if (SEASONAL_SUMMER_IDS.includes(idStr) || SEASONAL_SUMMER_IDS.includes(extId)) tier = 2;
 
           return {
             id: p.id,
             name: p.name,
-            thumbnailUrl: p.thumbnail_url,
+            thumbnailUrl: p.thumbnail_url || (variants[0]?.files?.find((f: any) => f.type === 'preview')?.thumbnail_url),
             redirectUrl: syncProduct.external_url || `https://decent-ducks.printful.me/product/${p.id}`,
             minPrice: Math.min(...prices),
             maxPrice: Math.max(...prices),

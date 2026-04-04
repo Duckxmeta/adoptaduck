@@ -117,15 +117,24 @@ function SupportContent() {
   const accessoryMerch = merch.filter(m => m.tier === 3);
 
   const ProductCard = ({ product }: { product: any }) => (
-    <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full">
+    <Card 
+      key={product.id} 
+      className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full cursor-pointer"
+      onClick={() => window.open(product.redirectUrl, '_blank')}
+    >
       <div className="relative aspect-square bg-muted">
         {product.thumbnailUrl ? (
-          <Image src={product.thumbnailUrl} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+          <Image 
+            src={product.thumbnailUrl} 
+            alt={product.name} 
+            fill 
+            className="object-cover transition-transform duration-700 group-hover:scale-110" 
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="h-12 w-12" /></div>
         )}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Button onClick={() => window.open(product.redirectUrl, '_blank')} variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
+          <Button variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
             <ExternalLink className="h-5 w-5" />
           </Button>
         </div>
@@ -135,7 +144,7 @@ function SupportContent() {
           <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
           <p className="text-lg font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
         </div>
-        <Button onClick={() => window.open(product.redirectUrl, '_blank')} className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
+        <Button className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
           BUY NOW
         </Button>
       </CardContent>
@@ -335,7 +344,7 @@ function SupportContent() {
         </section>
 
         {/* 3. PROMO CODE GATE */}
-        <section className="container mx-auto px-4 mb-32">
+        <section className="container mx-auto px-4 mb-24">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0 flex items-center gap-2">
@@ -348,9 +357,9 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 4. SANCTUARY GEAR */}
+        {/* 4. SANCTUARY GEAR - CONTINUOUS GALLERY FLOW */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
-          <div className="flex items-center gap-4 mb-12">
+          <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" /> 4. Sanctuary Gear
@@ -364,32 +373,36 @@ function SupportContent() {
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
             </div>
           ) : (
-            <div className="space-y-12 max-w-6xl mx-auto">
+            <div className="max-w-6xl mx-auto space-y-0">
               {/* TIER 1: STAPLES */}
-              <div className="space-y-6">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Sanctuary Staples</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              {stapleMerch.length > 0 && (
+                <div className="space-y-4">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Staples</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
+                    {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* TIER 2: SEASONAL */}
               {seasonalMerch.length > 0 && (
-                <div className="space-y-6">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Seasonal Selection</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="space-y-4">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Seasonal Selection</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
                 </div>
               )}
 
               {/* TIER 3: ACCESSORIES */}
-              <div className="space-y-6">
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 block text-center lg:text-left">Sanctuary Accessories</span>
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              {accessoryMerch.length > 0 && (
+                <div className="space-y-4">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Accessories</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </section>
