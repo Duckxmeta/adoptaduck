@@ -16,7 +16,8 @@ import {
   Loader2,
   Trophy,
   Zap,
-  Radio
+  Radio,
+  Tv
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 
 /**
  * @fileOverview Decent Ducks Sanctuary Home Page.
- * Cleaned and optimized: 'Latest Updates' and 'Live Cam' migrated to gated dashboards.
+ * DuckTV Teaser implemented: Moving towards a public-only live feature.
  * Maintains strict content lock on mission and $75/yr pricing.
  */
 
@@ -208,16 +209,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Coming Soon: Live Cam Teaser */}
+        {/* DuckTV: Public Teaser */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto bg-muted/10 border-2 border-dashed border-border rounded-3xl p-8 flex flex-col md:flex-row items-center justify-center gap-6 text-center md:text-left shadow-inner">
-              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center border border-destructive/20 animate-pulse">
-                <Radio className="h-8 w-8 text-destructive" />
+            <div className="max-w-4xl mx-auto bg-secondary/5 border-2 border-dashed border-secondary/30 rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-center gap-8 text-center md:text-left shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-secondary/5 opacity-50 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10 w-20 h-20 bg-secondary/20 rounded-2xl flex items-center justify-center border-2 border-secondary/40 animate-pulse">
+                <Tv className="h-10 w-10 text-secondary" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Coming Soon: Sanctuary Live Cam 🦆</h3>
-                <p className="text-muted-foreground text-sm font-medium">Real-time enrichment broadcasting for our verified Guardians. Stay tuned for the first stream.</p>
+              <div className="relative z-10 space-y-2">
+                <h3 className="text-3xl md:text-4xl font-headline font-black uppercase tracking-tighter text-white">DuckTV: Coming Soon 🦆</h3>
+                <p className="text-muted-foreground text-lg font-medium max-w-md leading-relaxed">The 24/7 live window into the Decent Ducks Sanctuary.</p>
               </div>
             </div>
           </div>
