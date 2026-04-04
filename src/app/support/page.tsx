@@ -133,7 +133,7 @@ function SupportContent() {
         ) : (
           <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="h-12 w-12" /></div>
         )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
           <Button variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
             <ExternalLink className="h-5 w-5" />
           </Button>
@@ -378,7 +378,7 @@ function SupportContent() {
               {stapleMerch.length > 0 && (
                 <div className="space-y-4">
                   <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Staples</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
                 </div>
@@ -388,7 +388,7 @@ function SupportContent() {
               {seasonalMerch.length > 0 && (
                 <div className="space-y-4">
                   <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Seasonal Selection</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
                 </div>
@@ -397,7 +397,7 @@ function SupportContent() {
               {/* TIER 3: ACCESSORIES */}
               {accessoryMerch.length > 0 && (
                 <div className="space-y-4">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Accessories</span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left">Sanctuary Gear</span>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
