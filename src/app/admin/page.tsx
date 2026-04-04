@@ -177,29 +177,31 @@ function ManagerPortal({ user }: { user: any }) {
       await deleteDoc(doc(firestore, 'bulletin', bulletinId));
       toast({ title: "Update Removed" });
     } catch (e) {
-      toast({ variant: "destructive", title: "Error" });
+      toast({ variant: "destructive", title: "Error Deleting" });
     }
   };
 
   const handleSaveBulletin = async (data: Partial<BulletinEntry>) => {
     if (!firestore) return;
     try {
-      if (editingBulletin) {
-        await updateDoc(doc(firestore, 'bulletin', editingBulletin.id), {
-          ...data,
-          timestamp: serverTimestamp()
-        });
+      const { id, ...payload } = data;
+      const cleanPayload = {
+        ...payload,
+        timestamp: serverTimestamp()
+      };
+
+      if (id) {
+        await updateDoc(doc(firestore, 'bulletin', id), cleanPayload);
         toast({ title: "Update Edited" });
       } else {
-        await addDoc(collection(firestore, 'bulletin'), {
-          ...data,
-          timestamp: serverTimestamp()
-        });
+        await addDoc(collection(firestore, 'bulletin'), cleanPayload);
         toast({ title: "Update Published" });
       }
       setIsBulletinDialogOpen(false);
     } catch (e) {
+      console.error("Sanctuary Update Error:", e);
       toast({ variant: "destructive", title: "Error Publishing" });
+      throw e; // Rethrow to let dialog handle internal error state
     }
   };
 

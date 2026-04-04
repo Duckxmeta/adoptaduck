@@ -69,7 +69,9 @@ export function BulletinDialog({ open, onOpenChange, onSave, bulletin }: Bulleti
       let finalImageUrl = formData.imageUrl || "";
 
       if (selectedFile && storage) {
-        const fileName = `bulletin-${Date.now()}-${selectedFile.name.replace(/\s+/g, '-')}`;
+        // Safer mobile filename generation
+        const safeName = (selectedFile.name || 'update').replace(/\s+/g, '-');
+        const fileName = `bulletin-${Date.now()}-${safeName}`;
         const fileRef = storageRef(storage, `bulletins/${fileName}`);
         const snapshot = await uploadBytes(fileRef, selectedFile);
         finalImageUrl = await getDownloadURL(snapshot.ref);
@@ -81,7 +83,8 @@ export function BulletinDialog({ open, onOpenChange, onSave, bulletin }: Bulleti
       });
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error Saving Update" });
+      console.error("Bulletin Save Error:", error);
+      toast({ variant: "destructive", title: "Error Saving Update", description: "Check connection and try again." });
     } finally {
       setLoading(false);
     }
@@ -89,7 +92,7 @@ export function BulletinDialog({ open, onOpenChange, onSave, bulletin }: Bulleti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground border-border max-w-md rounded-[2rem]">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-md rounded-[2rem] focus:outline-none">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-primary/10 rounded-lg">
