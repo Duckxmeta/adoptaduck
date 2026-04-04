@@ -27,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 
+const STAPLE_IDS = ['390252688', '426252489', '426261731'];
+
 export default function Home() {
   const firestore = useFirestore();
   const auth = useAuth();
@@ -43,8 +45,8 @@ export default function Home() {
         const res = await fetch('/api/products');
         if (!res.ok) return;
         const data = await res.json();
-        // Homepage Mirror: Ensure ONLY the 3 Staple IDs appear on the homepage
-        setStapleMerch(data.filter((m: any) => m.tier === 1).slice(0, 3));
+        // Homepage Mirror: Strict ID matching for Staples only
+        setStapleMerch(data.filter((m: any) => STAPLE_IDS.includes(m.id.toString())).slice(0, 3));
       } catch (e) {
         console.error("Home merch fetch failed");
       } finally {

@@ -6,12 +6,10 @@ import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   Heart, 
   ArrowRight,
-  Sparkles,
   Loader2,
   Waves,
   Trophy,
@@ -136,10 +134,10 @@ function SupportContent() {
       </div>
       <CardContent className="p-6 space-y-4 flex flex-col flex-1">
         <div className="space-y-1 flex-1">
-          <h4 className="font-headline font-black text-xs uppercase tracking-tight line-clamp-1">{product.name}</h4>
+          <h4 className="font-headline font-black text-[10px] uppercase tracking-tight line-clamp-1">{product.name}</h4>
           <p className="text-lg font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
         </div>
-        <Button className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[10px] uppercase tracking-widest rounded-xl">
+        <Button className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[8px] uppercase tracking-widest rounded-xl">
           BUY NOW
         </Button>
       </CardContent>
@@ -371,8 +369,8 @@ function SupportContent() {
             <div className="max-w-6xl mx-auto space-y-0">
               {/* TIER 1: STAPLES */}
               {stapleMerch.length > 0 && (
-                <div className="mb-12">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Sanctuary Staples</span>
+                <div className="mb-0">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Staples</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -381,8 +379,8 @@ function SupportContent() {
 
               {/* TIER 2: SEASONAL */}
               {seasonalMerch.length > 0 && (
-                <div className="mb-12">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Seasonal Selection</span>
+                <div className="mb-0 mt-8">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Seasonal</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -391,8 +389,8 @@ function SupportContent() {
 
               {/* TIER 3: ACCESSORIES */}
               {accessoryMerch.length > 0 && (
-                <div>
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Sanctuary Gear</span>
+                <div className="mt-8">
+                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Accessories</span>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>

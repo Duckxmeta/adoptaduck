@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 
 /**
- * @fileOverview Strict Curated Merch API Controller.
- * Implements a Hard Exclusion Rule: Only listed IDs are rendered.
- * Tier 1: Staples (Quack Head, Trucker, Vintage Tee)
- * Tier 2: Seasonal (Summer Tank, Adidas Polos) - Date Sensitive (April-Sept)
- * Tier 3: Accessories (Pins, Canvases, Tumbler)
+ * @fileOverview Final Merch Lockdown Controller.
+ * Implements Strict Matching using 9-digit Sync Product IDs.
+ * Tier 1: Staples (Core Brand)
+ * Tier 2: Seasonal (Summer Selection - April-Sept)
+ * Tier 3: Accessories (Sanctuary Gear)
  */
 
-const STAPLE_IDS = ['68a540b74ab376', '69cbfd8a5d8938', '69cc0bf0eb8546'];
-const SEASONAL_SUMMER_IDS = ['69d140ea45fe28', '69d13cef0d5c46', '69d13d58b1b314'];
-const ACCESSORY_IDS = ['69cc02a0a31cc9', '69cc0475957615', '69cc004ee58d81', '69cc05e38a0234'];
+const STAPLE_IDS = ['390252688', '426252489', '426261731'];
+const SEASONAL_SUMMER_IDS = ['426819811', '426817550', '426817886'];
+const ACCESSORY_IDS = ['426256061', '426257115', '426254324', '426258041'];
 
 export async function GET() {
   const apiKey = process.env.PRINTFUL_API_KEY;
@@ -30,30 +30,15 @@ export async function GET() {
     const data = await response.json();
     const allProducts = data.result || [];
 
-    // 2. Identify Tier 1 (Staples) - STRICT MATCH ONLY
-    const stapleProducts = allProducts.filter((p: any) => {
-      const idStr = p.id?.toString() || "";
-      const extId = p.external_id?.replace(/^#/, "") || "";
-      return STAPLE_IDS.includes(idStr) || STAPLE_IDS.includes(extId);
-    });
-
-    // 3. Identify Tier 2 (Seasonal - Summer Only: April-Sept) - STRICT MATCH ONLY
+    // 2. Strict ID Filtering - No Failsafes, only provided 9-digit IDs
     const currentMonth = new Date().getMonth();
     const isSummer = currentMonth >= 3 && currentMonth <= 8; // April to Sept
-    const seasonalProducts = isSummer ? allProducts.filter((p: any) => {
-      const idStr = p.id?.toString() || "";
-      const extId = p.external_id?.replace(/^#/, "") || "";
-      return SEASONAL_SUMMER_IDS.includes(idStr) || SEASONAL_SUMMER_IDS.includes(extId);
-    }) : [];
 
-    // 4. Identify Tier 3 (Accessories) - STRICT MATCH ONLY
-    const accessoryProducts = allProducts.filter((p: any) => {
-      const idStr = p.id?.toString() || "";
-      const extId = p.external_id?.replace(/^#/, "") || "";
-      return ACCESSORY_IDS.includes(idStr) || ACCESSORY_IDS.includes(extId);
-    });
+    const stapleProducts = allProducts.filter((p: any) => STAPLE_IDS.includes(p.id.toString()));
+    const seasonalProducts = isSummer ? allProducts.filter((p: any) => SEASONAL_SUMMER_IDS.includes(p.id.toString())) : [];
+    const accessoryProducts = allProducts.filter((p: any) => ACCESSORY_IDS.includes(p.id.toString()));
 
-    // 5. Hydrate selected products with specific details
+    // 3. Hydrate strictly matched products
     const hydrate = async (p: any, tier: number) => {
       try {
         const detailRes = await fetch(`https://api.printful.com/store/products/${p.id}`, { headers });
@@ -69,7 +54,6 @@ export async function GET() {
 
         if (prices.length === 0) return null;
 
-        // Ensure thumbnail is visible: Prefer high-res variant preview over generic thumbnail
         const thumb = p.thumbnail_url || (variants[0]?.files?.find((f: any) => f.type === 'preview')?.thumbnail_url) || variants[0]?.files?.[0]?.thumbnail_url;
 
         return {
@@ -85,15 +69,16 @@ export async function GET() {
       }
     };
 
-    const hydratedStaples = await Promise.all(stapleProducts.map(p => hydrate(p, 1)));
-    const hydratedSeasonal = await Promise.all(seasonalProducts.map(p => hydrate(p, 2)));
-    const hydratedAccessories = await Promise.all(accessoryProducts.map(p => hydrate(p, 3)));
+    const [staples, seasonal, accessories] = await Promise.all([
+      Promise.all(stapleProducts.map(p => hydrate(p, 1))),
+      Promise.all(seasonalProducts.map(p => hydrate(p, 2))),
+      Promise.all(accessoryProducts.map(p => hydrate(p, 3)))
+    ]);
 
-    // STRICT EXCLUSION: Combine ONLY the hydrated curated products
     const results = [
-      ...hydratedStaples,
-      ...hydratedSeasonal,
-      ...hydratedAccessories
+      ...staples,
+      ...seasonal,
+      ...accessories
     ].filter(Boolean);
 
     return NextResponse.json(results);
