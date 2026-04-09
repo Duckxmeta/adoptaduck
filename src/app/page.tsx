@@ -121,14 +121,19 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-20 text-center">
             <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest mb-6 uppercase border border-secondary/50 glow-purple">
               <Sparkles className="h-3.5 w-3.5" />
-              Adopt a Duck
+              Adopt a Friend
             </div>
             <h1 className="text-6xl md:text-8xl font-headline font-black mb-6 leading-[0.9] tracking-tighter uppercase text-center">
               VIRTUAL <span className="text-primary">SANCTUARY</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 font-medium leading-relaxed px-4">
-              A modern, transparent sanctuary providing a peaceful, high-quality home for domestic ducks.
-            </p>
+            <div className="max-w-3xl mx-auto mb-10 space-y-4">
+              <p className="text-xl md:text-2xl text-white font-bold uppercase tracking-tight">
+                A modern, transparent, and stress-free sanctuary for ducks and animals alike.
+              </p>
+              <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed px-4">
+                Providing a peaceful, high-quality home where every creature deserves a safe spot to chill and thrive.
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:w-auto px-12 text-lg rounded-2xl shadow-xl" asChild>
                 <Link href="/support#adopt">ADOPT A RESIDENT</Link>
