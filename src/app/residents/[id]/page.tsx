@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { 
   Heart, 
-  Wallet, 
   MapPin, 
   Zap, 
   Trophy,
@@ -17,17 +16,13 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  TrendingUp,
-  ArrowRight,
-  Database,
   GitBranch
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from '@/firebase';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
-import { Resident, Expense, UserProfile } from '@/lib/types';
+import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { Resident, UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { cn, getResidentName } from '@/lib/utils';
 import {
   Carousel,
@@ -37,8 +32,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Link from 'next/link';
-
-const ADMIN_EMAILS = ['flowmarket1@gmail.com', 'decentducksorg@gmail.com'];
 
 /**
  * @fileOverview Resident Profile.
@@ -50,7 +43,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   const firestore = useFirestore();
   const { user } = useUser();
-  const router = useRouter();
 
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);

@@ -33,7 +33,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({
     itemName: '',
-    category: 'Bird',
+    category: 'Feed',
     cost: 0,
     date: new Date().toISOString().split('T')[0],
     birdId: ''
@@ -54,7 +54,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     } else {
       setFormData({
         itemName: '',
-        category: 'Bird',
+        category: 'Feed',
         cost: 0,
         date: new Date().toISOString().split('T')[0],
         birdId: ''
@@ -93,6 +93,8 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
       setLoading(false);
     }
   };
+
+  const categories = ["Feed", "Medical", "Bedding", "Infrastructure", "Acquisition", "Hardware", "Logistics"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,10 +137,9 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="Bird">Bird</SelectItem>
-                  <SelectItem value="Dog">Dog</SelectItem>
-                  <SelectItem value="Habitat">Habitat</SelectItem>
-                  <SelectItem value="General">General</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
