@@ -123,7 +123,7 @@ function ManagerPortal({ user }: { user: any }) {
   const { data: firestoreExpenses } = useCollection<Expense>(expensesQuery);
   const { data: bulletins } = useCollection<BulletinEntry>(bulletinQuery);
 
-  // MASTER LEDGER SYNC: Force sum from mock data only if firestore is clean
+  // MASTER LEDGER SYNC
   const expenses = useMemo(() => {
     const combined = [...MOCK_EXPENSES, ...(firestoreExpenses || [])];
     return combined.sort((a, b) => b.date.localeCompare(a.date));
@@ -160,6 +160,21 @@ function ManagerPortal({ user }: { user: any }) {
     const ref = doc(firestore, 'egg_history', todayStr);
     await setDoc(ref, { count: newCount, updatedAt: new Date().toISOString() }, { merge: true });
     toast({ title: "Egg Count Saved" });
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    if (!firestore) return;
+    const isMock = MOCK_EXPENSES.some(e => e.id === id);
+    if (isMock) {
+      toast({ variant: "destructive", title: "Locked Entry", description: "This archival entry cannot be deleted." });
+      return;
+    }
+    try {
+      await deleteDoc(doc(firestore, 'ledger', id));
+      toast({ title: "Expense Removed" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Delete Failed", description: "Database error." });
+    }
   };
 
   const handleDeleteBulletin = async (bulletinId: string) => {
@@ -358,6 +373,7 @@ function ManagerPortal({ user }: { user: any }) {
                 <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
                   {expenses.length > 0 ? expenses.map((exp) => {
                     const isTax = exp.itemName.toLowerCase().includes('tax') || exp.itemName.toLowerCase().includes('vat');
+                    const isMock = MOCK_EXPENSES.some(m => m.id === exp.id);
                     return (
                       <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center group">
                         <div className="space-y-1">
@@ -373,8 +389,13 @@ function ManagerPortal({ user }: { user: any }) {
                             <p className="text-[8px] font-bold text-muted-foreground uppercase">{exp.date}</p>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => { setEditingExpense(exp); setIsExpenseDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete this archival expense?')) deleteDoc(doc(firestore, 'ledger', exp.id)); }}><Trash2 className="h-4 w-4" /></Button>
+                            {!isMock && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => { setEditingExpense(exp); setIsExpenseDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete this expense?')) handleDeleteExpense(exp.id); }}><Trash2 className="h-4 w-4" /></Button>
+                              </>
+                            )}
+                            {isMock && <Badge variant="outline" className="text-[6px] opacity-30 border-none">ARCHIVED</Badge>}
                           </div>
                         </div>
                       </div>
