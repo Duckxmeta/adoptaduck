@@ -19,9 +19,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
+  // STRICT AUDIT: Simple sum of array. No hidden buffers.
   const totalLifetime = useMemo(() => {
-    // Explicit summation of all provided expense costs
-    return (expenses || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+    if (!expenses) return 0;
+    return expenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
   }, [expenses]);
 
   const chartData = useMemo(() => {
@@ -29,7 +30,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
     
     const categoryTotals: Record<string, number> = {};
     
-    (expenses || []).forEach(e => {
+    expenses.forEach(e => {
       const cat = e.category || 'General';
       categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(e.cost) || 0);
     });
@@ -47,7 +48,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
             <CardTitle className="text-2xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" /> SANCTUARY LEDGER
             </CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Historical Transparency Logs</CardDescription>
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Indefinite transparency logs</CardDescription>
           </div>
           
           <div className="flex flex-wrap gap-4">
@@ -57,7 +58,9 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
               </div>
               <div>
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Total Investment</p>
-                <p className="text-xl font-headline font-black text-primary leading-none">${totalLifetime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-xl font-headline font-black text-primary leading-none">
+                  ${totalLifetime.toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
@@ -117,7 +120,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
                   Sanctuary archives provide 100% financial transparency for our verified Guardians.
                 </p>
                 <p className="text-[9px] text-muted-foreground mt-1 uppercase font-bold">
-                  Items like sales tax and fuel are isolated to show direct resident impact.
+                  All overhead including sales tax is itemized for tax-exempt audit.
                 </p>
               </div>
             </div>
