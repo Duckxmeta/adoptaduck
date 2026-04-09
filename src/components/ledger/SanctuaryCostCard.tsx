@@ -12,14 +12,8 @@ interface SanctuaryCostCardProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Feed: '#FFD700',           // Primary Gold
-  Medical: '#FF4F4F',        // Bright Red
-  Bedding: '#14F195',        // Solana Green
-  Infrastructure: '#9945FF', // Solana Purple
-  Acquisition: '#00C2FF',    // Sky Blue
-  Hardware: '#FFA500',       // Orange
-  Logistics: '#808080',      // Grey
-  Habitat: '#A855F7',        // Purple 500
+  Bird: '#FFD700',           // Primary Gold
+  Habitat: '#9945FF',        // Solana Purple
   Dog: '#F97316',            // Orange 500
   General: '#64748B'         // Slate 500
 };
@@ -122,7 +116,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
                   Sanctuary archives provide 100% financial transparency for our verified Guardians.
                 </p>
                 <p className="text-[9px] text-muted-foreground mt-1 uppercase font-bold">
-                  All expenditures contributing to the operation are logged in real-time.
+                  Items like sales tax and fuel are isolated to show direct resident impact.
                 </p>
               </div>
             </div>

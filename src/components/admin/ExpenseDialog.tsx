@@ -34,7 +34,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({
     itemName: '',
-    category: 'Feed',
+    category: 'Bird',
     cost: 0,
     date: new Date().toISOString().split('T')[0],
     birdId: ''
@@ -55,7 +55,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     } else {
       setFormData({
         itemName: '',
-        category: 'Feed',
+        category: 'Bird',
         cost: 0,
         date: new Date().toISOString().split('T')[0],
         birdId: ''
@@ -95,7 +95,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     }
   };
 
-  const categories = ["Feed", "Medical", "Bedding", "Infrastructure", "Acquisition", "Hardware", "Logistics", "Habitat", "Dog", "General"];
+  const categories = ["Bird", "Dog", "Habitat", "General"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,7 +121,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
               id="itemName" 
               value={formData.itemName} 
               onChange={e => setFormData({...formData, itemName: e.target.value})}
-              placeholder="e.g. 50lb Layer Pellets"
+              placeholder="e.g. Layer Pellets"
               className="bg-background border-border h-11 rounded-xl"
               required
             />

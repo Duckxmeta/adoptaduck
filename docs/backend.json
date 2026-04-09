@@ -73,7 +73,7 @@
       "properties": {
         "id": { "type": "string" },
         "itemName": { "type": "string" },
-        "category": { "type": "string", "enum": ["Feed", "Medical", "Bedding", "Infrastructure", "Acquisition", "Hardware", "Logistics", "Habitat", "Dog", "General"] },
+        "category": { "type": "string", "enum": ["Bird", "Dog", "Habitat", "General"] },
         "cost": { "type": "number" },
         "date": { "type": "string", "format": "date" },
         "birdId": { "type": "string", "description": "Optional link to a specific resident." },
