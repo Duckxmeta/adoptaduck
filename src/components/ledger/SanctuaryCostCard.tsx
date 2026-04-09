@@ -18,27 +18,31 @@ const CATEGORY_COLORS: Record<string, string> = {
   General: '#64748B'         // Slate 500
 };
 
+const ALLOWED_CATEGORIES = ['Bird', 'Dog', 'Habitat', 'General'];
+
 export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
-  // STRICT AUDIT: Simple sum of array. No hidden buffers.
-  const totalLifetime = useMemo(() => {
-    if (!expenses) return 0;
-    return expenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+  // STRICT AUDIT: Filter out legacy categories and sum. No hidden offsets.
+  const filteredExpenses = useMemo(() => {
+    if (!expenses) return [];
+    return expenses.filter(e => ALLOWED_CATEGORIES.includes(e.category));
   }, [expenses]);
 
+  const totalLifetime = useMemo(() => {
+    return filteredExpenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+  }, [filteredExpenses]);
+
   const chartData = useMemo(() => {
-    if (!expenses) return [];
-    
     const categoryTotals: Record<string, number> = {};
     
-    expenses.forEach(e => {
-      const cat = e.category || 'General';
+    filteredExpenses.forEach(e => {
+      const cat = e.category;
       categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(e.cost) || 0);
     });
 
     return Object.entries(categoryTotals)
       .map(([name, value]) => ({ name, value }))
       .filter(d => d.value > 0);
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   return (
     <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl">
