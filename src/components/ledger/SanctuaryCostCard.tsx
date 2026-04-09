@@ -28,6 +28,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
   }, [expenses]);
 
   const totalLifetime = useMemo(() => {
+    // Pure summation of filtered entries. No manual buffers allowed.
     return filteredExpenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
   }, [filteredExpenses]);
 

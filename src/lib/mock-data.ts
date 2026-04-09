@@ -4,8 +4,7 @@ import { Expense } from './types';
 /**
  * MASTER SANCTUARY LEDGER - AUDITED APRIL 8, 2026
  * Total Investment: $169.15
- * Allowed Categories: Bird, Dog, Habitat, General
- * Legacy categories (Infrastructure, Acquisition, etc.) have been PURGED.
+ * This is the absolute source of truth. All duplicates and legacy non-itemized entries have been purged.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
