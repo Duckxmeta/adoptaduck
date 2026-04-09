@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -34,7 +33,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({
     itemName: '',
-    category: 'Feed',
+    category: 'Bird',
     cost: 0,
     date: new Date().toISOString().split('T')[0],
     birdId: ''
@@ -55,7 +54,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     } else {
       setFormData({
         itemName: '',
-        category: 'Feed',
+        category: 'Bird',
         cost: 0,
         date: new Date().toISOString().split('T')[0],
         birdId: ''
@@ -136,13 +135,10 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  <SelectItem value="Feed">Feed</SelectItem>
-                  <SelectItem value="Medical">Medical</SelectItem>
-                  <SelectItem value="Bedding">Bedding</SelectItem>
-                  <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-                  <SelectItem value="Acquisition">Acquisition</SelectItem>
-                  <SelectItem value="Hardware">Hardware</SelectItem>
-                  <SelectItem value="Logistics">Logistics</SelectItem>
+                  <SelectItem value="Bird">Bird</SelectItem>
+                  <SelectItem value="Dog">Dog</SelectItem>
+                  <SelectItem value="Habitat">Habitat</SelectItem>
+                  <SelectItem value="General">General</SelectItem>
                 </SelectContent>
               </Select>
             </div>

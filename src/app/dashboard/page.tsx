@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -64,7 +63,7 @@ export default function MemberDashboard() {
   const isAdmin = user?.email === ADMIN_EMAIL;
   const isGuardian = userProfile?.role === 'guardian' || isAdmin;
 
-  // ACCESS GATING: Non-Guardians are redirected to support to upgrade
+  // ACCESS GATING
   useEffect(() => {
     if (isMounted && !isUserLoading && !profileLoading && user && userProfile) {
       if (!isGuardian && userProfile.role !== 'admin') {
@@ -73,7 +72,6 @@ export default function MemberDashboard() {
     }
   }, [user, userProfile, isGuardian, isUserLoading, profileLoading, isMounted, router]);
 
-  // Bulletin Sync: Migrated to top of dashboard
   useEffect(() => {
     if (!firestore) return;
     const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
@@ -133,7 +131,7 @@ export default function MemberDashboard() {
   }
 
   if (!user || (!isGuardian && !isAdmin)) {
-    return null; // Handle via redirect in useEffect
+    return null;
   }
 
   const liveStatusBirds = (birds || [])
@@ -146,7 +144,6 @@ export default function MemberDashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-12 space-y-16">
-        {/* HEADER */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary">
@@ -171,7 +168,7 @@ export default function MemberDashboard() {
            </div>
         </section>
 
-        {/* 1. LATEST UPDATES (NEWS) */}
+        {/* 1. LATEST UPDATES */}
         {bulletins.length > 0 && (
           <section className="animate-in fade-in duration-1000 space-y-6">
             <div className="flex items-center gap-3">
@@ -204,13 +201,9 @@ export default function MemberDashboard() {
           </section>
         )}
 
-        {/* 2. DAILY ROUTINE (READ-ONLY MIRROR) */}
         <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
-
-        {/* 3. EGG COUNTER (READ-ONLY MIRROR) */}
         <EggCounter initialCount={eggHistory?.count || 0} readOnly />
 
-        {/* LIVE PULSE */}
         <section className="space-y-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse">
@@ -231,7 +224,6 @@ export default function MemberDashboard() {
           </div>
         </section>
 
-        {/* 4. FLOCK RECORDS (MIRROR) */}
         <section className="space-y-8">
            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2">
@@ -240,12 +232,11 @@ export default function MemberDashboard() {
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {birds?.map((bird) => (
-               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} expenses={expenses || []} totalBirds={birds?.length || 1} />
+               <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} />
              ))}
            </div>
         </section>
 
-        {/* 5. ARCHIVAL LEDGER (GUARDIAN ONLY) */}
         <section className="space-y-8 pt-12 border-t border-border">
            <div className="flex items-center gap-3">
               <ScrollText className="h-5 w-5 text-primary" />
@@ -253,13 +244,12 @@ export default function MemberDashboard() {
            </div>
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                 <SanctuaryCostCard expenses={expenses || []} />
+                 <SanctuaryCostCard expenses={expenses || []} totalBirds={birds?.length || 1} />
               </div>
               <ItemizedLedger expenses={expenses || []} />
            </div>
         </section>
 
-        {/* LOGOUT */}
         <section className="pt-12 border-t border-border flex justify-center">
            <Button variant="ghost" onClick={async () => { await signOut(auth!); router.push('/'); }} className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive">
              <LogOut className="h-4 w-4 mr-2" /> Log Out of Sanctuary
@@ -304,14 +294,7 @@ function ItemizedLedger({ expenses }: { expenses: Expense[] }) {
   );
 }
 
-function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds }: { bird: Resident, dailyStatusProgress: number, expenses: Expense[], totalBirds: number }) {
-  const careCosts = useMemo(() => {
-    if (!expenses || !totalBirds || totalBirds === 0) return 0;
-    const specific = expenses.filter(e => e.birdId === bird.id).reduce((s, e) => s + (Number(e.cost) || 0), 0);
-    const shared = expenses.filter(e => !e.birdId).reduce((s, e) => s + (Number(e.cost) || 0), 0);
-    return specific + (shared / totalBirds);
-  }, [expenses, totalBirds, bird.id]);
-
+function ResidentDashboardCard({ bird, dailyStatusProgress }: { bird: Resident, dailyStatusProgress: number }) {
   return (
     <Card className="bg-card border-border border-2 rounded-2xl overflow-hidden shadow-xl flex flex-col h-full group hover:glow-primary transition-all">
       <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
@@ -327,10 +310,6 @@ function ResidentDashboardCard({ bird, dailyStatusProgress, expenses, totalBirds
         </div>
       </div>
       <CardContent className="p-6 space-y-4 flex-1 flex flex-col">
-        <div className="flex justify-between items-center">
-           <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Lifetime Care Share</span>
-           <p className="text-lg font-headline font-black text-primary">${careCosts.toFixed(2)}</p>
-        </div>
         <div className="space-y-1">
            <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-muted-foreground">
               <span>Health Status</span>

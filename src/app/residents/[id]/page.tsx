@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, use } from 'react';
@@ -18,7 +17,6 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  Lock,
   TrendingUp,
   ArrowRight,
   Database,
@@ -43,8 +41,9 @@ import Link from 'next/link';
 const ADMIN_EMAILS = ['flowmarket1@gmail.com', 'decentducksorg@gmail.com'];
 
 /**
- * @fileOverview Resident Profile with Tier-Based Access Control.
- * Gated Sections: itemized ledger summaries and heritage tree links.
+ * @fileOverview Resident Profile.
+ * Focuses on story, personality, and vibes. 
+ * Financial metrics have been removed per UI cleanup requirements.
  */
 
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -59,30 +58,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-  // ACCESS AUTHORITY: DATA-DRIVEN ROLES ONLY.
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
-
-  // ARCHIVAL LEDGER
-  const expensesQuery = useMemoFirebase(() => {
-    if (!firestore || !isGuardian) return null;
-    return query(collection(firestore, 'ledger'), orderBy('date', 'desc'));
-  }, [firestore, isGuardian]);
-
-  const birdsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'birds'));
-  }, [firestore]);
-
-  const { data: expenses } = useCollection<Expense>(expensesQuery);
-  const { data: allBirds } = useCollection<Resident>(birdsQuery);
-
-  const totalSanctuaryInvestment = useMemo(() => {
-    if (!expenses || !Array.isArray(expenses)) return 0;
-    return expenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
-  }, [expenses]);
-
-  const birdCount = allBirds?.length || 1;
-  const avgPricePerBird = totalSanctuaryInvestment / birdCount;
 
   const galleryImages = useMemo(() => {
     if (!bird) return [];
@@ -214,12 +190,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     {isGuardian && (
-                       <span className="flex items-center gap-1.5 text-primary">
-                         <Wallet className="h-3.5 w-3.5" /> 
-                         Guardian Archival Record
-                       </span>
-                     )}
                   </div>
                 </div>
                 {isGuardian && (
@@ -233,53 +203,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </Button>
                 )}
               </div>
-
-              {/* TIER-BASED ACCESS CONTROL */}
-              {!isGuardian ? (
-                <Card className="bg-card p-12 rounded-[2.5rem] border-2 border-dashed border-border text-center space-y-6 shadow-2xl relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-primary/5 opacity-50" />
-                  <div className="relative z-10 space-y-4">
-                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                      <Lock className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-headline font-black uppercase tracking-widest text-primary leading-tight">UNLOCK THIS BIRD'S HISTORY</h2>
-                      <p className="text-sm text-muted-foreground font-medium mt-2 max-w-xs mx-auto">Detailed financial archives and heritage trees are exclusive to Sanctuary Guardians.</p>
-                    </div>
-                    <Button asChild className="bg-primary text-primary-foreground font-black h-14 px-8 rounded-xl uppercase text-xs tracking-widest shadow-xl hover:scale-105 transition-transform">
-                      <Link href="/support#membership">Upgrade to Guardian <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                    </Button>
-                  </div>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in zoom-in duration-500">
-                  <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl relative overflow-hidden group">
-                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                      <Database className="h-5 w-5 text-primary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Total Sanctuary Investment</span>
-                    </div>
-                    <div className="relative z-10">
-                      <span className="text-3xl font-headline font-black uppercase tracking-tight text-primary">
-                        ${totalSanctuaryInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Archival Total</span>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-card p-8 rounded-3xl border border-border flex flex-col justify-between shadow-xl group">
-                    <div className="flex items-center gap-3 text-muted-foreground mb-4">
-                      <TrendingUp className="h-5 w-5 text-secondary" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Average Share</span>
-                    </div>
-                    <div>
-                      <span className="text-3xl font-headline font-black text-secondary uppercase tracking-tight">
-                        ${avgPricePerBird.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                      <span className="text-[10px] font-black block text-muted-foreground mt-1 uppercase tracking-widest">Per Resident</span>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="space-y-4 bg-muted/5 p-8 rounded-3xl border border-border/50">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
