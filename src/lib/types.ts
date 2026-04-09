@@ -1,3 +1,4 @@
+
 export type Resident = {
   id: string;
   name: string;
@@ -36,7 +37,7 @@ export type Expense = {
   id: string;
   itemName: string;
   note?: string; // Additional archival details
-  category: 'Feed' | 'Medical' | 'Bedding' | 'Infrastructure' | 'Acquisition' | 'Hardware' | 'Logistics';
+  category: 'Feed' | 'Medical' | 'Bedding' | 'Infrastructure' | 'Acquisition' | 'Hardware' | 'Logistics' | 'Habitat' | 'Dog' | 'General';
   cost: number;
   date: string;
   birdId?: string;

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -33,6 +33,7 @@ import { EggCounter } from '@/components/EggCounter';
 import { ExpenseDialog } from '@/components/admin/ExpenseDialog';
 import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
 import { BulletinDialog } from '@/components/admin/BulletinDialog';
+import { MOCK_EXPENSES } from '@/lib/mock-data';
 
 // STRICT ADMIN LOCK
 const ADMIN_EMAIL = 'flowmarket1@gmail.com';
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (mounted && !isUserLoading && user) {
       if (user.email !== ADMIN_EMAIL) {
-        if (userProfile?.role === 'guardian') {
+        if (userProfile?.role === 'guardian' ) {
           router.replace('/dashboard');
         } else {
           router.replace('/support');
@@ -129,8 +130,14 @@ function ManagerPortal({ user }: { user: any }) {
   const { data: birds } = useCollection<Resident>(birdsQuery);
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
-  const { data: expenses } = useCollection<Expense>(expensesQuery);
+  const { data: firestoreExpenses } = useCollection<Expense>(expensesQuery);
   const { data: bulletins } = useCollection<BulletinEntry>(bulletinQuery);
+
+  // Merge Firestore expenses with injected mock data
+  const expenses = useMemo(() => {
+    const combined = [...MOCK_EXPENSES, ...(firestoreExpenses || [])];
+    return combined.sort((a, b) => b.date.localeCompare(a.date));
+  }, [firestoreExpenses]);
 
   const [namingRequests, setNamingRequests] = useState<NamingRequest[]>([]);
   useEffect(() => {
@@ -449,7 +456,7 @@ function ManagerPortal({ user }: { user: any }) {
 
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                 <SanctuaryCostCard expenses={expenses || []} />
+                 <SanctuaryCostCard expenses={expenses} />
               </div>
               <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
                 <div className="p-6 border-b border-border bg-primary/5">

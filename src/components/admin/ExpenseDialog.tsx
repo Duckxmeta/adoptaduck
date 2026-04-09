@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -94,7 +95,7 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     }
   };
 
-  const categories = ["Feed", "Medical", "Bedding", "Infrastructure", "Acquisition", "Hardware", "Logistics"];
+  const categories = ["Feed", "Medical", "Bedding", "Infrastructure", "Acquisition", "Hardware", "Logistics", "Habitat", "Dog", "General"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

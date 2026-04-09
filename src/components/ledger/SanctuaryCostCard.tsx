@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -17,7 +18,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   Infrastructure: '#9945FF', // Solana Purple
   Acquisition: '#00C2FF',    // Sky Blue
   Hardware: '#FFA500',       // Orange
-  Logistics: '#808080'       // Grey
+  Logistics: '#808080',      // Grey
+  Habitat: '#A855F7',        // Purple 500
+  Dog: '#F97316',            // Orange 500
+  General: '#64748B'         // Slate 500
 };
 
 export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
