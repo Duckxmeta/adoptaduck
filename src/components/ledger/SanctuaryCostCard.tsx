@@ -20,6 +20,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
   const totalLifetime = useMemo(() => {
+    // Explicit summation of all provided expense costs
     return (expenses || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
   }, [expenses]);
 

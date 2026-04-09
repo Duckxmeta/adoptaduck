@@ -145,7 +145,7 @@ export const MOCK_EXPENSES: Expense[] = [
   },
   {
     id: 'exp-gen-7',
-    itemName: 'Today\'s Sales Tax',
+    itemName: "Today's Sales Tax",
     cost: 4.41,
     category: 'General',
     date: '2026-04-08',
