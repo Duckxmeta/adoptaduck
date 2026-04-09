@@ -244,7 +244,7 @@ export default function MemberDashboard() {
            </div>
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                 <SanctuaryCostCard expenses={expenses || []} totalBirds={birds?.length || 1} />
+                 <SanctuaryCostCard expenses={expenses || []} />
               </div>
               <ItemizedLedger expenses={expenses || []} />
            </div>

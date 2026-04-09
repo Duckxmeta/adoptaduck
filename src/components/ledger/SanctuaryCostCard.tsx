@@ -4,11 +4,10 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Expense } from '@/lib/types';
-import { Wallet, Info, Sparkles, Database, TrendingUp } from 'lucide-react';
+import { Wallet, Info, Sparkles, Database } from 'lucide-react';
 
 interface SanctuaryCostCardProps {
   expenses: Expense[] | null;
-  totalBirds?: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -21,7 +20,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Logistics: '#808080'       // Grey
 };
 
-export function SanctuaryCostCard({ expenses, totalBirds = 1 }: SanctuaryCostCardProps) {
+export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
   const totalLifetime = useMemo(() => {
     return (expenses || []).reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
   }, [expenses]);
@@ -40,8 +39,6 @@ export function SanctuaryCostCard({ expenses, totalBirds = 1 }: SanctuaryCostCar
       .map(([name, value]) => ({ name, value }))
       .filter(d => d.value > 0);
   }, [expenses]);
-
-  const pricePerBird = totalLifetime / (totalBirds || 1);
 
   return (
     <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl">
@@ -62,16 +59,6 @@ export function SanctuaryCostCard({ expenses, totalBirds = 1 }: SanctuaryCostCar
               <div>
                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Total Investment</p>
                 <p className="text-xl font-headline font-black text-primary leading-none">${totalLifetime.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              </div>
-            </div>
-
-            <div className="bg-background/50 border border-secondary/20 p-4 rounded-2xl flex items-center gap-4 shadow-inner">
-              <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Price Per Bird</p>
-                <p className="text-xl font-headline font-black text-secondary leading-none">${pricePerBird.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>
