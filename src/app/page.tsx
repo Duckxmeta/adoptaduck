@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -27,7 +26,6 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
-import { MERCH_CATALOG } from '@/lib/merch-data';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -36,10 +34,6 @@ export default function Home() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
   
-  const stapleMerch = useMemo(() => {
-    return MERCH_CATALOG.filter(m => m.tier === 1).slice(0, 3);
-  }, []);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -77,6 +71,7 @@ export default function Home() {
 
   const domesticImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_8640.jpg?alt=media";
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
+  const merchSpotlightUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/QuackMerch.jpg?alt=media";
 
   if (!mounted) return null;
 
@@ -179,43 +174,47 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SANCTUARY STAPLES (Static Merch Mirror) */}
-        {stapleMerch.length > 0 && (
-          <section className="py-24 bg-card/20 border-b border-border">
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between mb-12">
-                <div className="space-y-1">
-                  <h2 className="text-3xl font-headline font-black uppercase tracking-tighter">Sanctuary <span className="text-primary">Staples</span></h2>
-                  <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Official Mission Gear</p>
-                </div>
-                <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">
-                  <Link href="/support#merch">View All Gear <ArrowRight className="ml-2 h-3 w-3" /></Link>
-                </Button>
+        {/* SANCTUARY GEAR - QUACK MERCH SPOTLIGHT */}
+        <section className="py-24 bg-card/20 border-b border-border">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-12">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-headline font-black uppercase tracking-tighter">Sanctuary <span className="text-primary">Gear</span></h2>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Official Mission Shop</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-                {stapleMerch.map(product => (
-                  <Card key={product.id} className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 cursor-pointer" onClick={() => window.open(product.redirectUrl, '_blank')}>
-                    <div className="relative aspect-square">
-                      <Image src={product.thumbnailUrl} alt={product.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                        <Button variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
-                          <ExternalLink className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-6 space-y-4">
-                      <h4 className="font-headline font-black text-[10px] uppercase tracking-widest line-clamp-1">{product.name}</h4>
-                      <div className="flex items-center justify-between">
-                        <p className="font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
-                        <Button className="bg-secondary text-white font-black h-8 px-4 text-[8px] uppercase tracking-widest rounded-lg">BUY</Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+              <Button asChild variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-primary">
+                <Link href="/support#merch">View Spotlight <ArrowRight className="ml-2 h-3 w-3" /></Link>
+              </Button>
             </div>
-          </section>
-        )}
+            
+            <Card className="max-w-5xl mx-auto bg-card border-4 border-primary/30 rounded-[3rem] overflow-hidden shadow-2xl relative group">
+              <div className="relative aspect-[16/9] md:aspect-[21/9] w-full">
+                <Image 
+                  src={merchSpotlightUrl} 
+                  alt="Quack Merch - JustDuckit" 
+                  fill 
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-8 text-center space-y-6">
+                  <div className="bg-black/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/10 space-y-4">
+                    <Button 
+                      asChild
+                      className="bg-primary text-primary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-transform"
+                    >
+                      <a href="https://justduckit-merch.printful.me/" target="_blank" rel="noopener noreferrer">
+                        SHOP THE QUICK STORE
+                      </a>
+                    </Button>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                      Proceeds support sanctuary residents. <br />
+                      Purchases are processed directly by Printful.me
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
 
         {/* DuckTV: Public Teaser */}
         <section className="py-16 bg-card/50 border-y border-border">

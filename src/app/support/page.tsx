@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, Suspense } from 'react';
@@ -28,7 +27,6 @@ import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { MERCH_CATALOG } from '@/lib/merch-data';
 
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
@@ -88,46 +86,7 @@ function SupportContent() {
     }
   };
 
-  const stapleMerch = MERCH_CATALOG.filter(m => m.tier === 1);
-  const seasonalMerch = MERCH_CATALOG.filter(m => m.tier === 2);
-  const accessoryMerch = MERCH_CATALOG.filter(m => m.tier === 3);
-  const decentralizedMerch = MERCH_CATALOG.filter(m => m.tier === 4);
-  const ogMerch = MERCH_CATALOG.filter(m => m.tier === 5);
-
-  const ProductCard = ({ product }: { product: any }) => (
-    <Card 
-      key={product.id} 
-      className="bg-card border-border rounded-2xl overflow-hidden group hover:glow-primary transition-all duration-500 flex flex-col h-full cursor-pointer"
-      onClick={() => window.open(product.redirectUrl, '_blank')}
-    >
-      <div className="relative aspect-square bg-muted">
-        {product.thumbnailUrl ? (
-          <Image 
-            src={product.thumbnailUrl} 
-            alt={product.name} 
-            fill 
-            className="object-cover transition-transform duration-700 group-hover:scale-110" 
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="h-12 w-12" /></div>
-        )}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-          <Button variant="outline" className="border-primary text-primary font-black rounded-full h-12 w-12 p-0">
-            <ExternalLink className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-      <CardContent className="p-6 space-y-4 flex flex-col flex-1">
-        <div className="space-y-1 flex-1">
-          <h4 className="font-headline font-black text-[10px] uppercase tracking-tight line-clamp-1">{product.name}</h4>
-          <p className="text-lg font-headline font-black text-primary">${Number(product.minPrice).toFixed(2)}</p>
-        </div>
-        <Button className="w-full bg-secondary text-secondary-foreground font-black h-10 text-[8px] uppercase tracking-widest rounded-xl">
-          BUY NOW
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  const merchSpotlightUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/QuackMerch.jpg?alt=media";
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body pb-32">
@@ -335,9 +294,9 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 4. SANCTUARY GEAR - STATIC CATALOG */}
+        {/* 4. SANCTUARY GEAR - QUACK MERCH SPOTLIGHT */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
               <ShoppingBag className="h-4 w-4" /> 4. Sanctuary Gear
@@ -345,47 +304,34 @@ function SupportContent() {
             <div className="h-px bg-border flex-1" />
           </div>
           
-          <div className="max-w-6xl mx-auto space-y-16">
-            {/* TIER 1: STAPLES */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Staples</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
+          <Card className="max-w-5xl mx-auto bg-card border-4 border-primary/30 rounded-[3rem] overflow-hidden shadow-2xl relative group">
+            <div className="relative aspect-[16/9] md:aspect-[21/9] w-full">
+              <Image 
+                src={merchSpotlightUrl} 
+                alt="Quack Merch - JustDuckit" 
+                fill 
+                className="object-cover"
+                priority
+              />
+              {/* High-Contrast Overlay for the CTA */}
+              <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-8 text-center space-y-6">
+                <div className="bg-black/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/10 space-y-4">
+                  <Button 
+                    asChild
+                    className="bg-primary text-primary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-transform"
+                  >
+                    <a href="https://justduckit-merch.printful.me/" target="_blank" rel="noopener noreferrer">
+                      SHOP THE QUICK STORE
+                    </a>
+                  </Button>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                    Proceeds support sanctuary residents. <br />
+                    Purchases are processed directly by Printful.me
+                  </p>
+                </div>
               </div>
             </div>
-
-            {/* TIER 2: SEASONAL */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Seasonal (Summer)</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </div>
-
-            {/* TIER 3: ACCESSORIES */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Accessories</span>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </div>
-
-            {/* TIER 4: DECENTRALIZED */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block text-center lg:text-left mb-6">DECENTralized Merch</span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {decentralizedMerch.map(product => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </div>
-
-            {/* TIER 5: OG MERCH */}
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary block text-center lg:text-left mb-6">OG Merch Line</span>
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {ogMerch.map(product => <ProductCard key={product.id} product={product} />)}
-              </div>
-            </div>
-          </div>
+          </Card>
         </section>
 
         {/* 5. EXCLUSIVE BOUTIQUE */}
