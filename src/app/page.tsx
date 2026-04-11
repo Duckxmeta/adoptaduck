@@ -116,15 +116,19 @@ export default function Home() {
                 Providing a peaceful, high-quality home where every creature deserves a safe spot to chill and thrive.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:w-auto px-12 text-lg rounded-2xl shadow-xl" asChild>
-                <Link href="/support#adopt">ADOPT A RESIDENT</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-16 w-full sm:w-auto px-12 text-lg rounded-2xl" asChild>
+            
+            {/* BUTTON TRIANGLE FORMATION */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
+                <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:min-w-[260px] px-12 text-lg rounded-2xl shadow-xl" asChild>
+                  <Link href="/support#adopt">ADOPT A RESIDENT</Link>
+                </Button>
+                <Button size="lg" variant="outline" className="border-white/20 text-white font-black backdrop-blur-md hover:bg-white/10 h-16 w-full sm:min-w-[260px] px-12 text-lg rounded-2xl" asChild>
+                  <Link href="/flock">MEET THE FLOCK</Link>
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" className="border-primary text-primary font-black hover:bg-primary/10 h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl mt-2" asChild>
                 <Link href="/our-story">READ OUR STORY</Link>
-              </Button>
-              <Button size="lg" variant="outline" className="border-white/20 text-white font-black backdrop-blur-md hover:bg-white/10 h-16 w-full sm:w-auto px-12 text-lg rounded-2xl" asChild>
-                <Link href="/flock">MEET THE FLOCK</Link>
               </Button>
             </div>
           </div>
@@ -258,7 +262,7 @@ export default function Home() {
             </Card>
 
             <Card className="bg-background border-2 border-secondary/30 rounded-3xl overflow-hidden shadow-2xl">
-              <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="relative aspect-square">
                   <Image src={wildImageUrl} alt="Wild" fill className="object-cover" />
                 </div>
