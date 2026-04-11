@@ -108,6 +108,8 @@ function SupportContent() {
   const stapleMerch = merch.filter(m => m.tier === 1);
   const seasonalMerch = merch.filter(m => m.tier === 2);
   const accessoryMerch = merch.filter(m => m.tier === 3);
+  const decentralizedMerch = merch.filter(m => m.tier === 4);
+  const ogMerch = merch.filter(m => m.tier === 5);
 
   const ProductCard = ({ product }: { product: any }) => (
     <Card 
@@ -366,11 +368,11 @@ function SupportContent() {
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
             </div>
           ) : (
-            <div className="max-w-6xl mx-auto space-y-0">
+            <div className="max-w-6xl mx-auto space-y-16">
               {/* TIER 1: STAPLES */}
               {stapleMerch.length > 0 && (
-                <div className="mb-0">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Staples</span>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Staples</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -379,8 +381,8 @@ function SupportContent() {
 
               {/* TIER 2: SEASONAL */}
               {seasonalMerch.length > 0 && (
-                <div className="mb-0 mt-8">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Seasonal</span>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Seasonal (Summer)</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
@@ -389,10 +391,30 @@ function SupportContent() {
 
               {/* TIER 3: ACCESSORIES */}
               {accessoryMerch.length > 0 && (
-                <div className="mt-8">
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/40 block text-center lg:text-left mb-4">Accessories</span>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Accessories</span>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* TIER 4: DECENTRALIZED */}
+              {decentralizedMerch.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block text-center lg:text-left mb-6">DECENTralized Merch</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {decentralizedMerch.map(product => <ProductCard key={product.id} product={product} />)}
+                  </div>
+                </div>
+              )}
+
+              {/* TIER 5: OG MERCH */}
+              {ogMerch.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary block text-center lg:text-left mb-6">OG Merch Line</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {ogMerch.map(product => <ProductCard key={product.id} product={product} />)}
                   </div>
                 </div>
               )}

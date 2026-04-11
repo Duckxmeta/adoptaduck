@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useCallback } from 'react';
@@ -29,7 +28,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
 
-const STAPLE_IDS = ['390252688', '426252489', '426261731'];
+const STAPLE_IDS = ['427494940', '390119961', '427491715'];
 
 export default function Home() {
   const firestore = useFirestore();
