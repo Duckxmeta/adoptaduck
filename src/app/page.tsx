@@ -16,7 +16,8 @@ import {
   GraduationCap,
   Globe,
   ShoppingBag,
-  ExternalLink
+  ExternalLink,
+  BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -118,6 +119,9 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:w-auto px-12 text-lg rounded-2xl shadow-xl" asChild>
                 <Link href="/support#adopt">ADOPT A RESIDENT</Link>
+              </Button>
+              <Button size="lg" variant="outline" className="border-primary text-primary font-black hover:bg-primary/10 h-16 w-full sm:w-auto px-12 text-lg rounded-2xl" asChild>
+                <Link href="/our-story">READ OUR STORY</Link>
               </Button>
               <Button size="lg" variant="outline" className="border-white/20 text-white font-black backdrop-blur-md hover:bg-white/10 h-16 w-full sm:w-auto px-12 text-lg rounded-2xl" asChild>
                 <Link href="/flock">MEET THE FLOCK</Link>
