@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -20,15 +21,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCollection, useFirestore, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, doc, setDoc, serverTimestamp, where, limit } from 'firebase/firestore';
-import { Resident } from '@/lib/types';
+import { useFirestore, useAuth } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { DOTMSpotlight } from '@/components/DOTMSpotlight';
-
-const STAPLE_IDS = ['427494940', '390119961', '427491715'];
+import { MERCH_CATALOG } from '@/lib/merch-data';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -36,25 +35,13 @@ export default function Home() {
   const router = useRouter();
   const [isVerifying, setIsVerifying] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [stapleMerch, setStapleMerch] = useState<any[]>([]);
-  const [merchLoading, setMerchLoading] = useState(true);
   
+  const stapleMerch = useMemo(() => {
+    return MERCH_CATALOG.filter(m => m.tier === 1).slice(0, 3);
+  }, []);
+
   useEffect(() => {
     setMounted(true);
-    async function fetchStaples() {
-      try {
-        const res = await fetch('/api/products');
-        if (!res.ok) return;
-        const data = await res.json();
-        // Homepage Mirror: Strict ID matching for Staples only
-        setStapleMerch(data.filter((m: any) => STAPLE_IDS.includes(m.id.toString())).slice(0, 3));
-      } catch (e) {
-        console.error("Home merch fetch failed");
-      } finally {
-        setMerchLoading(false);
-      }
-    }
-    fetchStaples();
   }, []);
 
   const checkRedirect = useCallback(async () => {
@@ -192,7 +179,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* SANCTUARY STAPLES (Curated Merch Mirror) */}
+        {/* SANCTUARY STAPLES (Static Merch Mirror) */}
         {stapleMerch.length > 0 && (
           <section className="py-24 bg-card/20 border-b border-border">
             <div className="container mx-auto px-4">

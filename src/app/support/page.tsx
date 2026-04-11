@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ import { UserProfile } from '@/lib/types';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { MERCH_CATALOG } from '@/lib/merch-data';
 
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
@@ -50,25 +52,6 @@ function SupportContent() {
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
-
-  const [merch, setMerch] = useState<any[]>([]);
-  const [merchLoading, setMerchLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchLiveCatalog() {
-      try {
-        const response = await fetch('/api/products');
-        if (!response.ok) throw new Error('Store mirror unreachable');
-        const data = await response.json();
-        setMerch(data);
-      } catch (e) {
-        console.error("Failed to load live merch catalog:", e);
-      } finally {
-        setMerchLoading(false);
-      }
-    }
-    fetchLiveCatalog();
-  }, []);
 
   const handleCheckout = async (priceId: string) => {
     setIsRedirecting(true);
@@ -105,11 +88,11 @@ function SupportContent() {
     }
   };
 
-  const stapleMerch = merch.filter(m => m.tier === 1);
-  const seasonalMerch = merch.filter(m => m.tier === 2);
-  const accessoryMerch = merch.filter(m => m.tier === 3);
-  const decentralizedMerch = merch.filter(m => m.tier === 4);
-  const ogMerch = merch.filter(m => m.tier === 5);
+  const stapleMerch = MERCH_CATALOG.filter(m => m.tier === 1);
+  const seasonalMerch = MERCH_CATALOG.filter(m => m.tier === 2);
+  const accessoryMerch = MERCH_CATALOG.filter(m => m.tier === 3);
+  const decentralizedMerch = MERCH_CATALOG.filter(m => m.tier === 4);
+  const ogMerch = MERCH_CATALOG.filter(m => m.tier === 5);
 
   const ProductCard = ({ product }: { product: any }) => (
     <Card 
@@ -352,7 +335,7 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 4. SANCTUARY GEAR - CONTINUOUS GALLERY FLOW */}
+        {/* 4. SANCTUARY GEAR - STATIC CATALOG */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
@@ -362,64 +345,47 @@ function SupportContent() {
             <div className="h-px bg-border flex-1" />
           </div>
           
-          {merchLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading Store Mirror...</p>
+          <div className="max-w-6xl mx-auto space-y-16">
+            {/* TIER 1: STAPLES */}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Staples</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
             </div>
-          ) : (
-            <div className="max-w-6xl mx-auto space-y-16">
-              {/* TIER 1: STAPLES */}
-              {stapleMerch.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Staples</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {stapleMerch.map(product => <ProductCard key={product.id} product={product} />)}
-                  </div>
-                </div>
-              )}
 
-              {/* TIER 2: SEASONAL */}
-              {seasonalMerch.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Seasonal (Summer)</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
-                  </div>
-                </div>
-              )}
-
-              {/* TIER 3: ACCESSORIES */}
-              {accessoryMerch.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Accessories</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
-                  </div>
-                </div>
-              )}
-
-              {/* TIER 4: DECENTRALIZED */}
-              {decentralizedMerch.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block text-center lg:text-left mb-6">DECENTralized Merch</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {decentralizedMerch.map(product => <ProductCard key={product.id} product={product} />)}
-                  </div>
-                </div>
-              )}
-
-              {/* TIER 5: OG MERCH */}
-              {ogMerch.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary block text-center lg:text-left mb-6">OG Merch Line</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {ogMerch.map(product => <ProductCard key={product.id} product={product} />)}
-                  </div>
-                </div>
-              )}
+            {/* TIER 2: SEASONAL */}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Seasonal (Summer)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {seasonalMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
             </div>
-          )}
+
+            {/* TIER 3: ACCESSORIES */}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/60 block text-center lg:text-left mb-6">Accessories</span>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {accessoryMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
+            </div>
+
+            {/* TIER 4: DECENTRALIZED */}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary block text-center lg:text-left mb-6">DECENTralized Merch</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {decentralizedMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
+            </div>
+
+            {/* TIER 5: OG MERCH */}
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary block text-center lg:text-left mb-6">OG Merch Line</span>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {ogMerch.map(product => <ProductCard key={product.id} product={product} />)}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* 5. EXCLUSIVE BOUTIQUE */}
