@@ -37,7 +37,7 @@ export type Expense = {
   id: string;
   itemName: string;
   note?: string; // Additional archival details
-  category: 'Bird' | 'Dog' | 'Habitat' | 'General';
+  category: 'Ducks' | 'Canine' | 'Feline' | 'Horse' | 'Habitat' | 'General';
   cost: number;
   date: string;
   birdId?: string;

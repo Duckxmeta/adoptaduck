@@ -23,7 +23,8 @@ import {
   Zap,
   Megaphone,
   Clock,
-  Database
+  Database,
+  ShieldAlert
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -214,17 +215,19 @@ function ItemizedLedger({ expenses }: { expenses: Expense[] }) {
     <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl flex flex-col h-full">
       <div className="p-6 border-b border-border bg-primary/5">
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">Guardian Archive</p>
-        <p className="text-xs font-bold text-muted-foreground">Indefinite transparency logs</p>
+        <p className="text-xs font-bold text-muted-foreground">Transparency species logs</p>
       </div>
       <div className="flex-1 overflow-y-auto max-h-[500px] custom-scrollbar divide-y divide-border">
         {filteredExpenses.length > 0 ? filteredExpenses.map((exp) => {
           const isTax = exp.itemName.toLowerCase().includes('tax') || exp.itemName.toLowerCase().includes('vat');
+          const isVet = exp.note?.includes('[VET/EMERGENCY]');
           return (
             <div key={exp.id} className="p-4 hover:bg-muted/10 transition-colors flex justify-between items-center">
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[11px] font-black uppercase text-foreground">{exp.itemName}</p>
                   {isTax && <Badge className="bg-[#14F195]/20 text-[#14F195] border-[#14F195]/30 font-black text-[7px] px-1 py-0 uppercase">TAX</Badge>}
+                  {isVet && <Badge className="bg-destructive/20 text-destructive border-destructive/30 font-black text-[7px] px-1 py-0 uppercase flex items-center gap-1"><ShieldAlert className="h-2 w-2" /> VET</Badge>}
                 </div>
                 <Badge variant="outline" className="text-[8px] border-secondary/30 text-secondary uppercase px-1.5 py-0">{exp.category}</Badge>
               </div>

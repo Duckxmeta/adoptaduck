@@ -4,7 +4,7 @@ import { Expense } from './types';
 /**
  * MASTER SANCTUARY LEDGER - AUDITED APRIL 8, 2026
  * Total Investment: $169.15
- * This is the absolute source of truth. All duplicates and legacy non-itemized entries have been purged.
+ * Categories updated to species-specific tracking for 501(c)(3) readiness.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
@@ -17,12 +17,12 @@ export const MOCK_EXPENSES: Expense[] = [
   { id: 'h6', itemName: 'Krylon Fusion Paint', cost: 8.49, category: 'Habitat', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
   { id: 'h7', itemName: 'Gorilla All Weather Tape', cost: 1.49, category: 'Habitat', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
 
-  // --- BIRD: $11.98 ---
-  { id: 'b1', itemName: 'Probiotic (3-pack)', cost: 4.99, category: 'Bird', date: '2026-03-25', createdAt: '2026-03-25T12:00:00Z' },
-  { id: 'b2', itemName: 'DMR Duck Crumble', cost: 6.99, category: 'Bird', date: '2026-03-28', createdAt: '2026-03-28T12:00:00Z' },
+  // --- DUCKS: $11.98 ---
+  { id: 'b1', itemName: 'Probiotic (3-pack)', cost: 4.99, category: 'Ducks', date: '2026-03-25', createdAt: '2026-03-25T12:00:00Z' },
+  { id: 'b2', itemName: 'DMR Duck Crumble', cost: 6.99, category: 'Ducks', date: '2026-03-28', createdAt: '2026-03-28T12:00:00Z' },
 
-  // --- DOG: $16.99 ---
-  { id: 'd1', itemName: 'Puppy Chow', cost: 16.99, category: 'Dog', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
+  // --- CANINE: $16.99 ---
+  { id: 'd1', itemName: 'Puppy Chow', cost: 16.99, category: 'Canine', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
 
   // --- GENERAL: $34.57 ---
   { id: 'g1', itemName: 'Gas (Transport)', cost: 15.00, category: 'General', date: '2026-03-15', createdAt: '2026-03-15T12:00:00Z' },

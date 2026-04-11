@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Expense, Resident } from '@/lib/types';
-import { Wallet, Loader2, Calendar, Tag, Bird } from 'lucide-react';
+import { Wallet, Loader2, Calendar, Tag, Bird, ShieldAlert } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -32,12 +33,14 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
+  const [isVetEmergency, setIsVetEmergency] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({
     itemName: '',
-    category: 'Bird',
+    category: 'Ducks',
     cost: 0,
     date: new Date().toISOString().split('T')[0],
-    birdId: ''
+    birdId: '',
+    note: ''
   });
   const [linkToBird, setLinkToBird] = useState(false);
 
@@ -52,15 +55,18 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     if (expense) {
       setFormData(expense);
       setLinkToBird(!!expense.birdId);
+      setIsVetEmergency(expense.note?.includes('[VET/EMERGENCY]') || false);
     } else {
       setFormData({
         itemName: '',
-        category: 'Bird',
+        category: 'Ducks',
         cost: 0,
         date: new Date().toISOString().split('T')[0],
-        birdId: ''
+        birdId: '',
+        note: ''
       });
       setLinkToBird(false);
+      setIsVetEmergency(false);
     }
   }, [expense, open]);
 
@@ -70,10 +76,16 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     
     setLoading(true);
     try {
+      let finalNote = formData.note || "";
+      if (isVetEmergency && !finalNote.includes('[VET/EMERGENCY]')) {
+        finalNote = `[VET/EMERGENCY] ${finalNote}`.trim();
+      }
+
       const data = {
         ...formData,
         cost: Number(formData.cost),
         birdId: linkToBird ? formData.birdId : null,
+        note: finalNote,
         updatedAt: new Date().toISOString()
       };
 
@@ -95,11 +107,11 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
     }
   };
 
-  const categories = ["Bird", "Dog", "Habitat", "General"];
+  const categories = ["Ducks", "Canine", "Feline", "Horse", "Habitat", "General"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground border-border max-w-md rounded-[2rem]">
+      <DialogContent className="bg-card text-card-foreground border-border max-w-md rounded-[2rem] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -110,11 +122,26 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
             </DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground font-medium">
-            Log sanctuary spending for live transparency.
+            Log species-specific spending for 501(c)(3) readiness.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          <div className="flex items-center justify-between p-4 bg-destructive/5 border border-destructive/20 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <ShieldAlert className="h-5 w-5 text-destructive" />
+              <div>
+                <Label htmlFor="vet-toggle" className="text-[10px] font-black uppercase tracking-widest text-destructive">Vet / Emergency</Label>
+                <p className="text-[8px] text-muted-foreground uppercase font-black">Tag as critical medical spend</p>
+              </div>
+            </div>
+            <Switch 
+              id="vet-toggle" 
+              checked={isVetEmergency} 
+              onCheckedChange={setIsVetEmergency} 
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="itemName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Item / Service Name</Label>
             <Input 
@@ -170,10 +197,21 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="note" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Audit Notes (Optional)</Label>
+            <Textarea 
+              id="note" 
+              value={formData.note} 
+              onChange={e => setFormData({...formData, note: e.target.value})}
+              placeholder="Add details for transparency..."
+              className="bg-background border-border min-h-[80px] resize-none rounded-xl"
+            />
+          </div>
+
           <div className="p-4 bg-muted/20 border border-border rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="link-bird" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <Bird className="h-3.5 w-3.5" /> Link to specific duck?
+                <Bird className="h-3.5 w-3.5" /> Link to specific resident?
               </Label>
               <Switch id="link-bird" checked={linkToBird} onCheckedChange={setLinkToBird} />
             </div>

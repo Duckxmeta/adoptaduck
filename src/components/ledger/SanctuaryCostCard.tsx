@@ -12,23 +12,24 @@ interface SanctuaryCostCardProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Bird: '#FFD700',           // Primary Gold
+  Ducks: '#FFD700',           // Primary Gold
   Habitat: '#9945FF',        // Solana Purple
-  Dog: '#F97316',            // Orange 500
+  Canine: '#F97316',         // Orange 500
+  Feline: '#14F195',         // Solana Green
+  Horse: '#3B82F6',          // Blue 500
   General: '#64748B'         // Slate 500
 };
 
-const ALLOWED_CATEGORIES = ['Bird', 'Dog', 'Habitat', 'General'];
+const ALLOWED_CATEGORIES = ['Ducks', 'Canine', 'Feline', 'Horse', 'Habitat', 'General'];
 
 export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
-  // STRICT AUDIT: Filter out legacy categories and sum. No hidden offsets.
+  // STRICT AUDIT: Filter out legacy categories and sum.
   const filteredExpenses = useMemo(() => {
     if (!expenses) return [];
     return expenses.filter(e => ALLOWED_CATEGORIES.includes(e.category));
   }, [expenses]);
 
   const totalLifetime = useMemo(() => {
-    // Pure summation of filtered entries. No manual buffers allowed.
     return filteredExpenses.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
   }, [filteredExpenses]);
 
@@ -53,7 +54,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
             <CardTitle className="text-2xl font-headline font-black uppercase tracking-tight flex items-center gap-2">
               <Wallet className="h-6 w-6 text-primary" /> SANCTUARY LEDGER
             </CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Indefinite transparency logs</CardDescription>
+            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Audit-Ready Species Tracking</CardDescription>
           </div>
           
           <div className="flex flex-wrap gap-4">
@@ -103,7 +104,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
                 <Sparkles className="h-3.5 w-3.5" /> Care Distribution
               </h4>
               <div className="space-y-3">
-                {chartData.map((item) => (
+                {chartData.sort((a, b) => b.value - a.value).map((item) => (
                   <div key={item.name} className="flex items-center justify-between p-3 bg-muted/10 rounded-xl border border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[item.name] || '#8884d8' }} />
@@ -122,10 +123,7 @@ export function SanctuaryCostCard({ expenses }: SanctuaryCostCardProps) {
               <Info className="h-5 w-5 text-primary shrink-0" />
               <div>
                 <p className="text-[10px] font-medium leading-relaxed italic">
-                  Sanctuary archives provide 100% financial transparency for our verified Guardians.
-                </p>
-                <p className="text-[9px] text-muted-foreground mt-1 uppercase font-bold">
-                  All overhead including sales tax is itemized for tax-exempt audit.
+                  Advanced tracking provides 100% transparency for verified Guardians and 501(c)(3) filing accuracy.
                 </p>
               </div>
             </div>

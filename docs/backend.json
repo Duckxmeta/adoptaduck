@@ -73,10 +73,11 @@
       "properties": {
         "id": { "type": "string" },
         "itemName": { "type": "string" },
-        "category": { "type": "string", "enum": ["Bird", "Dog", "Habitat", "General"] },
+        "category": { "type": "string", "enum": ["Ducks", "Canine", "Feline", "Horse", "Habitat", "General"] },
         "cost": { "type": "number" },
         "date": { "type": "string", "format": "date" },
         "birdId": { "type": "string", "description": "Optional link to a specific resident." },
+        "note": { "type": "string", "description": "Additional archival details including Vet tags." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["itemName", "category", "cost", "date"]
