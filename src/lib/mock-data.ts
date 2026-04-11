@@ -2,13 +2,20 @@
 import { Expense } from './types';
 
 /**
- * MASTER SANCTUARY LEDGER - AUDITED APRIL 8, 2026
- * Total Investment: $169.15
- * Categories updated to species-specific tracking for 501(c)(3) readiness.
+ * MASTER SANCTUARY LEDGER - AUDITED APRIL 10, 2026
+ * Total Investment: $212.44
+ * High-precision species-specific tracking for 501(c)(3) readiness.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
-  // --- HABITAT: $105.61 ---
+  // --- APRIL 10, 2026 BATCH ---
+  { id: 'b3', itemName: 'DMR Duck Feed (50lb)', cost: 25.99, category: 'Ducks', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
+  { id: 'h8', itemName: 'Fescue Hay (Bedding)', cost: 9.00, category: 'Habitat', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
+  { id: 'b4', itemName: 'Frozen Peas (12oz x2)', cost: 1.96, category: 'Ducks', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
+  { id: 'b5', itemName: 'Frozen Peas (32oz)', cost: 2.48, category: 'Ducks', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
+  { id: 'g8', itemName: "Today's Combined Sales Tax", cost: 3.86, category: 'General', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
+
+  // --- HABITAT ARCHIVE ---
   { id: 'h1', itemName: 'Gas (Lawnmower)', cost: 6.14, category: 'Habitat', date: '2026-03-20', createdAt: '2026-03-20T12:00:00Z' },
   { id: 'h2', itemName: 'Hardware (Bolt/Hooks/Eyes)', cost: 7.02, category: 'Habitat', date: '2026-03-22', createdAt: '2026-03-22T12:00:00Z' },
   { id: 'h3', itemName: 'Flex Seal (2 cans)', cost: 33.98, category: 'Habitat', date: '2026-04-01', createdAt: '2026-04-01T12:00:00Z' },
@@ -17,14 +24,14 @@ export const MOCK_EXPENSES: Expense[] = [
   { id: 'h6', itemName: 'Krylon Fusion Paint', cost: 8.49, category: 'Habitat', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
   { id: 'h7', itemName: 'Gorilla All Weather Tape', cost: 1.49, category: 'Habitat', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
 
-  // --- DUCKS: $11.98 ---
+  // --- DUCKS ARCHIVE ---
   { id: 'b1', itemName: 'Probiotic (3-pack)', cost: 4.99, category: 'Ducks', date: '2026-03-25', createdAt: '2026-03-25T12:00:00Z' },
   { id: 'b2', itemName: 'DMR Duck Crumble', cost: 6.99, category: 'Ducks', date: '2026-03-28', createdAt: '2026-03-28T12:00:00Z' },
 
-  // --- CANINE: $16.99 ---
+  // --- CANINE ARCHIVE ---
   { id: 'd1', itemName: 'Puppy Chow', cost: 16.99, category: 'Canine', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
 
-  // --- GENERAL: $34.57 ---
+  // --- GENERAL / OVERHEAD ARCHIVE ---
   { id: 'g1', itemName: 'Gas (Transport)', cost: 15.00, category: 'General', date: '2026-03-15', createdAt: '2026-03-15T12:00:00Z' },
   { id: 'g2', itemName: 'B&S Air Filter (Maintenance)', cost: 9.99, category: 'General', date: '2026-04-08', createdAt: '2026-04-08T17:00:00Z' },
   { id: 'g3', itemName: 'Hardware Tax', cost: 0.68, category: 'General', date: '2026-03-22', createdAt: '2026-03-22T12:05:00Z' },
