@@ -35,7 +35,6 @@ import {
 import Link from 'next/link';
 import { ref, getDownloadURL } from 'firebase/storage';
 
-// DIRECT LINK INJECTION MAP - SANCTUARY SOURCE OF TRUTH
 const RESIDENT_IMAGE_MAP: Record<string, string> = {
   'Cassidy': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCassidy.jpeg?alt=media&token=f66f2e79-86e3-4ba3-8f3c-9aff47227075',
   'Echo': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FEcho.jpeg?alt=media&token=6375ff79-0b14-4611-b789-a640017ffc9f',
@@ -58,7 +57,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const storage = useStorage();
   const { user } = useUser();
 
-  // Profile Discovery State: Pushes discovery across multiple collections
   const [activeCollection, setActiveCollection] = useState<'birds' | 'residents'>('birds');
   const [isSearching, setIsSearching] = useState(true);
 
@@ -70,7 +68,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
-  // Discovery Logic: Fallback mechanism for non-duck residents
   useEffect(() => {
     if (!isLoading) {
       if (!bird && activeCollection === 'birds') {
@@ -81,36 +78,54 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     }
   }, [isLoading, bird, activeCollection]);
 
-  // Image Resolution Logic: Forces unified pathing and direct-link injection
   const [resolvedImages, setResolvedImages] = useState<string[]>([]);
 
   useEffect(() => {
     async function resolveAll() {
       if (!bird) return;
       
-      const rawUrls = Array.from(new Set([
-        bird.primaryImageUrl,
-        ...(bird.galleryImageUrls || [])
-      ])).filter(Boolean) as string[];
+      // PRIORITY 1: Name mapping (High Performance)
+      if (RESIDENT_IMAGE_MAP[bird.name]) {
+        setResolvedImages([RESIDENT_IMAGE_MAP[bird.name]]);
+        return;
+      }
 
-      const resolved = await Promise.all(rawUrls.map(async (url) => {
-        // 1. PRIORITY: Direct Link Injection
-        if (RESIDENT_IMAGE_MAP[bird.name]) {
-          return RESIDENT_IMAGE_MAP[bird.name];
+      // PRIORITY 2: imageUrl field
+      if (bird.imageUrl && bird.imageUrl.startsWith('http')) {
+        setResolvedImages([bird.imageUrl, ...(bird.galleryImageUrls || [])]);
+        return;
+      }
+
+      // PRIORITY 3: storage resolution from image filename
+      const urls: string[] = [];
+      const primaryPath = bird.image || bird.primaryImageUrl;
+      
+      if (primaryPath) {
+        if (primaryPath.startsWith('http')) {
+          urls.push(primaryPath);
+        } else {
+          try {
+            const imageRef = ref(storage, `resident-photos/${primaryPath}`);
+            const downloadUrl = await getDownloadURL(imageRef);
+            urls.push(downloadUrl);
+          } catch (e) {}
         }
+      }
 
-        // 2. Standard resolution from Firestore
-        if (url.startsWith('http')) return url;
-
-        try {
-          // Unified Migration Path: Force resident-photos/ folder
-          const imageRef = ref(storage, `resident-photos/${url}`);
-          return await getDownloadURL(imageRef);
-        } catch (e) {
-          return null;
+      const gallery = bird.galleryImageUrls || [];
+      for (const p of gallery) {
+        if (p.startsWith('http')) {
+          urls.push(p);
+        } else {
+          try {
+            const imageRef = ref(storage, `resident-photos/${p}`);
+            const downloadUrl = await getDownloadURL(imageRef);
+            urls.push(downloadUrl);
+          } catch (e) {}
         }
-      }));
-      setResolvedImages(resolved.filter(Boolean) as string[]);
+      }
+
+      setResolvedImages(urls.filter(Boolean));
     }
     resolveAll();
   }, [bird, storage]);
@@ -157,7 +172,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
       
       <main className="flex-1 pb-32 animate-in fade-in duration-1000">
         <div className="container mx-auto px-4 pt-12">
-          {/* Navigation Fix: Point to Adoption Hub */}
           <Button 
             asChild
             variant="ghost" 
@@ -238,16 +252,20 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   <h1 className="text-7xl font-headline font-black text-primary tracking-tighter leading-[0.8] uppercase animate-in slide-in-from-top-4 duration-700">
                     {displayName}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
+                  <div className="flex flex-wrap items-center gap-4 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     {(bird?.species || bird?.category) && (
-                       <Badge variant="outline" className="border-border text-muted-foreground font-black uppercase">
-                         {bird?.species || bird?.category}
+                     {bird?.species && (
+                       <Badge variant="outline" className="border-secondary/30 text-secondary font-black uppercase">
+                         {bird.species}
+                       </Badge>
+                     )}
+                     {bird?.category && (
+                       <Badge variant="outline" className="border-primary/30 text-primary font-black uppercase">
+                         {bird.category}
                        </Badge>
                      )}
                   </div>
                 </div>
-                {/* Lineage Protection: Only for Ducks */}
                 {isGuardian && isDuck && (
                   <Button 
                     asChild
@@ -274,7 +292,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   <BookOpen className="h-4 w-4" /> Rescue Story & Narrative
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  {bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary."}
+                  {bird?.bio || bird?.backstory}
                 </p>
               </div>
 

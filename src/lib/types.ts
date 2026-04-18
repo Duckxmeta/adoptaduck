@@ -9,6 +9,9 @@ export type Resident = {
   heritageTree?: string;
   personalityTraits: string;
   backstory: string;
+  bio?: string; // High-fidelity narrative field
+  image?: string; // Filename for storage resolution
+  imageUrl?: string; // Direct storage URL
   primaryImageUrl: string;
   galleryImageUrls: string[];
   createdAt: string;
@@ -21,8 +24,8 @@ export type Resident = {
   hatch_date?: string;
   isFoundingResident?: boolean;
   generation?: number;
-  tier?: 'G0' | 'G1' | 'G2'; // New dynamic tiering
-  founder?: boolean; // Explicit founder tag
+  tier?: 'G0' | 'G1' | 'G2'; 
+  founder?: boolean; 
   liveStatus?: string;
   statusLastUpdated?: string;
   isFeatured?: boolean;
@@ -31,7 +34,7 @@ export type Resident = {
 };
 
 export type EggHistoryEntry = {
-  id: string; // Date as YYYY-MM-DD
+  id: string; 
   count: number;
   updatedAt: string;
 };
@@ -39,7 +42,7 @@ export type EggHistoryEntry = {
 export type Expense = {
   id: string;
   itemName: string;
-  note?: string; // Additional archival details
+  note?: string; 
   category: 'Ducks' | 'Canine' | 'Feline' | 'Horse' | 'Habitat' | 'General';
   cost: number;
   date: string;
@@ -53,7 +56,7 @@ export type UserProfile = {
   email: string;
   my_flock: string[];
   community_codes: string[];
-  usedCodes?: string[]; // Code tracking for Golden Tickets
+  usedCodes?: string[]; 
   role: 'member' | 'admin' | 'guardian';
   membershipStartedAt?: string;
   membershipExpiresAt?: string;
