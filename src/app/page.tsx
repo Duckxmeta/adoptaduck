@@ -195,32 +195,32 @@ export default function Home() {
               </Button>
             </div>
             
-            <Card className="max-w-5xl mx-auto bg-card border-4 border-primary/30 rounded-[3rem] overflow-hidden shadow-2xl relative group">
-              <div className="relative aspect-[16/9] md:aspect-[21/9] w-full">
-                <Image 
-                  src={merchSpotlightUrl} 
-                  alt="Quack Merch - JustDuckit" 
-                  fill 
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-4 sm:p-8 text-center space-y-6">
-                  <div className="bg-black/40 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 space-y-4 w-full max-w-sm sm:max-w-xl">
+            <div className="max-w-5xl mx-auto space-y-4">
+              <Card className="bg-card border-4 border-primary/30 rounded-[2rem] overflow-hidden shadow-2xl relative group">
+                <div className="relative aspect-video w-full">
+                  <Image 
+                    src={merchSpotlightUrl} 
+                    alt="Quack Merch - JustDuckit" 
+                    fill 
+                    className="object-cover"
+                  />
+                  {/* Clean Centered Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center p-4">
                     <Button 
                       asChild
-                      className="bg-primary text-primary-foreground font-black h-12 sm:h-16 px-6 sm:px-12 text-lg sm:text-xl rounded-2xl shadow-2xl hover:scale-105 transition-transform w-full max-w-[260px] sm:max-w-md"
+                      className="bg-primary text-primary-foreground font-black h-11 sm:h-14 px-8 sm:px-10 text-sm sm:text-lg rounded-xl shadow-2xl hover:scale-105 transition-transform w-full max-w-[200px] sm:max-w-xs"
                     >
                       <a href="https://justduckit-merch.printful.me/" target="_blank" rel="noopener noreferrer">
                         SHOP THE QUICK STORE
                       </a>
                     </Button>
-                    <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/90">
-                      Proceeds support sanctuary residents. <br />
-                      Purchases are processed directly by Printful.me
-                    </p>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 text-center">
+                Proceeds support sanctuary residents. Purchases are processed directly by Printful.me
+              </p>
+            </div>
           </div>
         </section>
 
