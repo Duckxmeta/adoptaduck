@@ -57,13 +57,30 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const storage = useStorage();
   const { user } = useUser();
 
-  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
+  // Profile Discovery State
+  const [activeCollection, setActiveCollection] = useState<'birds' | 'residents'>('birds');
+  const [isSearching, setIsSearching] = useState(true);
+
+  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, activeCollection, id) : null), [firestore, id, activeCollection]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
+
+  // Fallback Discovery Logic
+  useEffect(() => {
+    if (!isLoading) {
+      if (!bird && activeCollection === 'birds') {
+        // Not in birds, immediately fall back to residents
+        setActiveCollection('residents');
+      } else {
+        // Found it or tried both
+        setIsSearching(false);
+      }
+    }
+  }, [isLoading, bird, activeCollection]);
 
   // Resolved images state
   const [resolvedImages, setResolvedImages] = useState<string[]>([]);
@@ -97,16 +114,16 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     resolveAll();
   }, [bird, storage]);
 
-  if (isLoading) {
+  if (isLoading || isSearching) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="font-black uppercase tracking-[0.3em] text-xs text-muted-foreground">Verifying Sanctuary Identity...</p>
+        <p className="font-black uppercase tracking-[0.3em] text-xs text-muted-foreground">Syncing Sanctuary Identity...</p>
       </div>
     );
   }
 
-  if (!bird && !isLoading) {
+  if (!bird && !isLoading && !isSearching) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navbar />
@@ -117,7 +134,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-headline font-black uppercase tracking-tight">RESIDENT NOT FOUND</h1>
-              <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located.</p>
+              <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located in our archives.</p>
             </div>
             <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
               <Link href="/flock">RETURN TO THE FLOCK</Link>
@@ -130,6 +147,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   }
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
+  const isDuck = activeCollection === 'birds';
   const displayName = getResidentName(bird);
 
   return (
@@ -220,9 +238,10 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
+                     {bird?.species && <Badge variant="outline" className="border-border text-muted-foreground font-black uppercase">{bird.species}</Badge>}
                   </div>
                 </div>
-                {isGuardian && (
+                {isGuardian && isDuck && (
                   <Button 
                     asChild
                     className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
