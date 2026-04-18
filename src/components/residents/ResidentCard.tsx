@@ -29,21 +29,25 @@ export function ResidentCard({ resident }: ResidentCardProps) {
   
   useEffect(() => {
     async function resolve() {
-      const url = resident.primaryImageUrl;
-      if (!url) return;
-      if (url.startsWith('http')) {
-        setResolvedImage(url);
+      // Use primaryImageUrl from our schema
+      const fileName = resident.primaryImageUrl;
+      if (!fileName) return;
+
+      // If it's already a full URL, use it
+      if (fileName.startsWith('http')) {
+        setResolvedImage(fileName);
         return;
       }
 
       setIsLoadingImage(true);
       try {
-        // Unified path migration: All images reside in 'resident-photos'
-        const imageRef = ref(storage, `resident-photos/${url}`);
-        const downloadUrl = await getDownloadURL(imageRef);
+        // FORCE RESOLUTION: Explicitly prefix with resident-photos/
+        const storageRef = ref(storage, `resident-photos/${fileName}`);
+        const downloadUrl = await getDownloadURL(storageRef);
         setResolvedImage(downloadUrl);
       } catch (error) {
-        console.warn(`Could not resolve storage path for: ${url}`);
+        console.error(`Storage Resolution Error for ${fileName}:`, error);
+        setResolvedImage(null);
       } finally {
         setIsLoadingImage(false);
       }
@@ -65,6 +69,7 @@ export function ResidentCard({ resident }: ResidentCardProps) {
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              data-ai-hint="sanctuary resident"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           </>
