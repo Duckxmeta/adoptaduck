@@ -29,7 +29,7 @@ export async function fetchAllSanctuaryResidents(db: Firestore): Promise<Residen
 
     // 2. Fetch Multi-Species Residents (Sanctuary Friends)
     const residentsRef = collection(db, 'residents');
-    // Note: Fetching without orderBy initially to ensure immediate visibility while indexes propagate
+    // Fetching without orderBy for immediate visibility
     const residentsSnap = await getDocs(residentsRef);
     const residentsList = residentsSnap.docs.map(doc => {
       const data = doc.data();
@@ -37,12 +37,10 @@ export async function fetchAllSanctuaryResidents(db: Firestore): Promise<Residen
         ...data,
         id: doc.id,
         isDuck: false,
-        // Grouping category defaults to 'Sanctuary Friends' if missing
         category: data.category || 'Sanctuary Friends'
       } as Resident;
     });
 
-    // 3. Combine with type safety
     return [...birdsList, ...residentsList];
   } catch (error) {
     console.error("Error syncing sanctuary residents:", error);

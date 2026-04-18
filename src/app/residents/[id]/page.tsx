@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, use } from 'react';
+import { useMemo, use, useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
@@ -19,7 +19,7 @@ import {
   GitBranch
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useDoc, useFirestore, useMemoFirebase, useUser, useStorage } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident, UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -32,16 +32,12 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Link from 'next/link';
-
-/**
- * @fileOverview Resident Profile.
- * Focuses on story, personality, and vibes. 
- * Financial metrics have been removed per UI cleanup requirements.
- */
+import { ref, getDownloadURL } from 'firebase/storage';
 
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const firestore = useFirestore();
+  const storage = useStorage();
   const { user } = useUser();
 
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
@@ -52,14 +48,31 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
-  const galleryImages = useMemo(() => {
-    if (!bird) return [];
-    const images = Array.from(new Set([
-      bird.primaryImageUrl,
-      ...(bird.galleryImageUrls || [])
-    ])).filter(Boolean) as string[];
-    return images;
-  }, [bird]);
+  // Resolved images state
+  const [resolvedImages, setResolvedImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function resolveAll() {
+      if (!bird) return;
+      const rawUrls = Array.from(new Set([
+        bird.primaryImageUrl,
+        ...(bird.galleryImageUrls || [])
+      ])).filter(Boolean) as string[];
+
+      const resolved = await Promise.all(rawUrls.map(async (url) => {
+        if (url.startsWith('http')) return url;
+        try {
+          // Unified Path: Exclusively resident-photos/
+          const imageRef = ref(storage, `resident-photos/${url}`);
+          return await getDownloadURL(imageRef);
+        } catch (e) {
+          return null;
+        }
+      }));
+      setResolvedImages(resolved.filter(Boolean) as string[]);
+    }
+    resolveAll();
+  }, [bird, storage]);
 
   if (isLoading) {
     return (
@@ -116,13 +129,13 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             
             <div className="space-y-6">
               <div className={cn(
-                "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group",
+                "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group bg-[#1a1a1a]",
                 isFounder ? "border-primary/50 glow-primary" : "border-border"
               )}>
-                {galleryImages.length > 0 ? (
+                {resolvedImages.length > 0 ? (
                   <Carousel className="w-full">
                     <CarouselContent>
-                      {galleryImages.map((url, index) => (
+                      {resolvedImages.map((url, index) => (
                         <CarouselItem key={index}>
                           <div className="relative aspect-square">
                             <Image
@@ -136,7 +149,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    {galleryImages.length > 1 && (
+                    {resolvedImages.length > 1 && (
                       <>
                         <CarouselPrevious className="left-4 bg-black/40 border-none text-white hover:bg-black/60" />
                         <CarouselNext className="right-4 bg-black/40 border-none text-white hover:bg-black/60" />
@@ -144,7 +157,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                     )}
                   </Carousel>
                 ) : (
-                  <div className="aspect-square bg-muted flex items-center justify-center text-9xl">🦆</div>
+                  <div className="aspect-square flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary/20" />
+                  </div>
                 )}
                 
                 <div className="absolute bottom-6 left-6 flex flex-wrap gap-2 pointer-events-none z-10">

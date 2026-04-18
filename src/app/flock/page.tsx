@@ -1,9 +1,9 @@
-
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useStorage } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { Resident } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { cn, getResidentName } from '@/lib/utils';
+import { ref, getDownloadURL } from 'firebase/storage';
 
 export default function BrowseFlock() {
   const firestore = useFirestore();
@@ -26,16 +27,33 @@ export default function BrowseFlock() {
 
   const { data: birds, isLoading } = useCollection<Resident>(birdsQuery);
 
-  // Dynamic Filtering based on G0/Founder status
   const foundingMembers = birds?.filter(b => b.isFoundingResident || b.generation === 0 || b.founder) || [];
   const standardResidents = birds?.filter(b => !b.isFoundingResident && b.generation !== 0 && !b.founder) || [];
 
   const BirdCard = ({ bird }: { bird: Resident }) => {
+    const storage = useStorage();
+    const [resolvedImage, setResolvedImage] = useState<string | null>(null);
     const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder;
     const isCommunity = bird.isCommunityDuck;
-    
     const displayName = getResidentName(bird);
-    const hasImage = !!bird.primaryImageUrl && bird.primaryImageUrl.trim() !== "";
+
+    useEffect(() => {
+      async function resolve() {
+        const url = bird.primaryImageUrl;
+        if (!url) return;
+        if (url.startsWith('http')) {
+          setResolvedImage(url);
+          return;
+        }
+        try {
+          // Unified path migration: Exclusively resident-photos/
+          const imageRef = ref(storage, `resident-photos/${url}`);
+          const downloadUrl = await getDownloadURL(imageRef);
+          setResolvedImage(downloadUrl);
+        } catch (e) {}
+      }
+      resolve();
+    }, [bird.primaryImageUrl, storage]);
 
     return (
       <Card 
@@ -46,20 +64,19 @@ export default function BrowseFlock() {
           isCommunity ? "border-secondary/50 shadow-secondary/20 glow-purple ring-1 ring-secondary/20" : "hover:glow-purple"
         )}
       >
-        <div className="relative aspect-[4/5] overflow-hidden">
-          {hasImage ? (
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#1a1a1a]">
+          {resolvedImage ? (
             <Image 
-              src={bird.primaryImageUrl} 
+              src={resolvedImage} 
               alt={`${displayName} - ${bird.breed}`} 
               fill 
               className="object-cover transition-transform duration-700 group-hover:scale-110" 
             />
           ) : (
-            <div className="w-full h-full bg-muted flex items-center justify-center text-6xl">🦆</div>
+            <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦆</div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
           
-          {/* Identity Badges - Top Left */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             <Badge className="w-fit bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
               {bird.breed}
@@ -71,7 +88,6 @@ export default function BrowseFlock() {
             )}
           </div>
 
-          {/* Dynamic Generation Badge - Top Right */}
           <div className="absolute top-4 right-4">
             {bird.generation === 0 || (bird.generation === undefined && isFounder) ? (
               <Badge className="bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg flex items-center gap-1.5">
@@ -161,7 +177,6 @@ export default function BrowseFlock() {
           </div>
         ) : (
           <div className="space-y-24">
-            {/* Founding Members Section */}
             {foundingMembers.length > 0 && (
               <section className="space-y-12">
                 <div className="flex items-center gap-4">
@@ -177,7 +192,6 @@ export default function BrowseFlock() {
               </section>
             )}
 
-            {/* Standard Residents Section */}
             {standardResidents.length > 0 && (
               <section className="space-y-12">
                 <div className="flex items-center gap-4">

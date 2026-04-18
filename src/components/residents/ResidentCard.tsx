@@ -1,15 +1,17 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Resident } from '@/lib/types';
-import { ChevronRight, GitBranch, Trophy, PawPrint, Bird } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { ChevronRight, GitBranch, Trophy, PawPrint, Bird, Loader2 } from 'lucide-react';
+import { useUser, useStorage } from '@/firebase';
 import { getResidentName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { ref, getDownloadURL } from 'firebase/storage';
 
 interface ResidentCardProps {
   resident: Resident;
@@ -17,34 +19,48 @@ interface ResidentCardProps {
 
 export function ResidentCard({ resident }: ResidentCardProps) {
   const { user } = useUser();
+  const storage = useStorage();
+  const [resolvedImage, setResolvedImage] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+
   const displayName = getResidentName(resident);
   const isDuck = !!resident.isDuck;
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
   
-  // High-Fidelity Image Resolver for Firebase Storage filenames
-  const getResolvedImageUrl = (url?: string) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    
-    // Correct Folder Mapping: 'birds' for legacy flock, 'resident-photos' for new multi-species rescues
-    const folder = isDuck ? 'birds' : 'resident-photos';
-    const bucket = "studio-7482167027-804c1.firebasestorage.app";
-    return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${folder}%2F${url}?alt=media`;
-  };
+  useEffect(() => {
+    async function resolve() {
+      const url = resident.primaryImageUrl;
+      if (!url) return;
+      if (url.startsWith('http')) {
+        setResolvedImage(url);
+        return;
+      }
 
-  const resolvedImage = getResolvedImageUrl(resident.primaryImageUrl);
-  const hasImage = !!resolvedImage;
+      setIsLoadingImage(true);
+      try {
+        // Unified path migration: All images reside in 'resident-photos'
+        const imageRef = ref(storage, `resident-photos/${url}`);
+        const downloadUrl = await getDownloadURL(imageRef);
+        setResolvedImage(downloadUrl);
+      } catch (error) {
+        console.warn(`Could not resolve storage path for: ${url}`);
+      } finally {
+        setIsLoadingImage(false);
+      }
+    }
+    resolve();
+  }, [resident.primaryImageUrl, storage]);
 
   return (
     <Card className={cn(
       "group overflow-hidden bg-card border-border rounded-2xl duck-card-hover h-full flex flex-col",
       !isDuck && "border-secondary/20 hover:border-secondary/40"
     )}>
-      <Link href={`/residents/${resident.id}`} className="relative aspect-[4/5] overflow-hidden shrink-0">
-        {hasImage ? (
+      <Link href={`/residents/${resident.id}`} className="relative aspect-[4/5] overflow-hidden shrink-0 bg-[#1a1a1a]">
+        {resolvedImage ? (
           <>
             <Image
-              src={resolvedImage!}
+              src={resolvedImage}
               alt={displayName}
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -53,11 +69,17 @@ export function ResidentCard({ resident }: ResidentCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           </>
         ) : (
-          <div className="w-full h-full bg-[#1a1a1a] flex flex-col items-center justify-center p-6 text-center border-b border-border">
-            <span className="text-7xl mb-4 transition-transform group-hover:scale-125 duration-500">
-              {isDuck ? '🦆' : '🐾'}
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
+          <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center">
+            {isLoadingImage ? (
+              <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+            ) : (
+              <>
+                <span className="text-7xl mb-4 transition-transform group-hover:scale-125 duration-500">
+                  {isDuck ? '🦆' : '🐾'}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
+              </>
+            )}
           </div>
         )}
         
