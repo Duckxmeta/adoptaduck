@@ -1,6 +1,24 @@
 
 {
   "entities": {
+    "Resident": {
+      "title": "Resident",
+      "type": "object",
+      "description": "Any sanctuary resident (Duck, Dog, Cat, Horse, etc.)",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "breed": { "type": "string" },
+        "sex": { "type": "string", "enum": ["male", "female", "unknown"] },
+        "personalityTraits": { "type": "string" },
+        "backstory": { "type": "string" },
+        "primaryImageUrl": { "type": "string" },
+        "isDuck": { "type": "boolean" },
+        "category": { "type": "string", "description": "Grouping label for Sanctuary Friends." },
+        "liveStatus": { "type": "string" },
+        "statusLastUpdated": { "type": "string" }
+      }
+    },
     "ResidentBird": {
       "title": "ResidentBird",
       "type": "object",
@@ -103,7 +121,11 @@
   "firestore": {
     "/birds/{birdId}": {
       "schema": "#/backend/entities/ResidentBird",
-      "description": "Sanctuary residents collection."
+      "description": "Legacy sanctuary ducks collection."
+    },
+    "/residents/{residentId}": {
+      "schema": "#/backend/entities/Resident",
+      "description": "Multi-species sanctuary residents collection."
     },
     "/egg_history/{date}": {
       "schema": "#/backend/entities/EggHistory",

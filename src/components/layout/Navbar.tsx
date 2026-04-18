@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -61,7 +62,7 @@ export function Navbar() {
 
   const navLinks = [
     { label: 'Home', href: '/', icon: Home },
-    { label: 'The Flock', href: '/flock', icon: Bird },
+    { label: 'Adoption', href: '/adopt', icon: Heart },
     { label: 'Our Story', href: '/our-story', icon: BookOpen },
     { label: 'Dashboard', href: getDashboardHref(), icon: LayoutDashboard },
     { label: user ? 'Logout' : 'Login', onClick: user ? handleLogout : () => router.push('/login'), icon: user ? LogOut : Lock },
@@ -82,8 +83,8 @@ export function Navbar() {
 
           <div className="hidden md:flex items-center gap-8">
             <Link href="/" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors", pathname === '/' && "text-primary")}>Home</Link>
-            <Link href="/flock" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/flock' && "text-primary")}>
-              <Bird className="h-3.5 w-3.5" /> The Flock
+            <Link href="/adopt" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors flex items-center gap-1.5", pathname === '/adopt' && "text-primary")}>
+              <Heart className="h-3.5 w-3.5" /> Adoption Hub
             </Link>
             <Link href="/our-story" className={cn("text-[10px] font-black uppercase tracking-[0.2em] hover:text-primary transition-colors", pathname === '/our-story' && "text-primary")}>
               Our Story

@@ -16,7 +16,7 @@ export type Resident = {
   isCommunityDuck?: boolean;
   motherId?: string;
   fatherId?: string;
-  source?: 'Founding' | 'Rehomed' | 'Hatched';
+  source?: 'Founding' | 'Rehomed' | 'Hatched' | 'Rescue';
   hatch_date?: string;
   isFoundingResident?: boolean;
   generation?: number;
@@ -25,6 +25,8 @@ export type Resident = {
   liveStatus?: string;
   statusLastUpdated?: string;
   isFeatured?: boolean;
+  isDuck?: boolean;
+  category?: string;
 };
 
 export type EggHistoryEntry = {
