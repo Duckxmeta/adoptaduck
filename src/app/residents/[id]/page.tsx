@@ -84,13 +84,13 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     async function resolveAll() {
       if (!bird) return;
       
-      // PRIORITY 1: Name mapping (High Performance)
+      // PRIORITY 1: Name mapping (Direct Injection)
       if (RESIDENT_IMAGE_MAP[bird.name]) {
         setResolvedImages([RESIDENT_IMAGE_MAP[bird.name]]);
         return;
       }
 
-      // PRIORITY 2: imageUrl field
+      // PRIORITY 2: imageUrl field from Firestore
       if (bird.imageUrl && bird.imageUrl.startsWith('http')) {
         setResolvedImages([bird.imageUrl, ...(bird.galleryImageUrls || [])]);
         return;
@@ -283,7 +283,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   <Sparkles className="h-4 w-4" /> Personality Profile
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg italic">
-                  "{bird?.personalityTraits || "A curious and friendly sanctuary resident."}"
+                  {bird?.personalityTraits ? `"${bird.personalityTraits}"` : ""}
                 </p>
               </div>
 
@@ -292,7 +292,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   <BookOpen className="h-4 w-4" /> Rescue Story & Narrative
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  {bird?.bio || bird?.backstory}
+                  {bird?.bio || bird?.backstory || ""}
                 </p>
               </div>
 
