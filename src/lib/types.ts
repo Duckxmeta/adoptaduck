@@ -3,6 +3,7 @@ export type Resident = {
   id: string;
   name: string;
   breed: string;
+  species?: string; // New: Specific species label (Canine, Feline, Horse)
   color?: string; // Physical color marker
   sex: 'male' | 'female' | 'unknown';
   heritageTree?: string;

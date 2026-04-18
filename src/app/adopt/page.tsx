@@ -9,7 +9,7 @@ import { Resident } from '@/lib/types';
 import { fetchAllSanctuaryResidents } from '@/lib/residents';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Heart, Sparkles, Bird, PawPrint } from 'lucide-react';
+import { Loader2, Sparkles, Bird, PawPrint, Heart } from 'lucide-react';
 
 /**
  * @fileOverview Adoption Hub.
@@ -24,6 +24,7 @@ export default function AdoptionPage() {
   useEffect(() => {
     async function load() {
       if (!firestore) return;
+      // Critical Dual-Collection Fetch
       const data = await fetchAllSanctuaryResidents(firestore);
       setResidents(data);
       setLoading(false);
@@ -31,14 +32,14 @@ export default function AdoptionPage() {
     load();
   }, [firestore]);
 
-  // Sectioning Logic
+  // Logic to separate 'The Flock' from 'Sanctuary Friends'
   const ducks = useMemo(() => residents.filter(r => r.isDuck), [residents]);
   const otherResidents = useMemo(() => residents.filter(r => !r.isDuck), [residents]);
 
-  // Grouping for Sanctuary Friends
+  // Dynamic grouping for Sanctuary Friends
   const groupedFriends = useMemo(() => {
     return otherResidents.reduce((acc, res) => {
-      const cat = res.category || 'General Friends';
+      const cat = res.category || 'Sanctuary Friends';
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(res);
       return acc;
@@ -55,7 +56,7 @@ export default function AdoptionPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground font-body selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
 
       <main className="flex-1 container mx-auto px-4 py-20 space-y-32">
@@ -79,8 +80,8 @@ export default function AdoptionPage() {
               <Bird className="h-8 w-8 text-primary" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-4xl font-headline font-black uppercase tracking-tight">The Flock</h2>
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Domestic Duck Residents</p>
+              <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">The Flock</h2>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Domestic Duck Residents</p>
             </div>
             <div className="h-px bg-border flex-1 hidden md:block" />
           </div>
@@ -98,7 +99,7 @@ export default function AdoptionPage() {
           )}
         </section>
 
-        {/* SECTION 2: SANCTUARY FRIENDS (OTHER ANIMALS) */}
+        {/* SECTION 2: SANCTUARY FRIENDS (DOGS, CATS, HORSES) */}
         {otherResidents.length > 0 && (
           <section className="space-y-20">
             <div className="flex items-center gap-6">
@@ -106,8 +107,8 @@ export default function AdoptionPage() {
                 <PawPrint className="h-8 w-8 text-secondary" />
               </div>
               <div className="space-y-1">
-                <h2 className="text-4xl font-headline font-black uppercase tracking-tight">Sanctuary Friends</h2>
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Rescues of All Kinds</p>
+                <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">Sanctuary Friends</h2>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Non-Duck Rescue Lineup</p>
               </div>
               <div className="h-px bg-border flex-1 hidden md:block" />
             </div>
