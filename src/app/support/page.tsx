@@ -314,17 +314,17 @@ function SupportContent() {
                 priority
               />
               {/* High-Contrast Overlay for the CTA */}
-              <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-8 text-center space-y-6">
-                <div className="bg-black/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/10 space-y-4">
+              <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center p-4 sm:p-8 text-center space-y-6">
+                <div className="bg-black/40 backdrop-blur-md p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 space-y-4 w-full max-w-sm sm:max-w-xl">
                   <Button 
                     asChild
-                    className="bg-primary text-primary-foreground font-black h-16 px-12 text-xl rounded-2xl shadow-2xl hover:scale-105 transition-transform"
+                    className="bg-primary text-primary-foreground font-black h-12 sm:h-16 px-6 sm:px-12 text-lg sm:text-xl rounded-2xl shadow-2xl hover:scale-105 transition-transform w-full max-w-[260px] sm:max-w-md"
                   >
                     <a href="https://justduckit-merch.printful.me/" target="_blank" rel="noopener noreferrer">
                       SHOP THE QUICK STORE
                     </a>
                   </Button>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/90">
+                  <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white/90">
                     Proceeds support sanctuary residents. <br />
                     Purchases are processed directly by Printful.me
                   </p>
