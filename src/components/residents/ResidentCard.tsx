@@ -26,8 +26,8 @@ export function ResidentCard({ resident }: ResidentCardProps) {
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
-    // Case-sensitive folder mapping: 'birds' or 'residents'
-    const folder = isDuck ? 'birds' : 'residents';
+    // Correct Folder Mapping: 'birds' for legacy flock, 'resident-photos' for new multi-species rescues
+    const folder = isDuck ? 'birds' : 'resident-photos';
     const bucket = "studio-7482167027-804c1.firebasestorage.app";
     return `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${folder}%2F${url}?alt=media`;
   };
