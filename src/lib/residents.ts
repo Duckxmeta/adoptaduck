@@ -1,4 +1,3 @@
-
 'use client';
 
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
@@ -30,8 +29,8 @@ export async function fetchAllSanctuaryResidents(db: Firestore): Promise<Residen
 
     // 2. Fetch Multi-Species Residents (Sanctuary Friends)
     const residentsRef = collection(db, 'residents');
-    const residentsQuery = query(residentsRef, orderBy('createdAt', 'desc'));
-    const residentsSnap = await getDocs(residentsQuery);
+    // Note: Fetching without orderBy initially to ensure immediate visibility while indexes propagate
+    const residentsSnap = await getDocs(residentsRef);
     const residentsList = residentsSnap.docs.map(doc => {
       const data = doc.data();
       return {
