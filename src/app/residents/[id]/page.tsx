@@ -35,6 +35,7 @@ import {
 import Link from 'next/link';
 import { ref, getDownloadURL } from 'firebase/storage';
 
+// DIRECT LINK INJECTION MAP - SANCTUARY SOURCE OF TRUTH
 const RESIDENT_IMAGE_MAP: Record<string, string> = {
   'Cassidy': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCassidy.jpeg?alt=media&token=f66f2e79-86e3-4ba3-8f3c-9aff47227075',
   'Echo': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FEcho.jpeg?alt=media&token=6375ff79-0b14-4611-b789-a640017ffc9f',
@@ -57,7 +58,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const storage = useStorage();
   const { user } = useUser();
 
-  // Profile Discovery State
+  // Profile Discovery State: Pushes discovery across multiple collections
   const [activeCollection, setActiveCollection] = useState<'birds' | 'residents'>('birds');
   const [isSearching, setIsSearching] = useState(true);
 
@@ -69,20 +70,18 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
-  // Fallback Discovery Logic
+  // Discovery Logic: Fallback mechanism for non-duck residents
   useEffect(() => {
     if (!isLoading) {
       if (!bird && activeCollection === 'birds') {
-        // Not in birds, immediately fall back to residents
         setActiveCollection('residents');
       } else {
-        // Found it or tried both
         setIsSearching(false);
       }
     }
   }, [isLoading, bird, activeCollection]);
 
-  // Resolved images state
+  // Image Resolution Logic: Forces unified pathing and direct-link injection
   const [resolvedImages, setResolvedImages] = useState<string[]>([]);
 
   useEffect(() => {
@@ -95,14 +94,16 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
       ])).filter(Boolean) as string[];
 
       const resolved = await Promise.all(rawUrls.map(async (url) => {
-        // 1. PRIORITY: Check for Direct Link Injection via Resident Name for primary photo
-        if (url === bird.primaryImageUrl && RESIDENT_IMAGE_MAP[bird.name]) {
+        // 1. PRIORITY: Direct Link Injection
+        if (RESIDENT_IMAGE_MAP[bird.name]) {
           return RESIDENT_IMAGE_MAP[bird.name];
         }
 
+        // 2. Standard resolution from Firestore
         if (url.startsWith('http')) return url;
+
         try {
-          // Unified Path: Exclusively resident-photos/
+          // Unified Migration Path: Force resident-photos/ folder
           const imageRef = ref(storage, `resident-photos/${url}`);
           return await getDownloadURL(imageRef);
         } catch (e) {
@@ -137,7 +138,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               <p className="text-muted-foreground font-medium">The record for <strong>{id}</strong> could not be located in our archives.</p>
             </div>
             <Button asChild className="w-full bg-primary text-primary-foreground font-black h-14 rounded-xl shadow-lg">
-              <Link href="/flock">RETURN TO THE FLOCK</Link>
+              <Link href="/adopt">RETURN TO THE SANCTUARY</Link>
             </Button>
           </div>
         </main>
@@ -147,7 +148,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   }
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
-  const isDuck = activeCollection === 'birds';
+  const isDuck = bird?.isDuck || activeCollection === 'birds';
   const displayName = getResidentName(bird);
 
   return (
@@ -156,13 +157,14 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
       
       <main className="flex-1 pb-32 animate-in fade-in duration-1000">
         <div className="container mx-auto px-4 pt-12">
+          {/* Navigation Fix: Point to Adoption Hub */}
           <Button 
             asChild
             variant="ghost" 
             className="mb-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary p-0 h-auto"
           >
-            <Link href="/flock">
-              <ArrowLeft className="h-3 w-3 mr-2" /> Back to Flock
+            <Link href="/adopt">
+              <ArrowLeft className="h-3 w-3 mr-2" /> Back to Sanctuary
             </Link>
           </Button>
 
@@ -238,9 +240,14 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-6 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     {bird?.species && <Badge variant="outline" className="border-border text-muted-foreground font-black uppercase">{bird.species}</Badge>}
+                     {(bird?.species || bird?.category) && (
+                       <Badge variant="outline" className="border-border text-muted-foreground font-black uppercase">
+                         {bird?.species || bird?.category}
+                       </Badge>
+                     )}
                   </div>
                 </div>
+                {/* Lineage Protection: Only for Ducks */}
                 {isGuardian && isDuck && (
                   <Button 
                     asChild
@@ -264,7 +271,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" /> Rescue Story & Heritage
+                  <BookOpen className="h-4 w-4" /> Rescue Story & Narrative
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {bird?.backstory || "A cherished resident of the Decent Ducks Sanctuary."}
