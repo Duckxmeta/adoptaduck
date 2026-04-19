@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Sparkles, Trophy, ArrowRight, Heart, CheckCircle2, Star } from 'lucide-react';
+import { Sparkles, Trophy, ArrowRight, Heart, CheckCircle2, Star, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -43,6 +43,29 @@ function SuccessContent() {
                 ? "Welcome to the Family, Guardian! Your support provides a high-quality home for our rescued birds."
                 : "Your contribution has been received. You've helped ensure our residents have everything they need today."}
             </p>
+          </div>
+
+          {/* Discord CTA - PROMINENT FUNNEL */}
+          <div className="max-w-2xl mx-auto w-full animate-in zoom-in duration-700 delay-500">
+            <Card className="bg-[#5865F2]/10 border-2 border-[#5865F2]/40 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <MessageSquare className="h-20 w-20 text-[#5865F2]" />
+              </div>
+              <div className="space-y-6 relative z-10">
+                <div className="flex flex-col items-center gap-2">
+                   <Badge className="bg-[#5865F2] text-white font-black uppercase text-[10px] tracking-widest px-4 py-1">Community Access</Badge>
+                   <h3 className="text-2xl font-headline font-black uppercase">Join the Inner Circle</h3>
+                   <p className="text-sm text-muted-foreground font-medium max-w-md mx-auto">
+                     Connect with the sanctuary team and get daily resident photos, videos, and voting rights for facility upgrades.
+                   </p>
+                </div>
+                <Button asChild size="lg" className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                   <a href="https://discord.gg/ERegmyNdcG" target="_blank" rel="noopener noreferrer">
+                     JOIN THE ADOPTER DISCORD <MessageSquare className="ml-2 h-5 w-5 fill-current" />
+                   </a>
+                </Button>
+              </div>
+            </Card>
           </div>
 
           {/* Branded Achievement Anchor */}

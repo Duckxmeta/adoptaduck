@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Download, 
   Share2, 
@@ -17,7 +18,8 @@ import {
   Award, 
   Sparkles,
   ShieldCheck,
-  Heart
+  Heart,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,7 +34,7 @@ function SuccessContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push('/dashboard');
-    }, 30000);
+    }, 60000); // Extended for Discord onboarding
     return () => clearTimeout(timer);
   }, [router]);
 
@@ -75,9 +77,32 @@ function SuccessContent() {
             </p>
           </div>
 
+          {/* Discord CTA - PROMINENT ONBOARDING */}
+          <div className="max-w-2xl mx-auto w-full animate-in zoom-in duration-700 delay-300 no-print">
+            <Card className="bg-[#5865F2]/10 border-2 border-[#5865F2]/40 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <MessageSquare className="h-20 w-20 text-[#5865F2]" />
+              </div>
+              <div className="space-y-6 relative z-10">
+                <div className="flex flex-col items-center gap-2">
+                   <Badge className="bg-[#5865F2] text-white font-black uppercase text-[10px] tracking-widest px-4 py-1">Inner Circle Access</Badge>
+                   <h3 className="text-3xl font-headline font-black uppercase tracking-tight leading-none">Enter the Adopter Discord</h3>
+                   <p className="text-base text-muted-foreground font-medium max-w-md mx-auto">
+                     Get instant access to the daily resident pulse. Photos, videos, and facility updates happen here first.
+                   </p>
+                </div>
+                <Button asChild size="lg" className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                   <a href="https://discord.gg/ERegmyNdcG" target="_blank" rel="noopener noreferrer">
+                     JOIN THE COMMUNITY <MessageSquare className="ml-2 h-6 w-6 fill-current" />
+                   </a>
+                </Button>
+              </div>
+            </Card>
+          </div>
+
           {/* Certificate Customizer */}
           {!initialName && (
-            <Card className="max-w-md mx-auto bg-card/50 border-border backdrop-blur-sm p-6 rounded-2xl animate-in fade-in duration-1000 delay-300">
+            <Card className="max-w-md mx-auto bg-card/50 border-border backdrop-blur-sm p-6 rounded-2xl animate-in fade-in duration-1000 delay-300 no-print">
               <div className="space-y-4">
                 <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Enter Name for Certificate</Label>
                 <div className="flex gap-2">
@@ -190,7 +215,7 @@ function SuccessContent() {
           </div>
 
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground pt-12 no-print">
-            Returning to Sanctuary in 30 seconds...
+            Returning to Sanctuary in 60 seconds...
           </p>
 
         </div>

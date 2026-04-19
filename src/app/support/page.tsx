@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, Suspense } from 'react';
@@ -17,7 +18,8 @@ import {
   Star,
   ShoppingBag,
   ExternalLink,
-  Ticket
+  Ticket,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -178,13 +180,13 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 2. GUARDIAN SUBSCRIPTIONS */}
+        {/* 2. SANCTUARY SUBSCRIPTIONS */}
         <section id="membership" className="py-24 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px bg-border flex-1" />
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-                <Trophy className="h-4 w-4" /> 2. Guardian Subscriptions
+                <Trophy className="h-4 w-4" /> 2. Sanctuary Subscriptions
               </h2>
               <div className="h-px bg-border flex-1" />
             </div>
@@ -211,15 +213,21 @@ function SupportContent() {
               <Card className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-primary/10 scale-105 z-10 border-t-8 border-t-primary">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Heart className="h-20 w-20 text-primary fill-primary" /></div>
                 <div className="space-y-1 relative z-10">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Guardian</h3>
-                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Adopt-a-Duck Experience</p>
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Sanctuary Guardian</h3>
+                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">General Mission Support</p>
                 </div>
                 <div className="space-y-1 relative z-10">
                   <div className="text-4xl font-headline font-black text-primary">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest">($.27 a day)</p>
                 </div>
                 <ul className="flex-1 space-y-3 relative z-10">
-                  {['Official Virtual Adoption', 'Naming Rights for Rescues', 'Detailed Lineage Trees', 'Exclusive Member Badge', 'Direct Care Updates'].map((p, i) => (
+                  {[
+                    'Collaborative Input (Facility Voting)',
+                    'Access to Adopter Discord',
+                    'Daily Resident Photos & Videos',
+                    'Exclusive Member Badge',
+                    'Direct Care Updates'
+                  ].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black text-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" /> {p}
                     </li>
@@ -246,14 +254,21 @@ function SupportContent() {
               <Card className="bg-card border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl border-t-4 border-t-secondary">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Founding Member</h3>
-                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Lifetime Impact</p>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Sustainability Impact</p>
                 </div>
                 <div className="space-y-1">
                   <div className="text-4xl font-headline font-black text-secondary">$75<span className="text-xs font-medium text-muted-foreground ml-1">/yr</span></div>
                   <p className="text-[10px] font-black text-secondary uppercase tracking-widest">($.20 a day)</p>
                 </div>
                 <ul className="flex-1 space-y-3">
-                  {['Everything in Guardian', 'Name on Physical Ledger', 'Annual Impact Report', 'Founding Member Seal', 'Priority Rescue Alerts'].map((p, i) => (
+                  {[
+                    'Everything in Guardian',
+                    'Name on Physical Ledger',
+                    'Permanent Sanctuary Recognition',
+                    'Founding Member Seal',
+                    'Priority Rescue Alerts',
+                    'Access to Adopter Discord'
+                  ].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <Star className="h-4 w-4" /> {p}
                     </li>

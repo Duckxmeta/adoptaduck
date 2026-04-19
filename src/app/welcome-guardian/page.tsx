@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Suspense, useState, useRef } from 'react';
@@ -6,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   Download, 
   Share2, 
@@ -15,7 +17,8 @@ import {
   ShieldCheck,
   Heart,
   PartyPopper,
-  ArrowRight
+  ArrowRight,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -64,6 +67,29 @@ function WelcomeGuardianContent() {
             <p className="text-muted-foreground text-lg md:text-xl font-medium max-w-2xl mx-auto">
               Your impact starts now. Below is your official certificate of guardianship for the 2026 season.
             </p>
+          </div>
+
+          {/* Discord CTA - INNER CIRCLE FUNNEL */}
+          <div className="max-w-2xl mx-auto w-full animate-in zoom-in duration-700 delay-500 no-print">
+            <Card className="bg-[#5865F2]/10 border-2 border-[#5865F2]/40 rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <MessageSquare className="h-20 w-20 text-[#5865F2]" />
+              </div>
+              <div className="space-y-6 relative z-10">
+                <div className="flex flex-col items-center gap-2">
+                   <Badge className="bg-[#5865F2] text-white font-black uppercase text-[10px] tracking-widest px-4 py-1">Official Onboarding</Badge>
+                   <h3 className="text-3xl font-headline font-black uppercase tracking-tight">Access the Inner Circle</h3>
+                   <p className="text-base text-muted-foreground font-medium max-w-md mx-auto">
+                     Enter the Adopter Discord to see daily resident photos, real-time sanctuary updates, and facility upgrade voting.
+                   </p>
+                </div>
+                <Button asChild size="lg" className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                   <a href="https://discord.gg/ERegmyNdcG" target="_blank" rel="noopener noreferrer">
+                     JOIN THE DISCORD <MessageSquare className="ml-2 h-6 w-6 fill-current" />
+                   </a>
+                </Button>
+              </div>
+            </Card>
           </div>
 
           {/* Digital Adoption Certificate */}
