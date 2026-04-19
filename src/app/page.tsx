@@ -26,7 +26,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
-import { DOTMSpotlight } from '@/components/DOTMSpotlight';
+import { FeaturedResident } from '@/components/home/FeaturedResident';
 
 export default function Home() {
   const firestore = useFirestore();
@@ -117,9 +117,8 @@ export default function Home() {
               </p>
             </div>
             
-            {/* TIERED HERO CTA GRID */}
+            {/* CHOICE ARCHITECTURE: TIERED HERO CTA GRID */}
             <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto">
-              {/* PRIMARY ROW */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full text-lg rounded-2xl shadow-xl uppercase tracking-tight" asChild>
                   <Link href="/support">GENERAL SUPPORT</Link>
@@ -129,13 +128,12 @@ export default function Home() {
                 </Button>
               </div>
               
-              {/* SECONDARY ROW */}
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Button variant="outline" size="sm" className="border-white/20 text-white/80 font-black hover:bg-white/10 hover:text-white h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl" asChild>
                   <Link href="/our-story">OUR STORY</Link>
                 </Button>
                 <Button variant="outline" size="sm" className="border-white/20 text-white/80 font-black hover:bg-white/10 hover:text-white h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl" asChild>
-                  <Link href="/adopt">MEET THE FLOCK</Link>
+                  <Link href="/adopt">MEET THE RESIDENTS</Link>
                 </Button>
               </div>
             </div>
@@ -180,12 +178,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* DUCK OF THE MONTH SPOTLIGHT */}
+        {/* RESIDENT OF THE MONTH SPOTLIGHT */}
         <section className="py-24 bg-background border-b border-border">
           <div className="container mx-auto px-4 flex flex-col items-center gap-12">
-            <DOTMSpotlight />
+            <FeaturedResident />
             <Button asChild variant="outline" size="lg" className="border-primary text-primary font-black h-16 px-10 rounded-2xl hover:bg-primary/10 transition-transform hover:scale-105 shadow-xl uppercase text-xs tracking-widest">
-              <Link href="/flock">Meet the Rest of the Flock <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              <Link href="/adopt">Meet the Rest of the Residents <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
           </div>
         </section>
@@ -212,7 +210,6 @@ export default function Home() {
                     fill 
                     className="object-cover"
                   />
-                  {/* Clean Centered Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center p-4">
                     <Button 
                       asChild
