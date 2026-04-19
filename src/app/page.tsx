@@ -91,7 +91,7 @@ export default function Home() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative h-[85vh] flex items-center justify-center overflow-hidden w-full bg-[#1A1A1A]">
+        <section className="relative h-[90vh] flex items-center justify-center overflow-hidden w-full bg-[#1A1A1A]">
           <Image 
             src="https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/IMG_4297.jpeg?alt=media&token=6bf819bf-3329-4dea-8fe4-e715d60978c7" 
             alt="Sanctuary Hero" 
@@ -117,19 +117,27 @@ export default function Home() {
               </p>
             </div>
             
-            {/* BUTTON TRIANGLE FORMATION */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
-                <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full sm:min-w-[260px] px-12 text-lg rounded-2xl shadow-xl" asChild>
-                  <Link href="/support#adopt">ADOPT A RESIDENT</Link>
+            {/* TIERED HERO CTA GRID */}
+            <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto">
+              {/* PRIMARY ROW */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full text-lg rounded-2xl shadow-xl uppercase tracking-tight" asChild>
+                  <Link href="/support">GENERAL SUPPORT</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white/20 text-white font-black backdrop-blur-md hover:bg-white/10 h-16 w-full sm:min-w-[260px] px-12 text-lg rounded-2xl" asChild>
-                  <Link href="/flock">MEET THE FLOCK</Link>
+                <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full text-lg rounded-2xl shadow-xl uppercase tracking-tight" asChild>
+                  <Link href="/adopt">ADOPT A FRIEND</Link>
                 </Button>
               </div>
-              <Button variant="outline" size="sm" className="border-primary text-primary font-black hover:bg-primary/10 h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl mt-2" asChild>
-                <Link href="/our-story">READ OUR STORY</Link>
-              </Button>
+              
+              {/* SECONDARY ROW */}
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Button variant="outline" size="sm" className="border-white/20 text-white/80 font-black hover:bg-white/10 hover:text-white h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl" asChild>
+                  <Link href="/our-story">OUR STORY</Link>
+                </Button>
+                <Button variant="outline" size="sm" className="border-white/20 text-white/80 font-black hover:bg-white/10 hover:text-white h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl" asChild>
+                  <Link href="/adopt">MEET THE FLOCK</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
