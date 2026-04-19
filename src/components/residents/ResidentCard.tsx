@@ -8,17 +8,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Resident } from '@/lib/types';
-import { ChevronRight, GitBranch, Trophy, PawPrint, Bird, Loader2 } from 'lucide-react';
+import { ChevronRight, GitBranch, Trophy, PawPrint, Bird, Loader2, Heart, Lock } from 'lucide-react';
 import { useUser, useStorage } from '@/firebase';
 import { getResidentName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { ref, getDownloadURL } from 'firebase/storage';
+import { AdoptionModal } from './AdoptionModal';
 
-interface ResidentCardProps {
-  resident: Resident;
-}
-
-// DIRECT LINK INJECTION MAP - BYPASSES STORAGE SDK RESOLUTION ISSUES
+// DIRECT LINK INJECTION MAP
 const RESIDENT_IMAGE_MAP: Record<string, string> = {
   'Cassidy': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCassidy.jpeg?alt=media&token=f66f2e79-86e3-4ba3-8f3c-9aff47227075',
   'Echo': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FEcho.jpeg?alt=media&token=6375ff79-0b14-4611-b789-a640017ffc9f',
@@ -44,20 +41,18 @@ export function ResidentCard({ resident }: ResidentCardProps) {
   const displayName = getResidentName(resident);
   const isDuck = !!resident.isDuck;
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
+  const isSponsored = !!resident.isSponsored;
   
   useEffect(() => {
     async function resolve() {
-      // 1. PRIORITY: Direct Link Injection via Resident Name
       if (RESIDENT_IMAGE_MAP[resident.name]) {
         setResolvedImage(RESIDENT_IMAGE_MAP[resident.name]);
         return;
       }
 
-      // 2. Standard resolution from Firestore schema
       const fileName = resident.primaryImageUrl;
       if (!fileName) return;
 
-      // If it's already a full URL, use it
       if (fileName.startsWith('http')) {
         setResolvedImage(fileName);
         return;
@@ -65,12 +60,10 @@ export function ResidentCard({ resident }: ResidentCardProps) {
 
       setIsLoadingImage(true);
       try {
-        // FORCE RESOLUTION: Explicitly prefix with resident-photos/
         const storageRef = ref(storage, `resident-photos/${fileName}`);
         const downloadUrl = await getDownloadURL(storageRef);
         setResolvedImage(downloadUrl);
       } catch (error) {
-        console.error(`Storage Resolution Error for ${fileName}:`, error);
         setResolvedImage(null);
       } finally {
         setIsLoadingImage(false);
@@ -93,7 +86,6 @@ export function ResidentCard({ resident }: ResidentCardProps) {
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-110"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              data-ai-hint="sanctuary resident"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
           </>
@@ -112,7 +104,6 @@ export function ResidentCard({ resident }: ResidentCardProps) {
           </div>
         )}
         
-        {/* Identity Badge - Top Left */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           <Badge className="bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1 flex items-center gap-1.5">
             {isDuck ? <Bird className="h-3 w-3 text-primary" /> : <PawPrint className="h-3 w-3 text-secondary" />}
@@ -120,7 +111,6 @@ export function ResidentCard({ resident }: ResidentCardProps) {
           </Badge>
         </div>
 
-        {/* Dynamic Generation Badge (Ducks Only) - Top Right */}
         {isDuck && (
           <div className="absolute top-4 right-4">
             {resident.generation === 0 || (resident.generation === undefined && isFounder) ? (
@@ -136,27 +126,32 @@ export function ResidentCard({ resident }: ResidentCardProps) {
         )}
         
         <div className="absolute bottom-4 left-4 right-4 text-white">
-          <div className="flex justify-between items-end">
-            <div>
-              <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{displayName}</h3>
-              <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-2">
-                {resident.breed} • {resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Resident'}
-              </p>
-            </div>
+          <div>
+            <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{displayName}</h3>
+            <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-2">
+              {resident.breed} • {resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Resident'}
+            </p>
           </div>
         </div>
       </Link>
       
       <CardContent className="p-4 flex flex-col gap-3 bg-card mt-auto">
-         {isDuck && (
-           <Button asChild variant="outline" size="sm" className="w-full text-[9px] font-black uppercase tracking-widest border-border hover:bg-primary hover:text-primary-foreground h-10 rounded-xl">
-             <Link href={`/residents/${resident.id}/tree`}>
-               <GitBranch className="mr-2 h-3.5 w-3.5" /> View Heritage Tree
-             </Link>
+         {isSponsored ? (
+           <Button disabled variant="outline" className="w-full h-11 rounded-xl bg-muted/20 border-border text-muted-foreground font-black uppercase text-[10px] tracking-widest cursor-not-allowed">
+             <Lock className="mr-2 h-3.5 w-3.5" /> Fully Sponsored
            </Button>
+         ) : (
+           <AdoptionModal 
+             resident={resident} 
+             trigger={
+               <Button className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 transition-transform">
+                 <Heart className="mr-2 h-3.5 w-3.5 fill-current" /> Adopt Now
+               </Button>
+             }
+           />
          )}
          
-         <div className="flex justify-between items-center">
+         <div className="flex justify-between items-center pt-1">
            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">
              {resident.category}
            </span>

@@ -3,7 +3,7 @@ export type Resident = {
   id: string;
   name: string;
   breed: string;
-  species?: string; // New: Specific species label (Canine, Feline, Horse)
+  species?: string; // Specific species label (Equine, Canine, Feline, Waterfowl)
   color?: string; // Physical color marker
   sex: 'male' | 'female' | 'unknown';
   heritageTree?: string;
@@ -30,6 +30,7 @@ export type Resident = {
   statusLastUpdated?: string;
   isFeatured?: boolean;
   isDuck?: boolean;
+  isSponsored?: boolean; // Sponsorship lock status
   category?: string;
 };
 

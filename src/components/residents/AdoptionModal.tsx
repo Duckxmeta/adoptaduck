@@ -14,17 +14,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight, Check } from "lucide-react";
+import { Heart, ShieldCheck, Sparkles, Loader2, ArrowRight, Check, Lock } from "lucide-react";
 import { Resident, UserProfile } from "@/lib/types";
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+
+const SPECIES_PRICES: Record<string, string> = {
+  'Equine': 'price_1TNkneGyzCRtb3Hx34rLQuwT',
+  'Canine': 'price_1TNkoBGyzCRtb3Hx0UPYH362',
+  'Feline': 'price_1TNkogGyzCRtb3HxrCOZuCiO',
+  'Waterfowl': 'price_1TNkpHGyzCRtb3HxkFkl9C0d',
+  'Duck': 'price_1TNkpHGyzCRtb3HxkFkl9C0d',
+};
 
 export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const [suggestedName, setSuggestedName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -35,6 +46,45 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
   const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
   const displayName = resident.name;
+  const isSponsored = !!resident.isSponsored;
+
+  const handleStartCheckout = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    setIsCheckoutLoading(true);
+    try {
+      const speciesKey = resident.species || (resident.isDuck ? 'Waterfowl' : 'Waterfowl');
+      const priceId = SPECIES_PRICES[speciesKey] || 'price_1THAffGyzCRtb3Hx7RHfIdqC';
+
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId,
+          userId: user.uid,
+          userEmail: user.email,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.assign(data.url);
+      } else {
+        throw new Error('Could not initiate checkout session.');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Checkout Error",
+        description: error.message || "Financial engine unavailable.",
+      });
+    } finally {
+      setIsCheckoutLoading(false);
+    }
+  };
 
   const handleSubmitSuggestion = async () => {
     if (!user) {
@@ -45,7 +95,6 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
     setIsSubmitting(true);
     try {
       if (suggestedName.trim() && firestore) {
-        // Naming Request Engine: Save to naming_requests
         const requestData = {
           birdId: resident.id,
           birdName: resident.name,
@@ -70,11 +119,8 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
         }
       }
       
-      // If not Guardian, redirect to support
-      setTimeout(() => {
-        router.push(`/support?bird=${encodeURIComponent(displayName)}#membership`);
-        setIsSubmitting(false);
-      }, 800);
+      // If not Guardian, proceed to direct checkout flow
+      handleStartCheckout();
     } catch (error) {
       console.error("Submission Error:", error);
       toast({
@@ -86,13 +132,22 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
     }
   };
 
+  if (isSponsored) {
+    return (
+      <Button disabled className="w-full bg-muted text-muted-foreground font-black py-8 text-xl rounded-2xl border-2 border-border cursor-not-allowed">
+        <Lock className="mr-3 h-6 w-6" />
+        FULLY SPONSORED
+      </Button>
+    );
+  }
+
   return (
     <Dialog onOpenChange={(open) => !open && setIsSuccess(false)}>
       <DialogTrigger asChild>
         {trigger || (
           <Button size="lg" className="w-full bg-primary text-primary-foreground font-black hover:scale-105 transition-all py-8 text-xl rounded-2xl shadow-lg shadow-primary/20">
             <Heart className="mr-3 h-6 w-6 fill-current" />
-            SUPPORT {displayName.toUpperCase()}
+            ADOPT {displayName.toUpperCase()}
           </Button>
         )}
       </DialogTrigger>
@@ -102,12 +157,12 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
             <Heart className="h-10 w-10 text-primary fill-primary" />
           </div>
           <DialogTitle className="font-headline text-2xl font-black uppercase tracking-tight">
-            {isSuccess ? "REQUEST FILED!" : `Support ${displayName}`}
+            {isSuccess ? "REQUEST FILED!" : `Adopt ${displayName}`}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-sm font-medium leading-relaxed">
             {isSuccess 
               ? "Your name suggestion has been queued for admin review. Thank you for your guardianship!" 
-              : "Direct contributions fund the immediate care, health, and happiness of our residents."}
+              : "Virtually adopt this resident to fund their food, bedding, and medical care."}
           </DialogDescription>
         </div>
 
@@ -132,11 +187,11 @@ export function AdoptionModal({ resident, trigger }: AdoptionModalProps) {
               <div className="space-y-4">
                 <Button 
                   onClick={handleSubmitSuggestion}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isCheckoutLoading}
                   className="w-full bg-primary text-primary-foreground font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-[1.02] transition-transform"
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                    isGuardian ? "SUBMIT NAME SUGGESTION" : <>CONTINUE TO SUPPORT <ArrowRight className="ml-2 h-5 w-5" /></>
+                  {isSubmitting || isCheckoutLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                    isGuardian ? "SUBMIT NAME SUGGESTION" : <>START VIRTUAL ADOPTION <ArrowRight className="ml-2 h-5 w-5" /></>
                   )}
                 </Button>
                 <div className="flex flex-col items-center gap-2 text-[9px] text-center text-muted-foreground font-black uppercase tracking-[0.2em]">

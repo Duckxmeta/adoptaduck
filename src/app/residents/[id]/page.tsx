@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  GitBranch
+  GitBranch,
+  Lock
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useStorage } from '@/firebase';
@@ -84,21 +85,18 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     async function resolveAll() {
       if (!bird) return;
       
-      // PRIORITY 1: Name mapping (Direct Injection)
       if (RESIDENT_IMAGE_MAP[bird.name]) {
         setResolvedImages([RESIDENT_IMAGE_MAP[bird.name]]);
         return;
       }
 
-      // PRIORITY 2: imageUrl field from Firestore
       if (bird.imageUrl && bird.imageUrl.startsWith('http')) {
         setResolvedImages([bird.imageUrl, ...(bird.galleryImageUrls || [])]);
         return;
       }
 
-      // PRIORITY 3: storage resolution from image filename
       const urls: string[] = [];
-      const primaryPath = bird.image || bird.primaryImageUrl;
+      const primaryPath = bird.primaryImageUrl || bird.image;
       
       if (primaryPath) {
         if (primaryPath.startsWith('http')) {
@@ -164,6 +162,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const isDuck = bird?.isDuck || activeCollection === 'birds';
+  const isSponsored = !!bird?.isSponsored;
   const displayName = getResidentName(bird);
 
   return (
@@ -297,7 +296,15 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="pt-6">
-                {bird && <AdoptionModal resident={bird} />}
+                {bird && (
+                  isSponsored ? (
+                    <Button disabled className="w-full bg-muted text-muted-foreground font-black h-16 text-lg rounded-2xl border-2 border-border cursor-not-allowed">
+                      <Lock className="mr-2 h-5 w-5" /> FULLY SPONSORED
+                    </Button>
+                  ) : (
+                    <AdoptionModal resident={bird} />
+                  )
+                )}
               </div>
             </div>
           </div>
