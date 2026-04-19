@@ -146,7 +146,7 @@ export default function Home() {
                   The Digital Flock: <span className="text-primary">No Pond Required 🦆</span>
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed">
-                  Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Cocoa. Forget the standard pet—adopt a feathered resident as your digital companion.
+                  Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Moxie. Forget the standard pet—adopt a feathered resident as your digital companion.
                 </p>
               </div>
 
