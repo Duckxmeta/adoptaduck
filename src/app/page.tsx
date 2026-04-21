@@ -18,7 +18,8 @@ import {
   ShoppingBag,
   ExternalLink,
   BookOpen,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -249,7 +250,7 @@ export default function Home() {
         </section>
 
         {/* Educational Section */}
-        <section className="py-32 container mx-auto px-4">
+        <section className="py-32 container mx-auto px-4 border-b border-border">
           <div className="text-center mb-16 space-y-4">
             <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-widest">WHY WE EXIST</Badge>
             <h2 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-none">Domestic <span className="text-primary">vs.</span> Wildlife</h2>
@@ -283,6 +284,35 @@ export default function Home() {
                 </CardContent>
               </div>
             </Card>
+          </div>
+        </section>
+
+        {/* Partners of the Sanctuary */}
+        <section className="py-24 container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">OUR SUPPORTIVE ECOSYSTEM</h3>
+            <h2 className="text-3xl font-headline font-black uppercase tracking-tight">Partners of the Sanctuary</h2>
+          </div>
+          
+          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
+            <Link href="/partners" className="group">
+              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
+                <Zap className="h-12 w-12 text-secondary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">Solana Strays</span>
+              </div>
+            </Link>
+            <Link href="/partners" className="group">
+              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
+                <Bird className="h-12 w-12 text-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">Quakk</span>
+              </div>
+            </Link>
+            <Link href="/partners" className="group">
+              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
+                <Globe className="h-12 w-12 text-[#14F195]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">TN Waterfowl Collective</span>
+              </div>
+            </Link>
           </div>
         </section>
       </main>
