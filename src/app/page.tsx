@@ -78,9 +78,21 @@ export default function Home() {
   const merchSpotlightUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/QuackMerch.jpg?alt=media";
 
   const partners = [
-    { name: "Solana Strays", url: getPartnerUrl("partners/solanastrayslogo.jpg") },
-    { name: "Quakk", url: getPartnerUrl("partners/quakk crest logo black.jpeg") },
-    { name: "Broken Fence Farms", url: getPartnerUrl("partners/brokenfencefarms.jpg") }
+    { 
+      name: "Solana Strays", 
+      url: getPartnerUrl("partners/solanastrayslogo.jpg"),
+      websiteUrl: "https://solanastrays.xyz/"
+    },
+    { 
+      name: "Quakk", 
+      url: getPartnerUrl("partners/quakk crest logo black.jpeg"),
+      websiteUrl: "https://conservation.quakklife.com/"
+    },
+    { 
+      name: "Broken Fence Farms", 
+      url: getPartnerUrl("partners/brokenfencefarms.jpg"),
+      websiteUrl: "https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr"
+    }
   ];
 
   if (!mounted) return null;
@@ -302,7 +314,13 @@ export default function Home() {
           
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
             {partners.map((partner, i) => (
-              <Link key={i} href="/partners" className="group">
+              <a 
+                key={i} 
+                href={partner.websiteUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group"
+              >
                 <div className="flex flex-col items-center gap-4 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110">
                   <div className="relative w-32 h-20 md:w-40 md:h-24">
                     <Image 
@@ -314,7 +332,7 @@ export default function Home() {
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">{partner.name}</span>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>
