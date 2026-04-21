@@ -17,8 +17,11 @@ import {
   XCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function FoundADuckPage() {
+  const brokenFenceLogo = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/partners%2Fbrokenfencefarms.jpg?alt=media";
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
@@ -119,28 +122,46 @@ export default function FoundADuckPage() {
                </div>
             </div>
 
-            {/* STEP 3: Contact */}
+            {/* STEP 3: Intake Partner */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
                <div className="md:col-span-1 flex flex-col items-center">
                   <div className="w-12 h-12 rounded-full bg-primary text-black font-black flex items-center justify-center text-xl shadow-lg">3</div>
                </div>
                <div className="md:col-span-11 space-y-8">
                   <div className="space-y-4">
-                    <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight">CONTACT A <span className="text-primary">REHABBER</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight">CONTACT OUR <span className="text-primary">INTAKE PARTNER</span></h2>
                     <p className="text-muted-foreground text-lg font-medium leading-relaxed">
-                      We coordinate rescues across the region. Reach out for transport help or facility availability.
+                      Broken Fence Farms is our primary facility for new arrivals. We accept abandoned or unwanted Ducks, Chickens, Turkeys, and Peafowl.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <Button size="lg" className="h-20 bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform" asChild>
-                        <a href="mailto:decentducksorg@gmail.com">
-                           EMAIL SANCTUARY <Phone className="ml-2 h-6 w-6" />
-                        </a>
-                     </Button>
-                     <Button variant="outline" size="lg" className="h-20 border-primary text-primary font-black text-lg rounded-2xl hover:bg-primary/10" asChild>
-                        <Link href="/visit">VIEW LOCATIONS <ArrowRight className="ml-2 h-6 w-6" /></Link>
-                     </Button>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                     <div className="space-y-4">
+                        <Button size="lg" className="h-20 w-full bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform" asChild>
+                           <a href="https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
+                              CONTACT FOR INTAKE <ArrowRight className="ml-2 h-6 w-6" />
+                           </a>
+                        </Button>
+                        <Button variant="ghost" className="w-full text-muted-foreground font-black text-[10px] tracking-widest uppercase" asChild>
+                           <a href="mailto:decentducksorg@gmail.com">EMAIL SANCTUARY COORDINATOR</a>
+                        </Button>
+                     </div>
+                     
+                     <Card className="bg-card border-2 border-primary/20 rounded-3xl p-6 flex items-center gap-6 overflow-hidden group hover:border-primary transition-colors">
+                        <div className="relative w-20 h-20 shrink-0 grayscale group-hover:grayscale-0 transition-all">
+                           <Image 
+                              src={brokenFenceLogo} 
+                              alt="Broken Fence Farms" 
+                              fill 
+                              className="object-contain"
+                           />
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[10px] font-black uppercase tracking-widest text-primary">Intake Hub</p>
+                           <h4 className="font-headline font-black uppercase text-lg leading-none">Broken Fence Farms</h4>
+                           <p className="text-[9px] font-bold text-muted-foreground uppercase">Middle Tennessee Region</p>
+                        </div>
+                     </Card>
                   </div>
 
                   <div className="p-8 bg-card border border-border rounded-3xl text-center italic text-muted-foreground text-sm font-medium">
