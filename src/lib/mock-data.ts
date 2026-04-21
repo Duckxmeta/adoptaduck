@@ -2,12 +2,17 @@
 import { Expense } from './types';
 
 /**
- * MASTER SANCTUARY LEDGER - AUDITED APRIL 10, 2026
- * Total Investment: $212.44
+ * MASTER SANCTUARY LEDGER - AUDITED APRIL 12, 2026
+ * Total Investment: $254.64
  * High-precision species-specific tracking for 501(c)(3) readiness.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
+  // --- APRIL 12, 2026 BATCH (Infrastructure & Habitat Expansion) ---
+  { id: 'h9', itemName: '5x 6ft T-posts (Fencing Infrastructure)', cost: 28.45, category: 'Habitat', date: '2026-04-12', createdAt: '2026-04-12T09:00:00Z' },
+  { id: 'h10', itemName: 'Kiddie Pool (Drought Relief Habitat)', cost: 10.00, category: 'Habitat', date: '2026-04-12', createdAt: '2026-04-12T09:00:00Z' },
+  { id: 'g9', itemName: 'Sales Tax (T-posts & Pool)', cost: 3.75, category: 'General', date: '2026-04-12', createdAt: '2026-04-12T09:00:00Z' },
+
   // --- APRIL 10, 2026 BATCH ---
   { id: 'b3', itemName: 'DMR Duck Feed (50lb)', cost: 25.99, category: 'Ducks', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
   { id: 'h8', itemName: 'Fescue Hay (Bedding)', cost: 9.00, category: 'Habitat', date: '2026-04-10', createdAt: '2026-04-10T10:00:00Z' },
