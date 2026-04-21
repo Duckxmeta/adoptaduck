@@ -3,21 +3,18 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   Handshake, 
-  Sparkles, 
-  Globe, 
-  Bird, 
-  ShoppingBag,
-  ExternalLink,
-  ShieldCheck,
-  Zap,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+
+const BUCKET = "studio-7482167027-804c1.firebasestorage.app";
+const getPartnerUrl = (path: string) => `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
 
 export default function PartnersPage() {
   const partners = [
@@ -25,21 +22,21 @@ export default function PartnersPage() {
       name: "Solana Strays",
       role: "Ecosystem Partner",
       desc: "Building a bridge between decentralized finance and animal rescue operations.",
-      icon: <Zap className="h-10 w-10 text-secondary" />,
+      logoUrl: getPartnerUrl("partners/solanastrayslogo.jpg"),
       color: "border-secondary/20"
     },
     {
       name: "Quakk",
       role: "Strategic Collaborator",
       desc: "Providing high-fidelity tracking tools and platform support for waterfowl enthusiasts.",
-      icon: <Bird className="h-10 w-10 text-primary" />,
+      logoUrl: getPartnerUrl("partners/quakk crest logo black.jpeg"),
       color: "border-primary/20"
     },
     {
-      name: "Tennessee Waterfowl Collective",
+      name: "Broken Fence Farms",
       role: "Local Host Partner",
       desc: "Our primary regional partner for large-scale rescue logistics and habitat protection.",
-      icon: <Globe className="h-10 w-10 text-[#14F195]" />,
+      logoUrl: getPartnerUrl("partners/brokenfencefarms.jpg"),
       color: "border-[#14F195]/20"
     }
   ];
@@ -70,8 +67,13 @@ export default function PartnersPage() {
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {partners.map((p, i) => (
                 <Card key={i} className={`bg-card border-2 ${p.color} rounded-[2.5rem] p-10 space-y-6 shadow-2xl hover:glow-primary transition-all group`}>
-                   <div className="p-4 bg-background rounded-2xl border border-border inline-block group-hover:scale-110 transition-transform">
-                      {p.icon}
+                   <div className="relative h-20 w-40 mb-4 group-hover:scale-110 transition-transform">
+                      <Image 
+                        src={p.logoUrl} 
+                        alt={p.name} 
+                        fill 
+                        className="object-contain"
+                      />
                    </div>
                    <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-widest text-primary">{p.role}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -16,8 +16,6 @@ import {
   GraduationCap,
   Globe,
   ShoppingBag,
-  ExternalLink,
-  BookOpen,
   AlertTriangle,
   Zap
 } from 'lucide-react';
@@ -29,6 +27,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleGoogleRedirectResult, configureAuthPersistence } from '@/firebase/non-blocking-login';
 import { FeaturedResident } from '@/components/home/FeaturedResident';
+
+const BUCKET = "studio-7482167027-804c1.firebasestorage.app";
+const getPartnerUrl = (path: string) => `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
 
 export default function Home() {
   const firestore = useFirestore();
@@ -76,6 +77,12 @@ export default function Home() {
   const wildImageUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/wildmallards.png?alt=media";
   const merchSpotlightUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/QuackMerch.jpg?alt=media";
 
+  const partners = [
+    { name: "Solana Strays", url: getPartnerUrl("partners/solanastrayslogo.jpg") },
+    { name: "Quakk", url: getPartnerUrl("partners/quakk crest logo black.jpeg") },
+    { name: "Broken Fence Farms", url: getPartnerUrl("partners/brokenfencefarms.jpg") }
+  ];
+
   if (!mounted) return null;
 
   if (isVerifying) {
@@ -119,7 +126,6 @@ export default function Home() {
               </p>
             </div>
             
-            {/* CHOICE ARCHITECTURE: TIERED HERO CTA GRID */}
             <div className="flex flex-col items-center gap-6 w-full max-w-2xl mx-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <Button size="lg" className="bg-primary text-primary-foreground font-black hover:scale-105 transition-transform h-16 w-full text-lg rounded-2xl shadow-xl uppercase tracking-tight" asChild>
@@ -295,24 +301,21 @@ export default function Home() {
           </div>
           
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
-            <Link href="/partners" className="group">
-              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                <Zap className="h-12 w-12 text-secondary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">Solana Strays</span>
-              </div>
-            </Link>
-            <Link href="/partners" className="group">
-              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                <Bird className="h-12 w-12 text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">Quakk</span>
-              </div>
-            </Link>
-            <Link href="/partners" className="group">
-              <div className="flex flex-col items-center gap-3 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100">
-                <Globe className="h-12 w-12 text-[#14F195]" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">TN Waterfowl Collective</span>
-              </div>
-            </Link>
+            {partners.map((partner, i) => (
+              <Link key={i} href="/partners" className="group">
+                <div className="flex flex-col items-center gap-4 transition-all duration-300 grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110">
+                  <div className="relative w-32 h-20 md:w-40 md:h-24">
+                    <Image 
+                      src={partner.url} 
+                      alt={partner.name} 
+                      fill 
+                      className="object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground">{partner.name}</span>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       </main>
