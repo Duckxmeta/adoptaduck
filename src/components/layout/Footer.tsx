@@ -39,6 +39,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/flock" className="hover:text-primary transition-colors">Residents</Link></li>
               <li><Link href="/our-story" className="hover:text-primary transition-colors">Our Story</Link></li>
+              <li><Link href="/found-a-duck" className="hover:text-destructive transition-colors text-destructive/80 italic font-black">I Found a Duck</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
@@ -46,6 +47,14 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/login" className="hover:text-primary transition-colors">Member Login</Link></li>
               <li><Link href="/support#membership" className="hover:text-primary transition-colors">Membership</Link></li>
+              <li><Link href="/visit" className="hover:text-primary transition-colors">Visit Us</Link></li>
+            </ul>
+          </div>
+          <div className="space-y-4">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Collaborate</h5>
+            <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
+              <li><Link href="/partners" className="hover:text-primary transition-colors">Official Partners</Link></li>
+              <li><Link href="/support#merch" className="hover:text-primary transition-colors">Sanctuary Gear</Link></li>
             </ul>
           </div>
           <div className="space-y-4">
@@ -53,12 +62,6 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy</Link></li>
               <li><Link href="/terms" className="hover:text-primary transition-colors">Terms</Link></li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Contact</h5>
-            <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
-              <li><Link href="mailto:decentducksorg@gmail.com" className="hover:text-primary transition-colors">Email Us</Link></li>
             </ul>
           </div>
         </div>

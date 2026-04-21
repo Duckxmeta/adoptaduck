@@ -17,7 +17,8 @@ import {
   Globe,
   ShoppingBag,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -129,6 +130,9 @@ export default function Home() {
               </div>
               
               <div className="flex flex-wrap items-center justify-center gap-4">
+                <Button variant="destructive" size="sm" className="font-black hover:scale-105 transition-transform h-10 px-6 text-[10px] tracking-widest uppercase rounded-xl shadow-lg flex items-center gap-2" asChild>
+                  <Link href="/found-a-duck"><AlertTriangle className="h-3.5 w-3.5" /> I FOUND A DUCK</Link>
+                </Button>
                 <Button variant="outline" size="sm" className="border-white/20 text-white/80 font-black hover:bg-white/10 hover:text-white h-10 px-8 text-[10px] tracking-widest uppercase rounded-xl" asChild>
                   <Link href="/our-story">OUR STORY</Link>
                 </Button>
