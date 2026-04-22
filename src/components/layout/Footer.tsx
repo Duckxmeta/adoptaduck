@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 
 export function Footer() {
-  const supportUrl = "/support";
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
 
   return (
@@ -47,7 +46,6 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-muted-foreground font-bold uppercase">
               <li><Link href="/login" className="hover:text-primary transition-colors">Member Login</Link></li>
               <li><Link href="/support#membership" className="hover:text-primary transition-colors">Membership</Link></li>
-              <li><Link href="/visit" className="hover:text-primary transition-colors">Visit Us</Link></li>
             </ul>
           </div>
           <div className="space-y-4">

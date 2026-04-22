@@ -9,7 +9,8 @@ import {
   Handshake, 
   ArrowRight,
   ShieldCheck,
-  ExternalLink
+  ExternalLink,
+  Mail
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -109,7 +110,7 @@ export default function PartnersPage() {
                  </p>
               </div>
               <Button asChild size="lg" className="bg-primary text-primary-foreground font-black px-12 h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                 <Link href="/visit">GET IN TOUCH <ArrowRight className="ml-2 h-5 w-5" /></Link>
+                 <a href="mailto:decentducksorg@gmail.com">GET IN TOUCH <Mail className="ml-2 h-5 w-5" /></a>
               </Button>
            </div>
         </section>
