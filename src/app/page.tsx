@@ -81,17 +81,20 @@ export default function Home() {
     { 
       name: "Solana Strays", 
       url: getPartnerUrl("partners/solanastrayslogo.jpg"),
-      websiteUrl: "https://solanastrays.xyz/"
+      websiteUrl: "https://solanastrays.xyz/",
+      desc: "Building a bridge between decentralized finance and animal rescue operations."
     },
     { 
       name: "Quakk", 
       url: getPartnerUrl("partners/quakk crest logo black.jpeg"),
-      websiteUrl: "https://conservation.quakklife.com/"
+      websiteUrl: "https://conservation.quakklife.com/",
+      desc: "Bridging the gap between conservation, creativity, and community to foster a sustainable future where digital innovation meets real-world environmental impact."
     },
     { 
       name: "Broken Fence Farms", 
       url: getPartnerUrl("partners/brokenfencefarms.jpg"),
-      websiteUrl: "https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr"
+      websiteUrl: "https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr",
+      desc: "Our primary regional partner for large-scale rescue logistics and habitat protection."
     }
   ];
 

@@ -30,7 +30,7 @@ export default function PartnersPage() {
     {
       name: "Quakk",
       role: "Strategic Collaborator",
-      desc: "Providing high-fidelity tracking tools and platform support for waterfowl enthusiasts.",
+      desc: "Bridging the gap between conservation, creativity, and community to foster a sustainable future where digital innovation meets real-world environmental impact.",
       logoUrl: getPartnerUrl("partners/quakk crest logo black.jpeg"),
       websiteUrl: "https://conservation.quakklife.com/",
       color: "border-primary/20"
