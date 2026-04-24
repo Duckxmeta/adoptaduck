@@ -2,12 +2,16 @@
 import { Expense } from './types';
 
 /**
- * MASTER SANCTUARY LEDGER - AUDITED APRIL 12, 2026
- * Total Investment: $254.64
+ * MASTER SANCTUARY LEDGER - AUDITED APRIL 14, 2026
+ * Total Investment: $332.80
  * High-precision species-specific tracking for 501(c)(3) readiness.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
+  // --- APRIL 14, 2026 BATCH (Facility Maintenance) ---
+  { id: 'h11', itemName: 'Gutter System Components (End caps, Hangers, Drops)', cost: 71.22, category: 'Habitat', date: '2026-04-14', createdAt: '2026-04-14T10:00:00Z' },
+  { id: 'g10', itemName: "Sales Tax (Lowe's Hardware)", cost: 6.94, category: 'General', date: '2026-04-14', createdAt: '2026-04-14T10:00:00Z' },
+
   // --- APRIL 12, 2026 BATCH (Infrastructure & Habitat Expansion) ---
   { id: 'h9', itemName: '5x 6ft T-posts (Fencing Infrastructure)', cost: 28.45, category: 'Habitat', date: '2026-04-12', createdAt: '2026-04-12T09:00:00Z' },
   { id: 'h10', itemName: 'Kiddie Pool (Drought Relief Habitat)', cost: 10.00, category: 'Habitat', date: '2026-04-12', createdAt: '2026-04-12T09:00:00Z' },
