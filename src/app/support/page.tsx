@@ -24,7 +24,9 @@ import {
   Zap,
   ShieldCheck,
   Tv,
-  Bird
+  Bird,
+  Mail,
+  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -41,11 +43,10 @@ const STRIPE_PRICES = {
   SPLASH_25: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_25 || 'price_1THAj9GyzCRtb3HxxjI9L4Yg',
   SPLASH_CUSTOM: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_CUSTOM || 'price_1THAmlGyzCRtb3HxiD9YcrR5',
   GUARDIAN_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_GUARDIAN_MONTHLY || 'price_1THAffGyzCRtb3Hx7RHfIdqC',
-  PACK_MONTHLY: 'price_1TNkoBGyzCRtb3Hx0UPYH362',
-  EQUINE_MONTHLY: 'price_1TNkneGyzCRtb3Hx34rLQuwT'
 };
 
 const PACK_PROTECTOR_PAYMENT_LINK = 'https://buy.stripe.com/4gM14nbl66WA4U3dpD';
+const DISCORD_INVITE = 'https://discord.gg/ERegmyNdcG';
 
 function SupportContent() {
   const { toast } = useToast();
@@ -128,7 +129,6 @@ function SupportContent() {
                 </p>
               </div>
 
-              {/* QUICK TIP BUTTON GRID */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
@@ -195,7 +195,7 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 2. SANCTUARY MEMBERSHIPS */}
+        {/* 2. SANCTUARY MEMBERSHIPS - 3 TIER OVERHAUL */}
         <section id="membership" className="py-24 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
@@ -206,65 +206,101 @@ function SupportContent() {
               <div className="h-px bg-border flex-1" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* TIER 1: DUCK GUARDIAN */}
-              <Card id="guardian" className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative scroll-mt-32">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
+              
+              {/* TIER 1: SANCTUARY INSIDER (FREE) */}
+              <Card className="bg-card border-2 border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">The Duck Guardian</h3>
-                    <Bird className="h-6 w-6 text-primary/40" />
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">The Insider</h3>
+                    <MessageSquare className="h-6 w-6 text-muted-foreground/40" />
                   </div>
-                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Mascot: Moxie & Bandit</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mascot: Marina Miracles Cats</p>
                 </div>
-                <div className="text-4xl font-headline font-black text-foreground">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="text-4xl font-headline font-black text-foreground">FREE</div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Priority Focus:</p>
-                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Fencing, foundational sanctuary tech, and high-quality flock nutrition."</p>
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Get the blueprints:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Exclusive access to our technology roadmap, infrastructure updates, and the Sanctuary Insider email list."</p>
                 </div>
                 <ul className="flex-1 space-y-3">
-                  {['Foundational Sanctuary Tech', 'Flock Infrastructure (Fencing)', 'Access to Adopter Discord', 'Daily Resident Photo Logs'].map((p, i) => (
+                  {['Technology Roadmap Access', 'Infrastructure Pulse Updates', 'Sanctuary Insider Newsletter', 'Public Discord Entry'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" /> {p}
                     </li>
                   ))}
                 </ul>
                 <Button 
-                  onClick={() => handleCheckout(STRIPE_PRICES.GUARDIAN_MONTHLY)}
-                  disabled={isRedirecting}
-                  className="w-full h-auto min-h-[4rem] bg-primary text-primary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
+                  asChild
+                  className="w-full min-h-[4rem] bg-background border-2 border-border text-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
                 >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS DUCK GUARDIAN"}
+                  <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer">
+                    GET FREE ACCESS
+                  </a>
                 </Button>
               </Card>
 
-              {/* TIER 2: PACK PROTECTOR - DIRECT LINK UPDATE */}
-              <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-secondary/10 scale-105 z-10 scroll-mt-32">
-                <div className="absolute top-0 right-0 p-4 opacity-10"><Dog className="h-20 w-20 text-secondary" /></div>
+              {/* TIER 2: DUCK GUARDIAN ($8.33/mo) - FEATURED */}
+              <Card id="guardian" className="bg-card border-[3px] border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-8 ring-primary/5 scale-105 z-10">
+                <div className="absolute top-0 right-0 p-4 opacity-10"><Bird className="h-20 w-20 text-primary" /></div>
                 <div className="space-y-1 relative z-10">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">The Pack Protector</h3>
-                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Mascot: Marina Miracles (Dogs/Cats)</p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Duck Guardian</h3>
+                    <Star className="h-6 w-6 text-primary fill-primary" />
+                  </div>
+                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Mascot: Moxie & Bandit</p>
                 </div>
-                <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="text-4xl font-headline font-black text-foreground relative z-10">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                 <div className="space-y-2 relative z-10">
-                  <p className="text-[10px] font-black uppercase text-secondary tracking-widest">Priority Focus:</p>
-                  <p className="text-xs font-black text-foreground leading-relaxed italic">"Rescue operations and specialized multi-species habitat development."</p>
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Building the foundation:</p>
+                  <p className="text-xs font-black text-foreground leading-relaxed italic">"This tier fuels the fencing and the launch of the Duck TV streaming initiative."</p>
                 </div>
                 <ul className="flex-1 space-y-3 relative z-10">
+                  {['Duck TV Launch Priority', 'Flock Infrastructure (Fencing)', 'Inner Circle Discord Role', 'Daily Resident Photo Logs', 'Digital Support Achievement'].map((p, i) => (
+                    <li key={i} className="flex items-center gap-3 text-xs font-black text-foreground">
+                      <Zap className="h-4 w-4 text-primary fill-primary" /> {p}
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  onClick={() => handleCheckout(STRIPE_PRICES.GUARDIAN_MONTHLY)}
+                  disabled={isRedirecting}
+                  className="w-full min-h-[4rem] bg-primary text-primary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-xl hover:scale-[1.05] transition-transform whitespace-normal text-center px-4 leading-tight relative z-10"
+                >
+                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN THE FLOCK"}
+                </Button>
+                <div className="absolute bottom-0 left-0 w-full h-1 bg-primary" />
+              </Card>
+
+              {/* TIER 3: PACK PROTECTOR ($35/mo) */}
+              <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative overflow-hidden">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Pack Protector</h3>
+                    <Dog className="h-6 w-6 text-secondary/40" />
+                  </div>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Mascot: Marina Miracles Dogs</p>
+                </div>
+                <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase text-secondary tracking-widest">High-impact operations:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Support the full-scale nutrition, medical priorities, and multi-species habitat development."</p>
+                </div>
+                <ul className="flex-1 space-y-3">
                   {[
-                    'Rescue Operation Logistics',
-                    'Multi-Species Habitat Care',
-                    'Direct Medical Priority Funding',
-                    'Verified Protector Discord Role',
+                    'Full-Scale Nutrition Funding',
+                    'Medical Priority Logistics',
+                    'Multi-Species Habitat Growth',
+                    'Permanent Ledger Recognition',
                     'Everything in Guardian Tier'
                   ].map((p, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs font-black text-foreground">
+                    <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-secondary" /> {p}
                     </li>
                   ))}
                 </ul>
                 <Button 
                   asChild
-                  className="w-full h-auto min-h-[4rem] bg-secondary text-secondary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
+                  className="w-full min-h-[4rem] bg-secondary text-secondary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
                 >
                   <a href={PACK_PROTECTOR_PAYMENT_LINK} target="_blank" rel="noopener noreferrer">
                     PROTECT THE PACK
@@ -272,41 +308,6 @@ function SupportContent() {
                 </Button>
               </Card>
 
-              {/* TIER 3: EQUINE GUARDIAN */}
-              <Card id="equine" className="bg-card border-border border-2 rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl scroll-mt-32">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">The Equine Guardian</h3>
-                    <ShieldCheck className="h-6 w-6 text-primary/40" />
-                  </div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mascot: Otis</p>
-                </div>
-                <div className="text-4xl font-headline font-black text-foreground">$75<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Priority Focus:</p>
-                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Large-scale infrastructure and the Duck TV live-streaming initiative."</p>
-                </div>
-                <ul className="flex-1 space-y-3">
-                  {[
-                    'Duck TV Streaming Initiative',
-                    'Large-Scale Infrastructure',
-                    'Permanent Ledger Recognition',
-                    'Priority Facility Alert Access',
-                    'Full Inner Circle Onboarding'
-                  ].map((p, i) => (
-                    <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
-                      <Zap className="h-4 w-4 text-primary" /> {p}
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  onClick={() => handleCheckout(STRIPE_PRICES.EQUINE_MONTHLY)}
-                  disabled={isRedirecting}
-                  className="w-full h-auto min-h-[4rem] bg-background border-2 border-border text-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl hover:bg-muted/10 transition-all hover:scale-[1.02] shadow-sm whitespace-normal text-center px-4 leading-tight"
-                >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS EQUINE GUARDIAN"}
-                </Button>
-              </Card>
             </div>
           </div>
         </section>
