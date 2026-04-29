@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -10,10 +9,9 @@ import { Resident } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bird, Heart, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy, GitBranch, User } from 'lucide-react';
+import { Bird, Zap, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy, GitBranch, User } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { StoryModal } from '@/components/residents/StoryModal';
 import { cn, getResidentName } from '@/lib/utils';
 import { ref, getDownloadURL } from 'firebase/storage';
@@ -56,7 +54,6 @@ export default function BrowseFlock() {
 
     useEffect(() => {
       async function resolve() {
-        // 1. Check direct link map first
         if (RESIDENT_IMAGE_MAP[bird.name]) {
           setResolvedImage(RESIDENT_IMAGE_MAP[bird.name]);
           return;
@@ -69,7 +66,6 @@ export default function BrowseFlock() {
           return;
         }
         try {
-          // Unified path migration: Exclusively resident-photos/
           const imageRef = ref(storage, `resident-photos/${url}`);
           const downloadUrl = await getDownloadURL(imageRef);
           setResolvedImage(downloadUrl);
@@ -104,11 +100,6 @@ export default function BrowseFlock() {
             <Badge className="w-fit bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1">
               {bird.breed}
             </Badge>
-            {isCommunity && !isFounder && (
-              <Badge className="w-fit bg-secondary text-secondary-foreground border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 shadow-lg flex items-center gap-1.5">
-                <ShieldCheck className="h-3 w-3" /> COMMUNITY RESIDENT
-              </Badge>
-            )}
           </div>
 
           <div className="absolute top-4 right-4">
@@ -131,7 +122,7 @@ export default function BrowseFlock() {
         <CardContent className="p-8 flex-1 flex flex-col space-y-6">
           <div className="space-y-3">
             <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 text-secondary" /> Personality Profile
+              <Sparkles className="h-3.5 w-3.5 text-secondary" /> Institutional Roster
             </h4>
             <p className="text-sm text-muted-foreground italic leading-relaxed line-clamp-3">
               "{bird.personalityTraits}"
@@ -139,17 +130,11 @@ export default function BrowseFlock() {
           </div>
           
           <div className="pt-4 mt-auto flex flex-col gap-3">
-            <AdoptionModal 
-              resident={bird} 
-              trigger={
-                <Button className={cn(
-                  "w-full font-black h-14 rounded-xl shadow-lg hover:scale-105 transition-transform uppercase text-xs tracking-widest",
-                  isFounder ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                )}>
-                  <Heart className="mr-2 h-4 w-4 fill-current" /> {isFounder ? 'Sustain Founder' : `Adopt ${displayName}`}
-                </Button>
-              }
-            />
+            <Button asChild className="w-full bg-primary text-black font-black h-14 rounded-xl shadow-lg hover:scale-105 transition-transform uppercase text-xs tracking-widest">
+              <Link href="/support">
+                <Zap className="mr-2 h-4 w-4 fill-current" /> VIEW MISSION TIERS
+              </Link>
+            </Button>
             
             <Button asChild variant="outline" className="w-full text-[10px] font-black uppercase tracking-widest border-secondary/20 text-secondary hover:bg-secondary/5 h-12 rounded-xl">
               <Link href={`/residents/${bird.id}/tree`}>
@@ -167,7 +152,7 @@ export default function BrowseFlock() {
               resident={bird}
               trigger={
                 <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-                  View Full Rescue Story <ArrowRight className="ml-2 h-3 w-3" />
+                  View Mission Context <ArrowRight className="ml-2 h-3 w-3" />
                 </Button>
               }
             />
@@ -187,10 +172,10 @@ export default function BrowseFlock() {
             The Sanctuary Flock
           </Badge>
           <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">
-            MEET THE <span className="text-primary">FLOCK</span>
+            THE FLOCK <span className="text-primary">ROSTER</span>
           </h1>
           <p className="text-muted-foreground text-lg md:text-xl font-medium">
-            Browse our residents and find a friend to support. G0 Founders represent the root of our sanctuary lineage.
+            Explore the lineage and mission roles of our feathered residents. Membership funds foundational infrastructure and high-fidelity care.
           </p>
         </section>
 
@@ -204,7 +189,7 @@ export default function BrowseFlock() {
               <section className="space-y-12">
                 <div className="flex items-center gap-4">
                   <div className="h-px bg-border flex-1" />
-                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0">Founding Members</h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0">Mission Mascots (Founding)</h2>
                   <div className="h-px bg-border flex-1" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -231,7 +216,7 @@ export default function BrowseFlock() {
             )}
 
             {birds?.length === 0 && (
-              <p className="text-center text-muted-foreground py-12 italic">More residents arriving soon...</p>
+              <p className="text-center text-muted-foreground py-12 italic">Synchronizing roster records...</p>
             )}
           </div>
         )}

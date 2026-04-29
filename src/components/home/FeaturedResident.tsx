@@ -71,10 +71,6 @@ export function FeaturedResident() {
     liveStatus: featured.liveStatus || 'Spotlight Star 🌟'
   } : defaultData;
 
-  const handleSupportClick = () => {
-    router.push(`/support?bird=${encodeURIComponent(res.name)}#membership`);
-  };
-
   return (
     <Card className="relative w-full max-w-5xl overflow-hidden bg-card border-4 border-primary/50 shadow-2xl shadow-primary/10 rounded-[2.5rem] group animate-in fade-in slide-in-from-top-4 duration-1000">
       {/* Decorative Branding */}
@@ -123,22 +119,21 @@ export function FeaturedResident() {
             
             <div className="bg-primary/10 border-l-4 border-primary p-6 rounded-r-2xl space-y-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" /> Spotlight Mission
+                <Sparkles className="h-3.5 w-3.5" /> Mission Spotlight
               </p>
               <p className="text-sm font-bold text-foreground/80 leading-relaxed">
-                Support {res.name} this month and join the digital flock to follow their unique sanctuary journey.
+                Invest in our sanctuary mission today to fund the infrastructure and care that supports {res.name} and the entire roster.
               </p>
             </div>
           </div>
 
           {/* Action Grid */}
           <div className="pt-4 flex flex-col sm:flex-row gap-4">
-            <Button 
-              onClick={handleSupportClick}
-              className="bg-primary text-primary-foreground font-black h-14 px-8 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3 group/btn flex-1"
-            >
-              <Heart className="h-5 w-5 fill-current" />
-              SUPPORT {res.name.toUpperCase()}
+            <Button asChild className="bg-primary text-primary-foreground font-black h-14 px-8 rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-3 group/btn flex-1">
+              <Link href="/support">
+                <Zap className="h-5 w-5 fill-current" />
+                VIEW MISSION TIERS
+              </Link>
             </Button>
             <Button asChild variant="outline" className="border-primary text-primary font-black h-14 px-8 rounded-2xl hover:bg-primary/10 flex-1 flex items-center justify-center gap-2">
               <Link href={res.id === 'bandit-id' ? '/adopt' : `/residents/${res.id}`}>

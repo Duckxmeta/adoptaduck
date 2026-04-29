@@ -6,7 +6,6 @@ import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Heart, 
   MapPin, 
   Zap, 
   Trophy,
@@ -16,7 +15,6 @@ import {
   Loader2,
   AlertCircle,
   GitBranch,
-  Lock,
   ShieldCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -160,25 +158,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const displayName = getResidentName(bird);
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const isDuck = bird?.isDuck || activeCollection === 'birds';
-  
-  // SUPPORT FUNNEL LOGIC
   const isLegend = ['Bandit', 'Moxie'].includes(bird?.name || '');
-  const isPack = !isDuck && bird?.name !== 'Otis'; // Dogs and Cats
-  const isOtis = bird?.name === 'Otis';
-
-  let buttonText = "ADOPT NOW";
-  let buttonHref = "/support#donate";
-
-  if (isLegend) {
-    buttonText = "SUPPORT THE MISSION";
-    buttonHref = "/support#guardian";
-  } else if (isPack) {
-    buttonText = "SUPPORT THE PACK";
-    buttonHref = "/support#pack";
-  } else if (isOtis) {
-    buttonText = "SUPPORT OTIS";
-    buttonHref = "/support#equine";
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
@@ -192,7 +172,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             className="mb-8 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary p-0 h-auto"
           >
             <Link href="/adopt">
-              <ArrowLeft className="h-3 w-3 mr-2" /> Back to Sanctuary
+              <ArrowLeft className="h-3 w-3 mr-2" /> Back to Roster
             </Link>
           </Button>
 
@@ -237,7 +217,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 <div className="absolute bottom-6 left-6 flex flex-wrap gap-2 pointer-events-none z-10">
                    {isLegend ? (
                      <Badge className="bg-primary text-black font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg flex items-center gap-2">
-                       <ShieldCheck className="h-4 w-4" /> Fully Sponsored Legend
+                       <ShieldCheck className="h-4 w-4" /> MISSION MASCOT | LEGEND
                      </Badge>
                    ) : (
                      <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
@@ -296,7 +276,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
               <div className="space-y-4 bg-muted/5 p-8 rounded-3xl border border-border/50">
                 <h3 className="font-headline font-black text-sm text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" /> Personality Profile
+                  <Sparkles className="h-4 w-4" /> Institutional Record
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg italic">
                   {bird?.personalityTraits ? `"${bird.personalityTraits}"` : ""}
@@ -305,7 +285,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
               <div className="space-y-4">
                 <h3 className="font-headline font-black text-sm text-secondary uppercase tracking-[0.3em] flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" /> Rescue Story & Narrative
+                  <BookOpen className="h-4 w-4" /> Rescue Story & Mission Context
                 </h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {bird?.bio || bird?.backstory || ""}
@@ -313,19 +293,14 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="pt-6">
-                <Button asChild size="lg" className={cn(
-                  "w-full font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform",
-                  isLegend ? "bg-primary text-black" : isPack ? "bg-secondary text-white" : "bg-primary text-black"
-                )}>
-                  <Link href={buttonHref}>
-                    <Heart className="mr-3 h-6 w-6 fill-current" /> {buttonText}
+                <Button asChild size="lg" className="w-full bg-primary text-black font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform">
+                  <Link href="/support">
+                    <Zap className="mr-3 h-6 w-6 fill-current" /> VIEW MISSION TIERS
                   </Link>
                 </Button>
-                {isLegend && (
-                  <p className="text-[10px] text-center font-black uppercase tracking-[0.4em] text-muted-foreground mt-4">
-                    Legend status: All basic needs are covered. Gifts support mission expansion.
-                  </p>
-                )}
+                <p className="text-[10px] text-center font-black uppercase tracking-[0.4em] text-muted-foreground mt-4">
+                  Proceeds support sanctuary-wide infrastructure and high-fidelity care initiatives.
+                </p>
               </div>
             </div>
           </div>

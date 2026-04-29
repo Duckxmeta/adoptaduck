@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,11 +8,11 @@ import { Resident } from '@/lib/types';
 import { fetchAllSanctuaryResidents } from '@/lib/residents';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Bird, PawPrint, Heart } from 'lucide-react';
+import { Loader2, Sparkles, Bird, PawPrint, ShieldCheck } from 'lucide-react';
 
 /**
- * @fileOverview Adoption Hub.
- * Dual-collection integration displaying Ducks and Sanctuary Friends (Dogs/Cats/Horses).
+ * @fileOverview The Sanctuary Roster.
+ * Refactored from 'Adoption Hub' to 'Institutional Roster' to support mission tiers.
  */
 
 export default function AdoptionPage() {
@@ -24,7 +23,6 @@ export default function AdoptionPage() {
   useEffect(() => {
     async function load() {
       if (!firestore) return;
-      // Critical Dual-Collection Fetch
       const data = await fetchAllSanctuaryResidents(firestore);
       setResidents(data);
       setLoading(false);
@@ -32,11 +30,9 @@ export default function AdoptionPage() {
     load();
   }, [firestore]);
 
-  // Logic to separate 'The Flock' from 'Sanctuary Friends'
   const ducks = useMemo(() => residents.filter(r => r.isDuck), [residents]);
   const otherResidents = useMemo(() => residents.filter(r => !r.isDuck), [residents]);
 
-  // Dynamic grouping for Sanctuary Friends
   const groupedFriends = useMemo(() => {
     return otherResidents.reduce((acc, res) => {
       const cat = res.category || 'Sanctuary Friends';
@@ -63,13 +59,13 @@ export default function AdoptionPage() {
         {/* Header Section */}
         <section className="text-center space-y-6 max-w-3xl mx-auto">
           <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
-            Rescue Operations
+            Institutional Roster
           </Badge>
           <h1 className="text-5xl md:text-8xl font-headline font-black tracking-tighter uppercase leading-none">
-            CHOOSE YOUR <span className="text-primary">FRIEND</span>
+            THE SANCTUARY <span className="text-primary">ROSTER</span>
           </h1>
           <p className="text-muted-foreground text-lg md:text-xl font-medium">
-            Browse our residents and find a friend to support. Your virtual adoption directly funds their safety, health, and happiness.
+            Browse our residents and explore our mission tiers. Your membership directly funds foundational infrastructure, rescue operations, and high-fidelity care.
           </p>
         </section>
 
@@ -81,7 +77,7 @@ export default function AdoptionPage() {
             </div>
             <div className="space-y-1">
               <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">The Flock</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Domestic Duck Residents</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Domestic Waterfowl Residents</p>
             </div>
             <div className="h-px bg-border flex-1 hidden md:block" />
           </div>
@@ -94,7 +90,7 @@ export default function AdoptionPage() {
           
           {ducks.length === 0 && (
             <div className="p-20 text-center bg-card/50 border-2 border-dashed border-border rounded-[3rem]">
-              <p className="text-muted-foreground font-medium italic">All members of the flock are currently accounted for.</p>
+              <p className="text-muted-foreground font-medium italic">Synchronizing legacy flock records...</p>
             </div>
           )}
         </section>
@@ -108,7 +104,7 @@ export default function AdoptionPage() {
               </div>
               <div className="space-y-1">
                 <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">Sanctuary Friends</h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Non-Duck Rescue Lineup</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Mission Recipients</p>
               </div>
               <div className="h-px bg-border flex-1 hidden md:block" />
             </div>
@@ -117,7 +113,7 @@ export default function AdoptionPage() {
               {Object.entries(groupedFriends).map(([category, list]) => (
                 <div key={category} className="space-y-10">
                   <div className="flex items-center gap-4">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                    <ShieldCheck className="h-4 w-4 text-primary" />
                     <h3 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary">{category}</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">

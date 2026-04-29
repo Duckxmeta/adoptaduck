@@ -7,13 +7,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Resident } from '@/lib/types';
-import { ChevronRight, Trophy, PawPrint, Bird, Loader2, Heart, Lock, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Trophy, PawPrint, Bird, Loader2, ShieldCheck, Zap } from 'lucide-react';
 import { useStorage } from '@/firebase';
 import { getResidentName } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { ref, getDownloadURL } from 'firebase/storage';
 
-// DIRECT LINK INJECTION MAP
 const RESIDENT_IMAGE_MAP: Record<string, string> = {
   'Cassidy': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCassidy.jpeg?alt=media&token=f66f2e79-86e3-4ba3-8f3c-9aff47227075',
   'Echo': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FEcho.jpeg?alt=media&token=6375ff79-0b14-4611-b789-a640017ffc9f',
@@ -36,26 +35,11 @@ export function ResidentCard({ resident }: { resident: Resident }) {
   const displayName = getResidentName(resident);
   const isDuck = !!resident.isDuck;
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
-  
-  // SUPPORT FUNNEL LOGIC
   const isLegend = ['Bandit', 'Moxie'].includes(resident.name);
-  const isOtis = resident.name === 'Otis';
-  // Small Resident Pack includes all non-ducks that are not Otis (Dogs and Cats)
-  const isPack = !resident.isDuck && resident.name !== 'Otis';
 
-  let buttonText = "ADOPT NOW";
-  let buttonHref = "/support#donate";
-
-  if (isLegend) {
-    buttonText = "SUPPORT THE MISSION";
-    buttonHref = "/support#guardian";
-  } else if (isPack) {
-    buttonText = "SUPPORT THE PACK";
-    buttonHref = "/support#pack";
-  } else if (isOtis) {
-    buttonText = "SUPPORT OTIS";
-    buttonHref = "/support#equine";
-  }
+  // ALL buttons link to centralized support hub
+  const buttonHref = "/support";
+  const buttonText = "VIEW MISSION TIERS";
   
   useEffect(() => {
     async function resolve() {
@@ -112,7 +96,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
                 <span className="text-7xl mb-4 transition-transform group-hover:scale-125 duration-500">
                   {isDuck ? '🦆' : '🐾'}
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Photo Coming Soon!</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Institutional Record</span>
               </>
             )}
           </div>
@@ -121,7 +105,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {isLegend ? (
             <Badge className="bg-primary text-black border-none font-black text-[10px] uppercase tracking-wider px-3 py-1 flex items-center gap-1.5 shadow-xl">
-              <ShieldCheck className="h-3 w-3" /> LEGEND | FULLY SPONSORED
+              <ShieldCheck className="h-3 w-3" /> MISSION MASCOT | LEGEND
             </Badge>
           ) : (
             <Badge className="bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1 flex items-center gap-1.5">
@@ -156,12 +140,9 @@ export function ResidentCard({ resident }: { resident: Resident }) {
       </Link>
       
       <CardContent className="p-4 flex flex-col gap-3 bg-card mt-auto">
-         <Button asChild className={cn(
-           "w-full h-11 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 transition-transform",
-           isLegend ? "bg-primary text-black" : isPack ? "bg-secondary text-white" : "bg-primary text-black"
-         )}>
+         <Button asChild className="w-full h-11 bg-primary text-black rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 transition-transform">
            <Link href={buttonHref}>
-             <Heart className="mr-2 h-3.5 w-3.5 fill-current" /> {buttonText}
+             <Zap className="mr-2 h-3.5 w-3.5 fill-current" /> {buttonText}
            </Link>
          </Button>
          

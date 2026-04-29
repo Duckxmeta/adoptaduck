@@ -20,7 +20,11 @@ import {
   Ticket,
   MessageSquare,
   Dog,
-  ShoppingBasket
+  ShoppingBasket,
+  Zap,
+  ShieldCheck,
+  Tv,
+  Bird
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -98,9 +102,9 @@ function SupportContent() {
 
       <main className="flex-1 pt-12">
         <section className="container mx-auto px-4 text-center space-y-4 mb-20">
-          <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Support Hub</Badge>
-          <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">CHOOSE YOUR <span className="text-primary">IMPACT</span></h1>
-          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Your contributions provide food, medicine, and a safe forever home for our residents.</p>
+          <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Membership Hub</Badge>
+          <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">INVEST IN THE <span className="text-primary">MISSION</span></h1>
+          <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Your membership directly funds foundational infrastructure, rescue operations, and sanctuary technology.</p>
         </section>
 
         {/* 1. MAKE A SPLASH */}
@@ -109,22 +113,22 @@ function SupportContent() {
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px bg-secondary/20 flex-1" />
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-secondary shrink-0 flex items-center gap-2">
-                <Waves className="h-4 w-4" /> 1. Make a Splash
+                <Waves className="h-4 w-4" /> 1. One-Time Mission Support
               </h2>
               <div className="h-px bg-secondary/20 flex-1" />
             </div>
 
             <Card className="max-w-3xl mx-auto bg-card border-border rounded-[2rem] p-8 md:p-12 shadow-2xl space-y-8">
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">One-Time Gifts</h3>
-                <p className="text-sm text-muted-foreground font-medium">Select a gift level to provide immediate care items.</p>
+                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Direct Impact Gifts</h3>
+                <p className="text-sm text-muted-foreground font-medium">Immediate funding for facility maintenance and animal nutrition.</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'The Treat Fund' },
-                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'The Snack Pack' },
-                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Bedding Refresh' }
+                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
+                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'Habitat Upkeep' },
+                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Rescue Logistics' }
                 ].map((tier) => (
                   <button 
                     key={tier.val}
@@ -146,7 +150,7 @@ function SupportContent() {
               </div>
 
               <div className="pt-6 border-t border-border/50">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 mb-2 block">Or Enter Custom Amount</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 mb-2 block">Or Enter Custom Mission Amount</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <span className={cn("font-black text-lg transition-colors", selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "text-secondary" : "text-muted-foreground")}>$</span>
@@ -175,34 +179,41 @@ function SupportContent() {
                   disabled={isRedirecting}
                   className="w-full max-w-sm h-16 bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
                 >
-                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
+                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT MISSION WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
                 </Button>
               </div>
             </Card>
           </div>
         </section>
 
-        {/* 2. SANCTUARY SUBSCRIPTIONS */}
+        {/* 2. SANCTUARY MEMBERSHIPS */}
         <section id="membership" className="py-24 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px bg-border flex-1" />
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-                <Trophy className="h-4 w-4" /> 2. Sanctuary Subscriptions
+                <Trophy className="h-4 w-4" /> 2. Infrastructure Tiers
               </h2>
               <div className="h-px bg-border flex-1" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* TIER 1: GUARDIAN */}
+              {/* TIER 1: DUCK GUARDIAN */}
               <Card id="guardian" className="bg-card border-2 border-primary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative scroll-mt-32">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Sanctuary Guardian</h3>
-                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">General Mission Support</p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">The Duck Guardian</h3>
+                    <Bird className="h-6 w-6 text-primary/40" />
+                  </div>
+                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Mascot: Moxie & Bandit</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Priority Focus:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Fencing, foundational sanctuary tech, and high-quality flock nutrition."</p>
+                </div>
                 <ul className="flex-1 space-y-3">
-                  {['Collaborative Input (Facility Voting)', 'Access to Adopter Discord', 'Daily Resident Photos & Videos', 'Exclusive Member Badge'].map((p, i) => (
+                  {['Foundational Sanctuary Tech', 'Flock Infrastructure (Fencing)', 'Access to Adopter Discord', 'Daily Resident Photo Logs'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" /> {p}
                     </li>
@@ -213,24 +224,28 @@ function SupportContent() {
                   disabled={isRedirecting}
                   className="w-full h-14 bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
                 >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS GUARDIAN"}
+                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS DUCK GUARDIAN"}
                 </Button>
               </Card>
 
-              {/* TIER 2: THE PACK */}
+              {/* TIER 2: PACK PROTECTOR */}
               <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-secondary/10 scale-105 z-10 scroll-mt-32">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Dog className="h-20 w-20 text-secondary" /></div>
                 <div className="space-y-1 relative z-10">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">The Small Resident Pack</h3>
-                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Canine & Feline Sponsorship</p>
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">The Pack Protector</h3>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Mascot: Marina Miracles (Dogs/Cats)</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="space-y-2 relative z-10">
+                  <p className="text-[10px] font-black uppercase text-secondary tracking-widest">Priority Focus:</p>
+                  <p className="text-xs font-black text-foreground leading-relaxed italic">"Rescue operations and specialized multi-species habitat development."</p>
+                </div>
                 <ul className="flex-1 space-y-3 relative z-10">
                   {[
-                    'Support Canine & Feline Residents',
-                    'Direct Nutrition & Medical Funding',
-                    'Monthly Resident Video Updates',
-                    'Verified Adopter Discord Role',
+                    'Rescue Operation Logistics',
+                    'Multi-Species Habitat Care',
+                    'Direct Medical Priority Funding',
+                    'Verified Protector Discord Role',
                     'Everything in Guardian Tier'
                   ].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black text-foreground">
@@ -243,27 +258,34 @@ function SupportContent() {
                   disabled={isRedirecting}
                   className="w-full h-14 bg-secondary text-secondary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
                 >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "SPONSOR THE PACK"}
+                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS PACK PROTECTOR"}
                 </Button>
               </Card>
 
-              {/* TIER 3: OTIS */}
+              {/* TIER 3: EQUINE GUARDIAN */}
               <Card id="equine" className="bg-card border-border border-2 rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl scroll-mt-32">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">Otis the Gentle Giant</h3>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Equine Excellence</p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">The Equine Guardian</h3>
+                    <ShieldCheck className="h-6 w-6 text-primary/40" />
+                  </div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mascot: Otis</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">$75<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Priority Focus:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Large-scale infrastructure and the Duck TV live-streaming initiative."</p>
+                </div>
                 <ul className="flex-1 space-y-3">
                   {[
-                    'Primary Otis Sponsorship',
-                    'High-Fidelity Equine Care',
+                    'Duck TV Streaming Initiative',
+                    'Large-Scale Infrastructure',
                     'Permanent Ledger Recognition',
-                    'Priority Facility Rescue Alerts',
-                    'Access to Adopter Discord'
+                    'Priority Facility Alert Access',
+                    'Full Inner Circle Onboarding'
                   ].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
-                      <Star className="h-4 w-4 text-primary" /> {p}
+                      <Zap className="h-4 w-4 text-primary" /> {p}
                     </li>
                   ))}
                 </ul>
@@ -272,7 +294,7 @@ function SupportContent() {
                   disabled={isRedirecting}
                   className="w-full h-14 bg-background border-border text-foreground font-black uppercase text-xs tracking-widest rounded-xl hover:bg-muted/10 transition-colors"
                 >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "SPONSOR OTIS"}
+                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS EQUINE GUARDIAN"}
                 </Button>
               </Card>
             </div>
@@ -284,7 +306,7 @@ function SupportContent() {
           <div className="flex items-center gap-4 mb-8">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0 flex items-center gap-2">
-              <Ticket className="h-4 w-4" /> 3. Promo Code Gate
+              <Ticket className="h-4 w-4" /> 3. Reward Portal
             </h2>
             <div className="h-px bg-border flex-1" />
           </div>
@@ -298,7 +320,7 @@ function SupportContent() {
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-              <ShoppingBasket className="h-4 w-4" /> 4. Sanctuary Supplies
+              <ShoppingBasket className="h-4 w-4" /> 4. Physical Supplies
             </h2>
             <div className="h-px bg-border flex-1" />
           </div>
@@ -321,7 +343,7 @@ function SupportContent() {
               </div>
               <div className="space-y-2">
                 <h3 className="text-3xl font-headline font-black uppercase text-foreground">Amazon Wishlist</h3>
-                <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">Buy food, bedding, and supplies directly for the residents.</p>
+                <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">Purchase nutrition and bedding directly for sanctuary use.</p>
               </div>
               <Button asChild className="bg-[#FF9900] text-black font-black h-14 px-12 text-lg rounded-xl shadow-xl hover:scale-105 transition-transform">
                 <a href="https://www.amazon.com/hz/wishlist/ls/DECENTDUCKS" target="_blank" rel="noopener noreferrer">VISIT STOREFRONT</a>
