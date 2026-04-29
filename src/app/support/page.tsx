@@ -222,7 +222,7 @@ function SupportContent() {
                 <Button 
                   onClick={() => handleCheckout(STRIPE_PRICES.GUARDIAN_MONTHLY)}
                   disabled={isRedirecting}
-                  className="w-full h-14 bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
+                  className="w-full h-16 bg-primary text-primary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform"
                 >
                   {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS DUCK GUARDIAN"}
                 </Button>
@@ -256,7 +256,7 @@ function SupportContent() {
                 <Button 
                   onClick={() => handleCheckout(STRIPE_PRICES.PACK_MONTHLY)}
                   disabled={isRedirecting}
-                  className="w-full h-14 bg-secondary text-secondary-foreground font-black uppercase text-xs tracking-widest rounded-xl shadow-lg"
+                  className="w-full h-16 bg-secondary text-secondary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform"
                 >
                   {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS PACK PROTECTOR"}
                 </Button>
@@ -292,7 +292,7 @@ function SupportContent() {
                 <Button 
                   onClick={() => handleCheckout(STRIPE_PRICES.EQUINE_MONTHLY)}
                   disabled={isRedirecting}
-                  className="w-full h-14 bg-background border-border text-foreground font-black uppercase text-xs tracking-widest rounded-xl hover:bg-muted/10 transition-colors"
+                  className="w-full h-16 bg-background border-2 border-border text-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl hover:bg-muted/10 transition-all hover:scale-[1.02] shadow-sm"
                 >
                   {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS EQUINE GUARDIAN"}
                 </Button>
