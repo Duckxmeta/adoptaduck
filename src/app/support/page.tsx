@@ -39,6 +39,7 @@ const STRIPE_PRICES = {
 };
 
 const PACK_PROTECTOR_PAYMENT_LINK = 'https://buy.stripe.com/4gM14nbl66WA4U3dpD';
+const AMAZON_STOREFRONT_URL = 'https://www.amazon.com/shop/justtduckit/list/D8RL88I4288F?ref_=aip_sf_list_spv_ofs_m_lspvrd&ccs_id=ac2d438b-2c26-4bbb-8c7c-2d8eb617bb29';
 const DISCORD_INVITE = 'https://discord.gg/ERegmyNdcG';
 
 function SupportContent() {
@@ -187,7 +188,7 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 2. SANCTUARY MEMBERSHIPS - DIRECT SALES MODEL */}
+        {/* 2. SANCTUARY MEMBERSHIPS - 3-TIER FUNNEL */}
         <section id="membership" className="py-24 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
@@ -349,7 +350,7 @@ function SupportContent() {
                 <p className="text-sm text-muted-foreground font-medium max-w-xs mx-auto">Purchase nutrition and bedding directly for sanctuary use.</p>
               </div>
               <Button asChild className="bg-[#FF9900] text-black font-black h-14 px-12 text-lg rounded-xl shadow-xl hover:scale-105 transition-transform">
-                <a href="https://www.amazon.com/hz/wishlist/ls/DECENTDUCKS" target="_blank" rel="noopener noreferrer">VISIT STOREFRONT</a>
+                <a href={AMAZON_STOREFRONT_URL} target="_blank" rel="noopener noreferrer">VISIT STOREFRONT</a>
               </Button>
             </Card>
           </div>
