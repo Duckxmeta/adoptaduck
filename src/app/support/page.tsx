@@ -8,6 +8,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { 
   Heart, 
   Loader2,
   Waves,
@@ -97,104 +102,31 @@ function SupportContent() {
       <Navbar />
 
       <main className="flex-1 pt-12">
-        <section className="container mx-auto px-4 text-center space-y-4 mb-20">
-          <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Membership Hub</Badge>
+        <section className="container mx-auto px-4 text-center space-y-6 mb-20">
+          <div className="flex flex-col items-center gap-3">
+            <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Membership Hub</Badge>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5 py-1">
+                  <Ticket className="h-3 w-3" /> Redeem Code
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 border-none bg-transparent shadow-2xl" side="bottom" align="center">
+                <PromoCodeInput />
+              </PopoverContent>
+            </Popover>
+          </div>
           <h1 className="text-5xl md:text-7xl font-headline font-black tracking-tighter uppercase leading-tight">INVEST IN THE <span className="text-primary">MISSION</span></h1>
           <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">Your membership directly funds foundational infrastructure, rescue operations, and sanctuary technology.</p>
         </section>
 
-        {/* 1. MAKE A SPLASH */}
-        <section id="donate" className="py-24 bg-secondary/5 border-y border-secondary/10 scroll-mt-24">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center gap-4 mb-12">
-              <div className="h-px bg-secondary/20 flex-1" />
-              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-secondary shrink-0 flex items-center gap-2">
-                <Waves className="h-4 w-4" /> 1. One-Time Mission Support
-              </h2>
-              <div className="h-px bg-secondary/20 flex-1" />
-            </div>
-
-            <Card className="max-w-3xl mx-auto bg-card border-border rounded-[2rem] p-8 md:p-12 shadow-2xl space-y-8">
-              <div className="text-center space-y-2">
-                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Make a Splash</h3>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-xl mx-auto">
-                  From snacks and bedding to high-tech infrastructure like Duck TV, your one-time support fuels the immediate needs and future goals of the sanctuary. Every splash counts.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {[
-                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
-                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'Habitat Upkeep' },
-                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Rescue Logistics' }
-                ].map((tier) => (
-                  <button 
-                    key={tier.val}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSplashPrice(tier.price);
-                      setSplashAmountLabel(tier.val);
-                      setCustomAmount('');
-                    }}
-                    className={cn(
-                      "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
-                      selectedSplashPrice === tier.price && !customAmount ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
-                    )}
-                  >
-                    <span className="font-headline font-black text-2xl">${tier.val}</span>
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-70">{tier.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="pt-6 border-t border-border/50">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 mb-2 block">Or Enter Custom Mission Amount</Label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span className={cn("font-black text-lg transition-colors", selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "text-secondary" : "text-muted-foreground")}>$</span>
-                  </div>
-                  <input 
-                    type="number"
-                    min="1"
-                    placeholder="0.00"
-                    value={customAmount}
-                    onChange={(e) => {
-                      setCustomAmount(e.target.value);
-                      setSelectedSplashPrice(STRIPE_PRICES.SPLASH_CUSTOM);
-                      setSplashAmountLabel(e.target.value || 'Custom');
-                    }}
-                    className={cn(
-                      "flex h-14 w-full pl-10 bg-background border-2 font-black text-lg rounded-xl transition-all outline-none",
-                      selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "border-secondary ring-2 ring-secondary/10" : "border-border"
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 flex flex-col items-center gap-6">
-                <Button 
-                  onClick={() => handleCheckout(selectedSplashPrice)}
-                  disabled={isRedirecting}
-                  className="w-full max-w-sm h-16 bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
-                >
-                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT MISSION WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
-                </Button>
-                
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center px-8">
-                  For major gifts or specific infrastructure inquiries, please contact us directly via Discord.
-                </p>
-              </div>
-            </Card>
-          </div>
-        </section>
-
-        {/* 2. SANCTUARY MEMBERSHIPS - 3-TIER FUNNEL */}
-        <section id="membership" className="py-24 scroll-mt-24">
+        {/* 1. SANCTUARY MEMBERSHIPS - 3-TIER FUNNEL (PRIORITY) */}
+        <section id="membership" className="py-12 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
               <div className="h-px bg-border flex-1" />
               <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-                <Trophy className="h-4 w-4" /> 2. Infrastructure Tiers
+                <Trophy className="h-4 w-4" /> 1. Infrastructure Tiers
               </h2>
               <div className="h-px bg-border flex-1" />
             </div>
@@ -305,26 +237,97 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 3. PROMO CODE GATE */}
-        <section className="container mx-auto px-4 mb-24">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-px bg-border flex-1" />
-            <h2 className="text-xs font-black uppercase tracking-[0.4em] text-muted-foreground shrink-0 flex items-center gap-2">
-              <Ticket className="h-4 w-4" /> 3. Reward Portal
-            </h2>
-            <div className="h-px bg-border flex-1" />
-          </div>
-          <div className="max-w-md mx-auto">
-            <PromoCodeInput />
+        {/* 2. MAKE A SPLASH */}
+        <section id="donate" className="py-24 bg-secondary/5 border-y border-secondary/10 scroll-mt-24">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-4 mb-12">
+              <div className="h-px bg-secondary/20 flex-1" />
+              <h2 className="text-xs font-black uppercase tracking-[0.4em] text-secondary shrink-0 flex items-center gap-2">
+                <Waves className="h-4 w-4" /> 2. One-Time Mission Support
+              </h2>
+              <div className="h-px bg-secondary/20 flex-1" />
+            </div>
+
+            <Card className="max-w-3xl mx-auto bg-card border-border rounded-[2rem] p-8 md:p-12 shadow-2xl space-y-8">
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Make a Splash</h3>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-xl mx-auto">
+                  From snacks and bedding to high-tech infrastructure like Duck TV, your one-time support fuels the immediate needs and future goals of the sanctuary. Every splash counts.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
+                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'Habitat Upkeep' },
+                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Rescue Logistics' }
+                ].map((tier) => (
+                  <button 
+                    key={tier.val}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSplashPrice(tier.price);
+                      setSplashAmountLabel(tier.val);
+                      setCustomAmount('');
+                    }}
+                    className={cn(
+                      "h-24 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all",
+                      selectedSplashPrice === tier.price && !customAmount ? "border-secondary bg-secondary/10 text-secondary scale-105" : "border-border hover:border-secondary/40"
+                    )}
+                  >
+                    <span className="font-headline font-black text-2xl">${tier.val}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-70">{tier.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="pt-6 border-t border-border/50">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 mb-2 block">Or Enter Custom Mission Amount</Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span className={cn("font-black text-lg transition-colors", selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "text-secondary" : "text-muted-foreground")}>$</span>
+                  </div>
+                  <input 
+                    type="number"
+                    min="1"
+                    placeholder="0.00"
+                    value={customAmount}
+                    onChange={(e) => {
+                      setCustomAmount(e.target.value);
+                      setSelectedSplashPrice(STRIPE_PRICES.SPLASH_CUSTOM);
+                      setSplashAmountLabel(e.target.value || 'Custom');
+                    }}
+                    className={cn(
+                      "flex h-14 w-full pl-10 bg-background border-2 font-black text-lg rounded-xl transition-all outline-none",
+                      selectedSplashPrice === STRIPE_PRICES.SPLASH_CUSTOM ? "border-secondary ring-2 ring-secondary/10" : "border-border"
+                    )}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col items-center gap-6">
+                <Button 
+                  onClick={() => handleCheckout(selectedSplashPrice)}
+                  disabled={isRedirecting}
+                  className="w-full max-w-sm h-16 bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform"
+                >
+                  {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT MISSION WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
+                </Button>
+                
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center px-8">
+                  For major gifts or specific infrastructure inquiries, please contact us directly via Discord.
+                </p>
+              </div>
+            </Card>
           </div>
         </section>
 
-        {/* 4. SANCTUARY GEAR - AMAZON & PRINTFUL */}
-        <section id="merch" className="container mx-auto px-4 scroll-mt-24 mb-32">
+        {/* 3. SANCTUARY GEAR - AMAZON & PRINTFUL */}
+        <section id="merch" className="container mx-auto px-4 scroll-mt-24 py-24">
           <div className="flex items-center gap-4 mb-12">
             <div className="h-px bg-border flex-1" />
             <h2 className="text-xs font-black uppercase tracking-[0.4em] text-primary shrink-0 flex items-center gap-2">
-              <ShoppingBasket className="h-4 w-4" /> 4. Physical Supplies
+              <ShoppingBasket className="h-4 w-4" /> 3. Physical Supplies
             </h2>
             <div className="h-px bg-border flex-1" />
           </div>
