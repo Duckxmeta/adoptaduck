@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -38,10 +37,11 @@ export function ResidentCard({ resident }: { resident: Resident }) {
   const isDuck = !!resident.isDuck;
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
   
-  // LEGEND LOGIC
+  // SUPPORT FUNNEL LOGIC
   const isLegend = ['Bandit', 'Moxie'].includes(resident.name);
-  const isDog = !resident.isDuck && resident.name !== 'Otis';
   const isOtis = resident.name === 'Otis';
+  // Small Resident Pack includes all non-ducks that are not Otis (Dogs and Cats)
+  const isPack = !resident.isDuck && resident.name !== 'Otis';
 
   let buttonText = "ADOPT NOW";
   let buttonHref = "/support#donate";
@@ -49,7 +49,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
   if (isLegend) {
     buttonText = "SUPPORT THE MISSION";
     buttonHref = "/support#guardian";
-  } else if (isDog) {
+  } else if (isPack) {
     buttonText = "SUPPORT THE PACK";
     buttonHref = "/support#pack";
   } else if (isOtis) {
@@ -158,7 +158,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
       <CardContent className="p-4 flex flex-col gap-3 bg-card mt-auto">
          <Button asChild className={cn(
            "w-full h-11 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 transition-transform",
-           isLegend ? "bg-primary text-black" : isDog ? "bg-secondary text-white" : "bg-primary text-black"
+           isLegend ? "bg-primary text-black" : isPack ? "bg-secondary text-white" : "bg-primary text-black"
          )}>
            <Link href={buttonHref}>
              <Heart className="mr-2 h-3.5 w-3.5 fill-current" /> {buttonText}

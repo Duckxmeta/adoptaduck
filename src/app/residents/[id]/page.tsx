@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, use, useState, useEffect } from 'react';
@@ -162,9 +161,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const isDuck = bird?.isDuck || activeCollection === 'birds';
   
-  // LEGEND LOGIC
+  // SUPPORT FUNNEL LOGIC
   const isLegend = ['Bandit', 'Moxie'].includes(bird?.name || '');
-  const isDog = !isDuck && bird?.name !== 'Otis';
+  const isPack = !isDuck && bird?.name !== 'Otis'; // Dogs and Cats
   const isOtis = bird?.name === 'Otis';
 
   let buttonText = "ADOPT NOW";
@@ -173,7 +172,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   if (isLegend) {
     buttonText = "SUPPORT THE MISSION";
     buttonHref = "/support#guardian";
-  } else if (isDog) {
+  } else if (isPack) {
     buttonText = "SUPPORT THE PACK";
     buttonHref = "/support#pack";
   } else if (isOtis) {
@@ -316,7 +315,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               <div className="pt-6">
                 <Button asChild size="lg" className={cn(
                   "w-full font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform",
-                  isLegend ? "bg-primary text-black" : isDog ? "bg-secondary text-white" : "bg-primary text-black"
+                  isLegend ? "bg-primary text-black" : isPack ? "bg-secondary text-white" : "bg-primary text-black"
                 )}>
                   <Link href={buttonHref}>
                     <Heart className="mr-3 h-6 w-6 fill-current" /> {buttonText}

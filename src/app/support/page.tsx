@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, Suspense } from 'react';
@@ -222,15 +221,15 @@ function SupportContent() {
               <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-secondary/10 scale-105 z-10 scroll-mt-32">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Dog className="h-20 w-20 text-secondary" /></div>
                 <div className="space-y-1 relative z-10">
-                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">The Marina Miracles</h3>
-                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Canine Pack Sponsorship</p>
+                  <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">The Small Resident Pack</h3>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Canine & Feline Sponsorship</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                 <ul className="flex-1 space-y-3 relative z-10">
                   {[
-                    'Support the Entire Canine Pack',
+                    'Support Canine & Feline Residents',
                     'Direct Nutrition & Medical Funding',
-                    'Monthly Pack Video Updates',
+                    'Monthly Resident Video Updates',
                     'Verified Adopter Discord Role',
                     'Everything in Guardian Tier'
                   ].map((p, i) => (
