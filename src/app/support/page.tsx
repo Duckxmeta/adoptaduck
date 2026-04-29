@@ -120,10 +120,13 @@ function SupportContent() {
 
             <Card className="max-w-3xl mx-auto bg-card border-border rounded-[2rem] p-8 md:p-12 shadow-2xl space-y-8">
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Direct Impact Gifts</h3>
-                <p className="text-sm text-muted-foreground font-medium">Immediate funding for facility maintenance and animal nutrition.</p>
+                <h3 className="text-2xl font-headline font-black uppercase tracking-tight">Make a Splash</h3>
+                <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-xl mx-auto">
+                  From snacks and bedding to high-tech infrastructure like Duck TV, your one-time support fuels the immediate needs and future goals of the sanctuary. Every splash counts.
+                </p>
               </div>
 
+              {/* QUICK TIP BUTTON GRID */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
@@ -173,7 +176,7 @@ function SupportContent() {
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-center">
+              <div className="pt-4 flex flex-col items-center gap-6">
                 <Button 
                   onClick={() => handleCheckout(selectedSplashPrice)}
                   disabled={isRedirecting}
@@ -181,6 +184,10 @@ function SupportContent() {
                 >
                   {isRedirecting ? <Loader2 className="h-6 w-6 animate-spin" /> : <>SUPPORT MISSION WITH ${splashAmountLabel} <Heart className="ml-2 h-5 w-5 fill-current" /></>}
                 </Button>
+                
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center px-8">
+                  For major gifts or specific infrastructure inquiries, please contact us directly via Discord.
+                </p>
               </div>
             </Card>
           </div>
