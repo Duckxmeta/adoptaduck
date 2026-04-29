@@ -9,31 +9,24 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { 
   Heart, 
-  ArrowRight,
   Loader2,
   Waves,
   Trophy,
   CheckCircle2,
   Star,
   ShoppingBag,
-  ExternalLink,
   Ticket,
   MessageSquare,
   Dog,
   ShoppingBasket,
   Zap,
-  ShieldCheck,
-  Tv,
   Bird,
-  Mail,
-  Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 import { UserProfile } from '@/lib/types';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,7 +53,6 @@ function SupportContent() {
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
-  const isGuardian = userProfile?.role === 'guardian' || userProfile?.role === 'admin';
 
   const handleCheckout = async (priceId: string) => {
     setIsRedirecting(true);
@@ -195,7 +187,7 @@ function SupportContent() {
           </div>
         </section>
 
-        {/* 2. SANCTUARY MEMBERSHIPS - 3 TIER OVERHAUL */}
+        {/* 2. SANCTUARY MEMBERSHIPS - DIRECT SALES MODEL */}
         <section id="membership" className="py-24 scroll-mt-24">
           <div className="container mx-auto px-4">
             <div className="flex items-center gap-4 mb-12">
@@ -208,22 +200,22 @@ function SupportContent() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
               
-              {/* TIER 1: SANCTUARY INSIDER (FREE) */}
+              {/* TIER 1: THE SANCTUARY INSIDER (FREE) */}
               <Card className="bg-card border-2 border-border rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-foreground">The Insider</h3>
                     <MessageSquare className="h-6 w-6 text-muted-foreground/40" />
                   </div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mascot: Marina Miracles Cats</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Community Access</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground">FREE</div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Get the blueprints:</p>
-                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Exclusive access to our technology roadmap, infrastructure updates, and the Sanctuary Insider email list."</p>
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Get the inside view:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Join the Discord for daily raw content, resident logs, and real-time updates directly from the ground."</p>
                 </div>
                 <ul className="flex-1 space-y-3">
-                  {['Technology Roadmap Access', 'Infrastructure Pulse Updates', 'Sanctuary Insider Newsletter', 'Public Discord Entry'].map((p, i) => (
+                  {['Daily Raw Ground Content', 'Real-time Resident Logs', 'Public Discord Entry', 'Mission Update Feed'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-primary" /> {p}
                     </li>
@@ -234,7 +226,7 @@ function SupportContent() {
                   className="w-full min-h-[4rem] bg-background border-2 border-border text-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
                 >
                   <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer">
-                    GET FREE ACCESS
+                    JOIN THE COMMUNITY
                   </a>
                 </Button>
               </Card>
@@ -247,15 +239,15 @@ function SupportContent() {
                     <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Duck Guardian</h3>
                     <Star className="h-6 w-6 text-primary fill-primary" />
                   </div>
-                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Mascot: Moxie & Bandit</p>
+                  <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Foundation Support</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-foreground relative z-10">$8.33<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                 <div className="space-y-2 relative z-10">
-                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Building the foundation:</p>
-                  <p className="text-xs font-black text-foreground leading-relaxed italic">"This tier fuels the fencing and the launch of the Duck TV streaming initiative."</p>
+                  <p className="text-[10px] font-black uppercase text-primary tracking-widest">Protect the flock:</p>
+                  <p className="text-xs font-black text-foreground leading-relaxed italic">"Directly fuels infrastructure, security, and high-quality nutrition for the birds."</p>
                 </div>
                 <ul className="flex-1 space-y-3 relative z-10">
-                  {['Duck TV Launch Priority', 'Flock Infrastructure (Fencing)', 'Inner Circle Discord Role', 'Daily Resident Photo Logs', 'Digital Support Achievement'].map((p, i) => (
+                  {['Flock Infrastructure (Fencing)', 'High-Quality Nutrition Funding', 'Sanctuary Security Initiatives', 'Inner Circle Discord Role', 'Digital Support Achievement'].map((p, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs font-black text-foreground">
                       <Zap className="h-4 w-4 text-primary fill-primary" /> {p}
                     </li>
@@ -278,18 +270,18 @@ function SupportContent() {
                     <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Pack Protector</h3>
                     <Dog className="h-6 w-6 text-secondary/40" />
                   </div>
-                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Mascot: Marina Miracles Dogs</p>
+                  <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Scale the Mission</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase text-secondary tracking-widest">High-impact operations:</p>
-                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Support the full-scale nutrition, medical priorities, and multi-species habitat development."</p>
+                  <p className="text-[10px] font-black uppercase text-secondary tracking-widest">Operational support:</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Operational support for the full rescue squad, including our dogs, cats, and Otis."</p>
                 </div>
                 <ul className="flex-1 space-y-3">
                   {[
-                    'Full-Scale Nutrition Funding',
-                    'Medical Priority Logistics',
-                    'Multi-Species Habitat Growth',
+                    'Full Rescue Squad Operations',
+                    'Multi-Species Medical Care',
+                    'Habitat Expansion Funding',
                     'Permanent Ledger Recognition',
                     'Everything in Guardian Tier'
                   ].map((p, i) => (
