@@ -6,7 +6,6 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { AdoptionModal } from '@/components/residents/AdoptionModal';
 import { 
   Heart, 
   MapPin, 
@@ -18,7 +17,8 @@ import {
   Loader2,
   AlertCircle,
   GitBranch,
-  Lock
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useStorage } from '@/firebase';
@@ -44,8 +44,6 @@ const RESIDENT_IMAGE_MAP: Record<string, string> = {
   'Jade': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FJade.jpeg?alt=media&token=f89ea02f-f805-49df-a649-bad6524faa9d',
   'River': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FRiver.jpeg?alt=media&token=af080dc3-3a5a-42ad-b1cd-08a50e336fe1',
   'SweetPea': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FSweetPea.jpeg?alt=media&token=330a41bc-26c1-405c-ac1c-2f0fda3794ae',
-  'sweet pea': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FSweetPea.jpeg?alt=media&token=330a41bc-26c1-405c-ac1c-2f0fda3794ae',
-  'Sweet Pea': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FSweetPea.jpeg?alt=media&token=330a41bc-26c1-405c-ac1c-2f0fda3794ae',
   'Leela': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FLeela.jpeg?alt=media&token=f8c89eea-cf96-437a-b0de-e1263fe23254',
   'Whiskey': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FWhiskey.jpeg?alt=media&token=073b8dc6-a2ee-4ed8-8425-ce31505e2efc',
   'Pepper': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FPepper.jpeg?alt=media&token=8138ef48-61e1-428d-987e-c3da61eec7ee',
@@ -103,8 +101,8 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
           urls.push(primaryPath);
         } else {
           try {
-            const imageRef = ref(storage, `resident-photos/${primaryPath}`);
-            const downloadUrl = await getDownloadURL(imageRef);
+            const imageRefInstance = ref(storage, `resident-photos/${primaryPath}`);
+            const downloadUrl = await getDownloadURL(imageRefInstance);
             urls.push(downloadUrl);
           } catch (e) {}
         }
@@ -116,8 +114,8 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
           urls.push(p);
         } else {
           try {
-            const imageRef = ref(storage, `resident-photos/${p}`);
-            const downloadUrl = await getDownloadURL(imageRef);
+            const imageRefInstance = ref(storage, `resident-photos/${p}`);
+            const downloadUrl = await getDownloadURL(imageRefInstance);
             urls.push(downloadUrl);
           } catch (e) {}
         }
@@ -160,10 +158,28 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
+  const displayName = getResidentName(bird);
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
   const isDuck = bird?.isDuck || activeCollection === 'birds';
-  const isSponsored = !!bird?.isSponsored;
-  const displayName = getResidentName(bird);
+  
+  // LEGEND LOGIC
+  const isLegend = ['Bandit', 'Moxie'].includes(bird?.name || '');
+  const isDog = !isDuck && bird?.name !== 'Otis';
+  const isOtis = bird?.name === 'Otis';
+
+  let buttonText = "ADOPT NOW";
+  let buttonHref = "/support#donate";
+
+  if (isLegend) {
+    buttonText = "SUPPORT THE MISSION";
+    buttonHref = "/support#guardian";
+  } else if (isDog) {
+    buttonText = "SUPPORT THE PACK";
+    buttonHref = "/support#pack";
+  } else if (isOtis) {
+    buttonText = "SUPPORT OTIS";
+    buttonHref = "/support#equine";
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
@@ -186,7 +202,8 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             <div className="space-y-6">
               <div className={cn(
                 "relative rounded-[2.5rem] overflow-hidden border-2 shadow-2xl group bg-[#1a1a1a]",
-                isFounder ? "border-primary/50 glow-primary" : "border-border"
+                isFounder ? "border-primary/50 glow-primary" : "border-border",
+                isLegend && "border-primary ring-2 ring-primary/20"
               )}>
                 {resolvedImages.length > 0 ? (
                   <Carousel className="w-full">
@@ -219,10 +236,16 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                 )}
                 
                 <div className="absolute bottom-6 left-6 flex flex-wrap gap-2 pointer-events-none z-10">
-                   <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
-                     {bird?.breed}
-                   </Badge>
-                   {isFounder && (
+                   {isLegend ? (
+                     <Badge className="bg-primary text-black font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg flex items-center gap-2">
+                       <ShieldCheck className="h-4 w-4" /> Fully Sponsored Legend
+                     </Badge>
+                   ) : (
+                     <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
+                       {bird?.breed}
+                     </Badge>
+                   )}
+                   {isFounder && !isLegend && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-lg">
                        <Trophy className="h-3 w-3" /> G0 Founder
                      </Badge>
@@ -253,11 +276,6 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
-                     {bird?.species && (
-                       <Badge variant="outline" className="border-secondary/30 text-secondary font-black uppercase">
-                         {bird.species}
-                       </Badge>
-                     )}
                      {bird?.category && (
                        <Badge variant="outline" className="border-primary/30 text-primary font-black uppercase">
                          {bird.category}
@@ -265,7 +283,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                      )}
                   </div>
                 </div>
-                {isGuardian && isDuck && (
+                {isGuardian && isDuck && !isLegend && (
                   <Button 
                     asChild
                     className="bg-secondary text-secondary-foreground font-black h-12 rounded-xl px-6 shadow-xl hover:scale-105 transition-transform"
@@ -296,14 +314,18 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="pt-6">
-                {bird && (
-                  isSponsored ? (
-                    <Button disabled className="w-full bg-muted text-muted-foreground font-black h-16 text-lg rounded-2xl border-2 border-border cursor-not-allowed">
-                      <Lock className="mr-2 h-5 w-5" /> FULLY SPONSORED
-                    </Button>
-                  ) : (
-                    <AdoptionModal resident={bird} />
-                  )
+                <Button asChild size="lg" className={cn(
+                  "w-full font-black h-16 text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform",
+                  isLegend ? "bg-primary text-black" : isDog ? "bg-secondary text-white" : "bg-primary text-black"
+                )}>
+                  <Link href={buttonHref}>
+                    <Heart className="mr-3 h-6 w-6 fill-current" /> {buttonText}
+                  </Link>
+                </Button>
+                {isLegend && (
+                  <p className="text-[10px] text-center font-black uppercase tracking-[0.4em] text-muted-foreground mt-4">
+                    Legend status: All basic needs are covered. Gifts support mission expansion.
+                  </p>
                 )}
               </div>
             </div>
