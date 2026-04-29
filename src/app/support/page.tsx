@@ -45,6 +45,8 @@ const STRIPE_PRICES = {
   EQUINE_MONTHLY: 'price_1TNkneGyzCRtb3Hx34rLQuwT'
 };
 
+const PACK_PROTECTOR_PAYMENT_LINK = 'https://buy.stripe.com/4gM14nbl66WA4U3dpD';
+
 function SupportContent() {
   const { toast } = useToast();
   const { user } = useUser();
@@ -235,7 +237,7 @@ function SupportContent() {
                 </Button>
               </Card>
 
-              {/* TIER 2: PACK PROTECTOR */}
+              {/* TIER 2: PACK PROTECTOR - DIRECT LINK UPDATE */}
               <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-2xl relative overflow-hidden ring-4 ring-secondary/10 scale-105 z-10 scroll-mt-32">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Dog className="h-20 w-20 text-secondary" /></div>
                 <div className="space-y-1 relative z-10">
@@ -261,11 +263,12 @@ function SupportContent() {
                   ))}
                 </ul>
                 <Button 
-                  onClick={() => handleCheckout(STRIPE_PRICES.PACK_MONTHLY)}
-                  disabled={isRedirecting}
+                  asChild
                   className="w-full h-auto min-h-[4rem] bg-secondary text-secondary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
                 >
-                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "JOIN AS PACK PROTECTOR"}
+                  <a href={PACK_PROTECTOR_PAYMENT_LINK} target="_blank" rel="noopener noreferrer">
+                    PROTECT THE PACK
+                  </a>
                 </Button>
               </Card>
 
