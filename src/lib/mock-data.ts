@@ -2,12 +2,17 @@
 import { Expense } from './types';
 
 /**
- * MASTER SANCTUARY LEDGER - AUDITED APRIL 15, 2026
- * Total Investment: $347.80
+ * MASTER SANCTUARY LEDGER - AUDITED APRIL 18, 2026
+ * Total Investment: $391.08
  * High-precision species-specific tracking for 501(c)(3) readiness.
  */
 
 export const MOCK_EXPENSES: Expense[] = [
+  // --- APRIL 18, 2026 BATCH (Tooling & Infrastructure) ---
+  { id: 'h12', itemName: '5x 6ft T-posts (Fencing Infrastructure)', cost: 25.25, category: 'Habitat', date: '2026-04-18', createdAt: '2026-04-18T10:00:00Z' },
+  { id: 'g12', itemName: 'JS 6-inch Diagonal Cutters (Facility Tools)', cost: 14.19, category: 'General', date: '2026-04-18', createdAt: '2026-04-18T10:05:00Z' },
+  { id: 'g13', itemName: 'Sales Tax', cost: 3.84, category: 'General', date: '2026-04-18', createdAt: '2026-04-18T10:10:00Z' },
+
   // --- APRIL 15, 2026 BATCH (Property Utility) ---
   { id: 'g11', itemName: 'Farm Truck Fuel (Property Utility)', cost: 15.00, category: 'General', date: '2026-04-15', createdAt: '2026-04-15T10:00:00Z' },
 
