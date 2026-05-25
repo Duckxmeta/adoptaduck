@@ -322,6 +322,32 @@ function SupportContent() {
           </div>
         </section>
 
+        {/* CRYPTO DONATION SECTION */}
+<section className="container mx-auto px-4 py-12 scroll-mt-24">
+  <div className="max-w-3xl mx-auto bg-card border-2 border-primary rounded-[2rem] p-8 md:p-10 shadow-xl">
+    <div className="text-center space-y-6">
+      <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Direct Crypto Support</h3>
+      <div className="grid md:grid-cols-2 gap-6 text-left">
+        <div className="bg-muted/50 p-5 rounded-2xl border">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Solana (SOL)</p>
+          <code className="text-sm font-mono break-all bg-background p-3 rounded-lg block border border-border">
+            AKkgD4kg8bq7sPUXhqWLqNPBcvtXXhevx3TQCkuxpUQY
+          </code>
+        </div>
+        <div className="bg-muted/50 p-5 rounded-2xl border">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Ethereum (ETH)</p>
+          <code className="text-sm font-mono break-all bg-background p-3 rounded-lg block border border-border">
+            0x30B52ee50E3C4176071E4fF6D010c28e54164788
+          </code>
+        </div>
+      </div>
+      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+        Please ensure you are sending on the correct network.
+      </p>
+    </div>
+  </div>
+</section>
+        
         {/* 3. SANCTUARY GEAR - AMAZON & PRINTFUL */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 py-24">
           <div className="flex items-center gap-4 mb-12">
