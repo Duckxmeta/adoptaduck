@@ -26,6 +26,8 @@ import {
   ShoppingBasket,
   Zap,
   Bird,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -46,6 +48,48 @@ const STRIPE_PRICES = {
 const PACK_PROTECTOR_PAYMENT_LINK = 'https://buy.stripe.com/4gM14nbl66WA4U3dpD';
 const AMAZON_STOREFRONT_URL = 'https://www.amazon.com/shop/justtduckit/list/D8RL88I4288F?ref_=aip_sf_list_spv_ofs_m_lspvrd&ccs_id=ac2d438b-2c26-4bbb-8c7c-2d8eb617bb29';
 const DISCORD_INVITE = 'https://discord.gg/ERegmyNdcG';
+
+// Helper component for interactive click-to-copy functionality
+function CryptoAddressBlock({ label, address }: { label: string; address: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  return (
+    <div className="bg-muted/50 p-5 rounded-2xl border flex flex-col justify-between space-y-3">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">{label}</p>
+        <code className="text-xs font-mono break-all bg-background p-3 rounded-lg block border border-border select-all">
+          {address}
+        </code>
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={handleCopy}
+        className="w-full h-10 font-black text-[10px] tracking-widest uppercase border-primary/20 hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+      >
+        {copied ? (
+          <>
+            <Check className="h-3 w-3 text-green-500" /> COPIED!
+          </>
+        ) : (
+          <>
+            <Copy className="h-3 w-3" /> COPY ADDRESS
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
 
 function SupportContent() {
   const { toast } = useToast();
@@ -323,30 +367,26 @@ function SupportContent() {
         </section>
 
         {/* CRYPTO DONATION SECTION */}
-<section className="container mx-auto px-4 py-12 scroll-mt-24">
-  <div className="max-w-3xl mx-auto bg-card border-2 border-primary rounded-[2rem] p-8 md:p-10 shadow-xl">
-    <div className="text-center space-y-6">
-      <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Direct Crypto Support</h3>
-      <div className="grid md:grid-cols-2 gap-6 text-left">
-        <div className="bg-muted/50 p-5 rounded-2xl border">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Solana (SOL)</p>
-          <code className="text-sm font-mono break-all bg-background p-3 rounded-lg block border border-border">
-            AKkgD4kg8bq7sPUXhqWLqNPBcvtXXhevx3TQCkuxpUQY
-          </code>
-        </div>
-        <div className="bg-muted/50 p-5 rounded-2xl border">
-          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Ethereum (ETH)</p>
-          <code className="text-sm font-mono break-all bg-background p-3 rounded-lg block border border-border">
-            0x30B52ee50E3C4176071E4fF6D010c28e54164788
-          </code>
-        </div>
-      </div>
-      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-        Please ensure you are sending on the correct network.
-      </p>
-    </div>
-  </div>
-</section>
+        <section className="container mx-auto px-4 py-12 scroll-mt-24">
+          <div className="max-w-3xl mx-auto bg-card border-2 border-primary rounded-[2rem] p-8 md:p-10 shadow-xl">
+            <div className="text-center space-y-6">
+              <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-primary">Direct Crypto Support</h3>
+              <div className="grid md:grid-cols-2 gap-6 text-left">
+                <CryptoAddressBlock 
+                  label="Solana (SOL)" 
+                  address="AKkgD4kg8bq7sPUXhqWLqNPBcvtXXhevx3TQCkuxpUQY" 
+                />
+                <CryptoAddressBlock 
+                  label="Ethereum (ETH)" 
+                  address="0x30B52ee50E3C4176071E4fF6D010c28e54164788" 
+                />
+              </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                Please ensure you are sending on the correct network.
+              </p>
+            </div>
+          </div>
+        </section>
         
         {/* 3. SANCTUARY GEAR - AMAZON & PRINTFUL */}
         <section id="merch" className="container mx-auto px-4 scroll-mt-24 py-24">
