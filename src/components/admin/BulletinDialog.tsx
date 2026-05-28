@@ -20,6 +20,7 @@ import Image from 'next/image';
 import { useStorage } from '@/firebase';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
+import { preprocessImage, getFriendlyStorageError } from '@/lib/image';
 
 interface BulletinDialogProps {
   open: boolean;
@@ -69,11 +70,13 @@ export function BulletinDialog({ open, onOpenChange, onSave, bulletin }: Bulleti
       let finalImageUrl = formData.imageUrl || "";
 
       if (selectedFile && storage) {
+        // Preprocess (convert HEIC & compress client-side)
+        const processedFile = await preprocessImage(selectedFile);
         // Safer mobile filename generation
-        const safeName = (selectedFile.name || 'update').replace(/\s+/g, '-');
+        const safeName = (processedFile.name || 'update').replace(/\s+/g, '-');
         const fileName = `bulletin-${Date.now()}-${safeName}`;
         const fileRef = storageRef(storage, `bulletins/${fileName}`);
-        const snapshot = await uploadBytes(fileRef, selectedFile);
+        const snapshot = await uploadBytes(fileRef, processedFile);
         finalImageUrl = await getDownloadURL(snapshot.ref);
       }
 
@@ -84,7 +87,12 @@ export function BulletinDialog({ open, onOpenChange, onSave, bulletin }: Bulleti
       onOpenChange(false);
     } catch (error) {
       console.error("Bulletin Save Error:", error);
-      toast({ variant: "destructive", title: "Error Saving Update", description: "Check connection and try again." });
+      const friendlyError = getFriendlyStorageError(error);
+      toast({
+        variant: "destructive",
+        title: friendlyError.title,
+        description: friendlyError.description,
+      });
     } finally {
       setLoading(false);
     }

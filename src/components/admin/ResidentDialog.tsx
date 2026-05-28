@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { getResidentName } from '@/lib/utils';
+import { preprocessImage, getFriendlyStorageError } from '@/lib/image';
 
 interface ResidentDialogProps {
   open: boolean;
@@ -171,17 +172,21 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
     try {
       if (storage) {
         if (selectedFile) {
+          // Preprocess (convert HEIC & compress client-side)
+          const processedFile = await preprocessImage(selectedFile);
           const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-primary-${Date.now()}`;
           const fileRef = storageRef(storage, `resident-photos/${fileName}`);
-          const snapshot = await uploadBytes(fileRef, selectedFile);
+          const snapshot = await uploadBytes(fileRef, processedFile);
           finalImageUrl = await getDownloadURL(snapshot.ref);
         }
 
         if (selectedGalleryFiles.length > 0) {
           for (const file of selectedGalleryFiles) {
+            // Preprocess each gallery image (convert HEIC & compress client-side)
+            const processedFile = await preprocessImage(file);
             const fileName = `${formData.name?.toLowerCase().replace(/\s+/g, '-') || 'resident'}-gallery-${Date.now()}-${Math.random().toString(36).substring(7)}`;
             const fileRef = storageRef(storage, `resident-photos/gallery/${fileName}`);
-            const snapshot = await uploadBytes(fileRef, file);
+            const snapshot = await uploadBytes(fileRef, processedFile);
             const url = await getDownloadURL(snapshot.ref);
             finalGalleryUrls.push(url);
           }
@@ -214,10 +219,11 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
       await onSave(submissionData);
     } catch (error) {
       console.error("Upload error:", error);
+      const friendlyError = getFriendlyStorageError(error);
       toast({
         variant: "destructive",
-        title: "Upload Failed",
-        description: "Could not save images. Please try again.",
+        title: friendlyError.title,
+        description: friendlyError.description,
       });
     } finally {
       setUploading(false);
