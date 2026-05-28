@@ -119,6 +119,13 @@ function ManagerPortal({ user }: { user: any }) {
   }, [firestore]);
 
   const { data: birds } = useCollection<Resident>(birdsQuery);
+  const [localBirds, setLocalBirds] = useState<Resident[]>([]);
+  useEffect(() => {
+    if (birds) {
+      setLocalBirds(birds);
+    }
+  }, [birds]);
+
   const { data: dailyStatus } = useDoc<DailyStatus>(dailyStatusRef);
   const { data: eggHistory } = useDoc<EggHistoryEntry>(eggHistoryRef);
   const { data: firestoreExpenses } = useCollection<Expense>(expensesQuery);
@@ -163,6 +170,28 @@ function ManagerPortal({ user }: { user: any }) {
     toast({ title: "Egg Count Saved" });
   };
 
+  const handleDeleteBird = async (bird: Resident) => {
+    if (!firestore) return;
+    const isConfirmed = window.confirm(`Are you sure you want to delete ${bird.name}? This will remove them from the pedigree tree.`);
+    if (!isConfirmed) return;
+
+    try {
+      // Opt-4: Filter out the bird from local state immediately
+      setLocalBirds(prev => prev.filter(b => b.id !== bird.id));
+      
+      const birdRef = doc(firestore, 'birds', bird.id);
+      await deleteDoc(birdRef);
+      toast({ title: "Bird Deleted", description: `${bird.name} has been removed successfully.` });
+    } catch (e) {
+      console.error("Delete bird error:", e);
+      toast({ variant: "destructive", title: "Delete Failed", description: "Database error." });
+      // Restore from source of truth if failed
+      if (birds) {
+        setLocalBirds(birds);
+      }
+    }
+  };
+
   const handleDeleteExpense = async (id: string) => {
     if (!firestore) return;
     const isMock = MOCK_EXPENSES.some(e => e.id === id);
@@ -174,6 +203,7 @@ function ManagerPortal({ user }: { user: any }) {
       await deleteDoc(doc(firestore, 'ledger', id));
       toast({ title: "Expense Removed" });
     } catch (e) {
+      console.error("Delete expense error:", e);
       toast({ variant: "destructive", title: "Delete Failed", description: "Database error." });
     }
   };
@@ -184,6 +214,7 @@ function ManagerPortal({ user }: { user: any }) {
       await deleteDoc(doc(firestore, 'bulletin', bulletinId));
       toast({ title: "Update Removed" });
     } catch (e) {
+      console.error("Delete bulletin error:", e);
       toast({ variant: "destructive", title: "Error Deleting" });
     }
   };
@@ -202,6 +233,7 @@ function ManagerPortal({ user }: { user: any }) {
       }
       setIsBulletinDialogOpen(false);
     } catch (e) {
+      console.error("Save bulletin error:", e);
       toast({ variant: "destructive", title: "Error Publishing" });
       throw e;
     }
@@ -218,6 +250,7 @@ function ManagerPortal({ user }: { user: any }) {
       await batch.commit();
       toast({ title: "Name Approved!", description: `Renamed to ${req.suggestedName}.` });
     } catch (e) {
+      console.error("Approve naming request error:", e);
       toast({ variant: "destructive", title: "Error" });
     }
   };
@@ -228,6 +261,7 @@ function ManagerPortal({ user }: { user: any }) {
       await updateDoc(doc(firestore, 'naming_requests', requestId), { status: 'denied', updatedAt: new Date().toISOString() });
       toast({ title: "Request Denied" });
     } catch (e) {
+      console.error("Deny naming request error:", e);
       toast({ variant: "destructive", title: "Error" });
     }
   };
@@ -245,6 +279,7 @@ function ManagerPortal({ user }: { user: any }) {
       }
       setIsResidentDialogOpen(false);
     } catch (error) {
+      console.error("Save resident error:", error);
       toast({ variant: "destructive", title: "Save Failed" });
     }
   };
@@ -328,11 +363,18 @@ function ManagerPortal({ user }: { user: any }) {
             <Button onClick={() => { setEditingResident(null); setIsResidentDialogOpen(true); }} className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"><Plus className="h-4 w-4 mr-2" /> Add Bird</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {birds?.map((bird) => (
+            {localBirds?.map((bird) => (
               <Card key={bird.id} className="bg-card border-border border-2 rounded-2xl overflow-hidden shadow-xl flex flex-col">
                 <div className="relative aspect-video bg-muted flex items-center justify-center">
                   {bird.primaryImageUrl ? <Image src={bird.primaryImageUrl} alt={bird.name} fill className="object-cover" /> : <span className="text-4xl opacity-20">🦆</span>}
-                  <div className="absolute top-2 right-2"><Button size="icon" variant="secondary" className="h-8 w-8 rounded-lg shadow-lg" onClick={() => { setEditingResident(bird); setIsResidentDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button></div>
+                  <div className="absolute top-2 right-2 flex gap-1.5 bg-background/50 backdrop-blur-sm p-1 rounded-lg">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-background/80" onClick={() => { setEditingResident(bird); setIsResidentDialogOpen(true); }}>
+                      <Edit3 className="h-4 w-4 text-foreground" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-destructive/80 hover:text-destructive" onClick={() => handleDeleteBird(bird)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="p-6 space-y-6 flex-1">
                   <div>

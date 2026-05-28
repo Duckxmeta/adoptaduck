@@ -1,0 +1,155 @@
+
+{
+  "entities": {
+    "Resident": {
+      "title": "Resident",
+      "type": "object",
+      "description": "Any sanctuary resident (Duck, Dog, Cat, Horse, etc.)",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "breed": { "type": "string" },
+        "sex": { "type": "string", "enum": ["male", "female", "unknown"] },
+        "personalityTraits": { "type": "string" },
+        "backstory": { "type": "string" },
+        "primaryImageUrl": { "type": "string" },
+        "isDuck": { "type": "boolean" },
+        "category": { "type": "string", "description": "Grouping label for Sanctuary Friends." },
+        "liveStatus": { "type": "string" },
+        "statusLastUpdated": { "type": "string" }
+      }
+    },
+    "ResidentBird": {
+      "title": "ResidentBird",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "breed": { "type": "string" },
+        "sex": { "type": "string", "enum": ["male", "female", "unknown"] },
+        "personalityTraits": { "type": "string" },
+        "backstory": { "type": "string" },
+        "primaryImageUrl": { "type": "string" },
+        "isFoundingResident": { "type": "boolean" },
+        "generation": { "type": "number" },
+        "liveStatus": { "type": "string" },
+        "statusLastUpdated": { "type": "string" }
+      }
+    },
+    "EggHistory": {
+      "title": "EggHistory",
+      "type": "object",
+      "description": "Daily egg production totals.",
+      "properties": {
+        "id": { "type": "string", "description": "Date formatted as YYYY-MM-DD" },
+        "count": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "DailyStatus": {
+      "title": "DailyStatus",
+      "type": "object",
+      "description": "Sanctuary routine tracker.",
+      "properties": {
+        "id": { "type": "string" },
+        "morningFeeding": { "type": "boolean" },
+        "freshWater": { "type": "boolean" },
+        "eggCounter": { "type": "boolean" },
+        "healthCheck": { "type": "boolean" },
+        "nightlyPenUp": { "type": "boolean" },
+        "lastReset": { "type": "string" }
+      }
+    },
+    "Donation": {
+      "title": "Donation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "amount": { "type": "number" },
+        "designation": { "type": "string", "enum": ["feed", "medical", "infrastructure"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "donorDisplayName": { "type": "string" },
+        "uid": { "type": "string" }
+      }
+    },
+    "PromoCode": {
+      "title": "PromoCode",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["discount", "bypass_upgrade"] },
+        "targetRole": { "type": "string" },
+        "durationDays": { "type": "number" },
+        "usageCount": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      }
+    },
+    "Expense": {
+      "title": "Expense",
+      "type": "object",
+      "description": "Records of sanctuary expenditures.",
+      "properties": {
+        "id": { "type": "string" },
+        "itemName": { "type": "string" },
+        "category": { "type": "string", "enum": ["Ducks", "Canine", "Feline", "Horse", "Habitat", "General"] },
+        "cost": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "birdId": { "type": "string", "description": "Optional link to a specific resident." },
+        "note": { "type": "string", "description": "Additional archival details including Vet tags." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["itemName", "category", "cost", "date"]
+    },
+    "NamingRequest": {
+      "title": "NamingRequest",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "birdId": { "type": "string" },
+        "birdName": { "type": "string" },
+        "suggestedName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "denied"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["password", "google"]
+  },
+  "firestore": {
+    "/birds/{birdId}": {
+      "schema": "#/backend/entities/ResidentBird",
+      "description": "Legacy sanctuary ducks collection."
+    },
+    "/residents/{residentId}": {
+      "schema": "#/backend/entities/Resident",
+      "description": "Multi-species sanctuary residents collection."
+    },
+    "/egg_history/{date}": {
+      "schema": "#/backend/entities/EggHistory",
+      "description": "Daily aggregate of egg collection."
+    },
+    "/daily_status/{statusId}": {
+      "schema": "#/backend/entities/DailyStatus",
+      "description": "Real-time sanctuary routine state."
+    },
+    "/donations/{donationId}": {
+      "schema": "#/backend/entities/Donation",
+      "description": "Financial support records."
+    },
+    "/promo_codes/{codeId}": {
+      "schema": "#/backend/entities/PromoCode",
+      "description": "Tracking for promo code usage."
+    },
+    "/ledger/{expenseId}": {
+      "schema": "#/backend/entities/Expense",
+      "description": "Historical log of sanctuary costs."
+    },
+    "/naming_requests/{requestId}": {
+      "schema": "#/backend/entities/NamingRequest",
+      "description": "User suggested names for review."
+    }
+  }
+}
