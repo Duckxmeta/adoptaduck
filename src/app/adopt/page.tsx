@@ -8,7 +8,7 @@ import { Resident } from '@/lib/types';
 import { fetchAllSanctuaryResidents } from '@/lib/residents';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Bird, PawPrint, ShieldCheck } from 'lucide-react';
+import { Loader2, Sparkles, Bird } from 'lucide-react';
 
 /**
  * @fileOverview The Sanctuary Roster.
@@ -30,17 +30,7 @@ export default function AdoptionPage() {
     load();
   }, [firestore]);
 
-  const ducks = useMemo(() => residents.filter(r => r.isDuck), [residents]);
-  const otherResidents = useMemo(() => residents.filter(r => !r.isDuck), [residents]);
-
-  const groupedFriends = useMemo(() => {
-    return otherResidents.reduce((acc, res) => {
-      const cat = res.category || 'Sanctuary Friends';
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(res);
-      return acc;
-    }, {} as Record<string, Resident[]>);
-  }, [otherResidents]);
+  const ducks = useMemo(() => residents.filter(r => r.isDuck && ['Bandit', 'Moxie'].includes(r.name)), [residents]);
 
   if (loading) {
     return (
@@ -94,38 +84,6 @@ export default function AdoptionPage() {
             </div>
           )}
         </section>
-
-        {/* SECTION 2: SANCTUARY FRIENDS (DOGS, CATS, HORSES) */}
-        {otherResidents.length > 0 && (
-          <section className="space-y-20">
-            <div className="flex items-center gap-6">
-              <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20">
-                <PawPrint className="h-8 w-8 text-secondary" />
-              </div>
-              <div className="space-y-1">
-                <h2 className="text-4xl font-headline font-black uppercase tracking-tight leading-none">Sanctuary Friends</h2>
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Rescue Mission Recipients</p>
-              </div>
-              <div className="h-px bg-border flex-1 hidden md:block" />
-            </div>
-
-            <div className="space-y-24">
-              {Object.entries(groupedFriends).map(([category, list]) => (
-                <div key={category} className="space-y-10">
-                  <div className="flex items-center gap-4">
-                    <ShieldCheck className="h-4 w-4 text-primary" />
-                    <h3 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary">{category}</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {list.map((res) => (
-                      <ResidentCard key={res.id} resident={res} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
       </main>
 
       <Footer />

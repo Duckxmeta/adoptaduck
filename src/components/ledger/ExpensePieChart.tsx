@@ -11,9 +11,6 @@ interface ExpensePieChartProps {
 
 const CATEGORY_COLORS: Record<string, string> = {
   'The Flock': '#FFCC00',         // Decent Ducks Yellow
-  'Canine Pack': '#9945FF',      // Canine Purple
-  'Otis': '#8B4513',             // Equine Brown
-  'Feline Friends': '#14F195',   // Green
   'General Operations': '#475569' // Slate/Dark Grey
 };
 
@@ -23,25 +20,15 @@ export function ExpensePieChart({ expenses }: ExpensePieChartProps) {
 
     const transformed: Record<string, number> = {
       'The Flock': 0,
-      'Canine Pack': 0,
-      'Otis': 0,
-      'Feline Friends': 0,
       'General Operations': 0
     };
 
     expenses.forEach(e => {
       const cost = Number(e.cost) || 0;
-      // Grouping Logic: Species categories map to animal slices, everything else is Operations
       if (e.category === 'Ducks') {
         transformed['The Flock'] += cost;
-      } else if (e.category === 'Canine') {
-        transformed['Canine Pack'] += cost;
-      } else if (e.category === 'Horse') {
-        transformed['Otis'] += cost;
-      } else if (e.category === 'Feline') {
-        transformed['Feline Friends'] += cost;
       } else {
-        // Habitat, General, etc.
+        // Legacy species care and general operations
         transformed['General Operations'] += cost;
       }
     });

@@ -33,19 +33,7 @@ import {
 import Link from 'next/link';
 import { ref, getDownloadURL } from 'firebase/storage';
 
-const RESIDENT_IMAGE_MAP: Record<string, string> = {
-  'Cassidy': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCassidy.jpeg?alt=media&token=f66f2e79-86e3-4ba3-8f3c-9aff47227075',
-  'Echo': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FEcho.jpeg?alt=media&token=6375ff79-0b14-4611-b789-a640017ffc9f',
-  'Cracker': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCracker.jpeg?alt=media&token=94b6629c-43d4-4721-9fd7-c50dd215d7b8',
-  'Coffee': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FCoffee.jpeg?alt=media&token=08099fb8-2362-44ff-bb72-324b14ecc099',
-  'Jade': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FJade.jpeg?alt=media&token=f89ea02f-f805-49df-a649-bad6524faa9d',
-  'River': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FRiver.jpeg?alt=media&token=af080dc3-3a5a-42ad-b1cd-08a50e336fe1',
-  'SweetPea': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FSweetPea.jpeg?alt=media&token=330a41bc-26c1-405c-ac1c-2f0fda3794ae',
-  'Leela': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FLeela.jpeg?alt=media&token=f8c89eea-cf96-437a-b0de-e1263fe23254',
-  'Whiskey': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FWhiskey.jpeg?alt=media&token=073b8dc6-a2ee-4ed8-8425-ce31505e2efc',
-  'Pepper': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FPepper.jpeg?alt=media&token=8138ef48-61e1-428d-987e-c3da61eec7ee',
-  'Otis': 'https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/resident-photos%2FOtis.jpeg?alt=media&token=e765d331-774d-4bd3-bb73-75a143af24f1',
-};
+const RESIDENT_IMAGE_MAP: Record<string, string> = {};
 
 export default function ResidentProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -53,10 +41,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   const storage = useStorage();
   const { user } = useUser();
 
-  const [activeCollection, setActiveCollection] = useState<'birds' | 'residents'>('birds');
   const [isSearching, setIsSearching] = useState(true);
 
-  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, activeCollection, id) : null), [firestore, id, activeCollection]);
+  const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: bird, isLoading } = useDoc<Resident>(birdRef);
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
@@ -66,13 +53,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   useEffect(() => {
     if (!isLoading) {
-      if (!bird && activeCollection === 'birds') {
-        setActiveCollection('residents');
-      } else {
-        setIsSearching(false);
-      }
+      setIsSearching(false);
     }
-  }, [isLoading, bird, activeCollection]);
+  }, [isLoading]);
 
   const [resolvedImages, setResolvedImages] = useState<string[]>([]);
 
@@ -132,7 +115,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (!bird && !isLoading && !isSearching) {
+  const isValidBird = bird && ['Bandit', 'Moxie'].includes(bird.name);
+
+  if (!isValidBird && !isLoading && !isSearching) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navbar />
@@ -155,9 +140,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const displayName = getResidentName(bird);
+  const displayName = getResidentName(bird!);
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
-  const isDuck = bird?.isDuck || activeCollection === 'birds';
+  const isDuck = true;
   const isLegend = ['Bandit', 'Moxie'].includes(bird?.name || '');
 
   return (

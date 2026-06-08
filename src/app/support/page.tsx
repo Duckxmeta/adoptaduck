@@ -22,12 +22,12 @@ import {
   ShoppingBag,
   Ticket,
   MessageSquare,
-  Dog,
   ShoppingBasket,
   Zap,
   Bird,
   Copy,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -240,24 +240,24 @@ function SupportContent() {
                 <div className="absolute bottom-0 left-0 w-full h-1 bg-primary" />
               </Card>
 
-              {/* TIER 3: PACK PROTECTOR ($35/mo) */}
+              {/* TIER 3: FLOCK PROTECTOR ($35/mo) */}
               <Card id="pack" className="bg-card border-2 border-secondary rounded-[2.5rem] p-8 flex flex-col space-y-6 shadow-xl relative overflow-hidden">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Pack Protector</h3>
-                    <Dog className="h-6 w-6 text-secondary/40" />
+                    <h3 className="text-2xl font-headline font-black uppercase tracking-tight text-secondary">Flock Protector</h3>
+                    <Bird className="h-6 w-6 text-secondary/40" />
                   </div>
                   <p className="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Scale the Mission</p>
                 </div>
                 <div className="text-4xl font-headline font-black text-secondary">$35<span className="text-xs font-medium text-muted-foreground ml-1">/mo</span></div>
                 <div className="space-y-2">
                   <p className="text-[10px] font-black uppercase text-secondary tracking-widest">Operational support:</p>
-                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Operational support for the full rescue squad, including our dogs, cats, and Otis."</p>
+                  <p className="text-xs font-bold text-muted-foreground leading-relaxed italic">"Operational support for the full waterfowl rescue squad, including our ducks, geese, and turkeys."</p>
                 </div>
                 <ul className="flex-1 space-y-3">
                   {[
-                    'Full Rescue Squad Operations',
-                    'Multi-Species Medical Care',
+                    'Full Waterfowl Operations',
+                    'Specialized Avian Medical Care',
                     'Habitat Expansion Funding',
                     'Permanent Ledger Recognition',
                     'Everything in Guardian Tier'
@@ -384,6 +384,32 @@ function SupportContent() {
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Please ensure you are sending on the correct network.
               </p>
+
+              <div className="border-t border-border pt-6 mt-6 text-left">
+                <div className="bg-muted/30 p-6 rounded-2xl border border-border flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary fill-primary/10" />
+                      <h4 className="text-lg font-headline font-black uppercase tracking-tight text-foreground">Decent Ducks v2</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground font-medium max-w-md">
+                      Support our mission directly with a digital asset receipt that only ever gains value.
+                    </p>
+                  </div>
+                  <Button 
+                    asChild 
+                    className="w-full md:w-auto h-12 px-6 bg-primary text-primary-foreground font-black text-xs tracking-widest uppercase rounded-xl hover:scale-105 transition-transform"
+                  >
+                    <a 
+                      href="https://justduckeggs.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      Support via Decent Ducks
+                    </a>
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </section>

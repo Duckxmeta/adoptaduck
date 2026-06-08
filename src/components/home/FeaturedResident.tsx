@@ -21,23 +21,15 @@ export function FeaturedResident() {
   const router = useRouter();
   const firestore = useFirestore();
 
-  // 1. Dual-Collection Search for Featured Flag
+  // 1. Search for Featured Flag in birds collection
   const featuredBirdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'birds'), where('isFeatured', '==', true), limit(1));
   }, [firestore]);
 
-  const featuredResidentsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'residents'), where('isFeatured', '==', true), limit(1));
-  }, [firestore]);
+  const { data: featuredBirds, isLoading } = useCollection<Resident>(featuredBirdsQuery);
 
-  const { data: featuredBirds, isLoading: loadingBirds } = useCollection<Resident>(featuredBirdsQuery);
-  const { data: featuredResidents, isLoading: loadingResidents } = useCollection<Resident>(featuredResidentsQuery);
-
-  // Prioritize multi-species residents for spotlight, fallback to birds
-  const featured = featuredResidents?.[0] || featuredBirds?.[0];
-  const isLoading = loadingBirds || loadingResidents;
+  const featured = featuredBirds?.[0];
 
   // HARD CONTENT FALLBACK: BANDIT (The Sanctuary Root)
   const defaultData = {
