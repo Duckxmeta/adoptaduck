@@ -30,7 +30,7 @@ export default function AdoptionPage() {
     load();
   }, [firestore]);
 
-  const ducks = useMemo(() => residents.filter(r => r.isDuck && ['Bandit', 'Moxie'].includes(r.name)), [residents]);
+  const ducks = useMemo(() => residents.filter(r => r.isDuck && ['bandit', 'moxie'].includes(r.name?.toLowerCase().trim())), [residents]);
 
   if (loading) {
     return (

@@ -23,7 +23,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
   const displayName = getResidentName(resident);
   const isDuck = !!resident.isDuck;
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
-  const isLegend = ['Bandit', 'Moxie'].includes(resident.name);
+  const isLegend = ['bandit', 'moxie'].includes(resident.name?.toLowerCase().trim());
 
   // ALL buttons link to centralized support hub
   const buttonHref = "/support";

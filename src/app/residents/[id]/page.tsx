@@ -115,7 +115,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const isValidBird = bird && ['Bandit', 'Moxie'].includes(bird.name);
+  const isValidBird = bird && ['bandit', 'moxie'].includes(bird.name?.toLowerCase().trim());
 
   if (!isValidBird && !isLoading && !isSearching) {
     return (

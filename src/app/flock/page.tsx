@@ -23,12 +23,20 @@ export default function BrowseFlock() {
 
   const birdsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'birds'), orderBy('createdAt', 'desc'));
+    return query(collection(firestore, 'birds'));
   }, [firestore]);
 
   const { data: birds, isLoading } = useCollection<Resident>(birdsQuery);
 
-  const activeBirds = birds?.filter(b => ['Bandit', 'Moxie'].includes(b.name)) || [];
+  const activeBirds = birds
+    ? [...birds]
+        .filter(b => ['bandit', 'moxie'].includes(b.name?.toLowerCase().trim()))
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+    : [];
 
   const foundingMembers = activeBirds.filter(b => b.isFoundingResident || b.generation === 0 || b.founder) || [];
   const standardResidents = activeBirds.filter(b => !b.isFoundingResident && b.generation !== 0 && !b.founder) || [];

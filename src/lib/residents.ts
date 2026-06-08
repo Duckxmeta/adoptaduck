@@ -13,8 +13,7 @@ export async function fetchAllSanctuaryResidents(db: Firestore): Promise<Residen
   try {
     // Fetch Birds (Primary focus)
     const birdsRef = collection(db, 'birds');
-    const birdsQuery = query(birdsRef, orderBy('createdAt', 'desc'));
-    const birdsSnap = await getDocs(birdsQuery);
+    const birdsSnap = await getDocs(birdsRef);
     const birdsList = birdsSnap.docs.map(doc => {
       const data = doc.data();
       return {
@@ -24,6 +23,13 @@ export async function fetchAllSanctuaryResidents(db: Firestore): Promise<Residen
         species: data.species || 'Duck',
         category: data.category || 'The Flock'
       } as Resident;
+    });
+
+    // Sort client-side by createdAt desc
+    birdsList.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
     });
 
     return birdsList;
