@@ -13,7 +13,7 @@ import { Bird, Zap, Loader2, Sparkles, ArrowRight, ShieldCheck, Trophy, GitBranc
 import Image from 'next/image';
 import Link from 'next/link';
 import { StoryModal } from '@/components/residents/StoryModal';
-import { cn, getResidentName } from '@/lib/utils';
+import { cn, getResidentName, getBirdTypeAndSex } from '@/lib/utils';
 import { ref, getDownloadURL } from 'firebase/storage';
 
 const RESIDENT_IMAGE_MAP: Record<string, string> = {};
@@ -46,6 +46,7 @@ export default function BrowseFlock() {
     const isFounder = bird.isFoundingResident || bird.generation === 0 || bird.founder;
     const isCommunity = bird.isCommunityDuck;
     const displayName = getResidentName(bird);
+    const birdInfo = getBirdTypeAndSex(bird);
 
     useEffect(() => {
       async function resolve() {
@@ -87,7 +88,9 @@ export default function BrowseFlock() {
               className="object-cover transition-transform duration-700 group-hover:scale-110" 
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦆</div>
+            <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">
+              {birdInfo.type === 'TURKEY' ? '🦃' : birdInfo.type === 'GOOSE' ? '🦢' : '🦆'}
+            </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80" />
           
@@ -111,7 +114,7 @@ export default function BrowseFlock() {
 
           <div className="absolute bottom-6 left-6 right-6">
             <h3 className="text-3xl font-headline font-black text-white uppercase tracking-tighter leading-none mb-2">{displayName}</h3>
-            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{bird.sex === 'female' ? 'Hen' : 'Drake'}</p>
+            <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{birdInfo.sexLabel}</p>
           </div>
         </div>
         <CardContent className="p-8 flex-1 flex flex-col space-y-6">

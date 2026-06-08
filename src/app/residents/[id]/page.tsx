@@ -15,14 +15,15 @@ import {
   Loader2,
   AlertCircle,
   GitBranch,
-  ShieldCheck
+  ShieldCheck,
+  Bird
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useDoc, useFirestore, useMemoFirebase, useUser, useStorage } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Resident, UserProfile } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { cn, getResidentName } from '@/lib/utils';
+import { cn, getResidentName, getBirdTypeAndSex } from '@/lib/utils';
 import {
   Carousel,
   CarouselContent,
@@ -141,8 +142,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
   }
 
   const displayName = getResidentName(bird!);
+  const birdInfo = getBirdTypeAndSex(bird);
   const isFounder = bird?.isFoundingResident || bird?.generation === 0 || bird?.founder;
-  const isDuck = true;
+  const isDuck = birdInfo.type === 'DUCK';
   const isLegend = ['Bandit', 'Moxie'].includes(bird?.name || '');
 
   return (
@@ -205,9 +207,14 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                        <ShieldCheck className="h-4 w-4" /> MISSION MASCOT | LEGEND
                      </Badge>
                    ) : (
-                     <Badge className="bg-primary text-primary-foreground font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
-                       {bird?.breed}
-                     </Badge>
+                     <>
+                       <Badge className="bg-primary text-black font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg flex items-center gap-1.5">
+                         <Bird className="h-4 w-4" /> {birdInfo.type}
+                       </Badge>
+                       <Badge className="bg-[#1a1a1a]/80 text-white border-border backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs shadow-lg">
+                         {bird?.breed}
+                       </Badge>
+                     </>
                    )}
                    {isFounder && !isLegend && (
                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md font-black px-4 py-1.5 rounded-xl uppercase tracking-wider text-xs flex items-center gap-1.5 shadow-lg">
@@ -240,6 +247,9 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground font-black text-xs uppercase tracking-[0.2em]">
                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-secondary" /> Sanctuary Resident</span>
+                     <Badge variant="outline" className="border-secondary/30 text-secondary font-black uppercase">
+                       {birdInfo.sexLabel}
+                     </Badge>
                      {bird?.category && (
                        <Badge variant="outline" className="border-primary/30 text-primary font-black uppercase">
                          {bird.category}

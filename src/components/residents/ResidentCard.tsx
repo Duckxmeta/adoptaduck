@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Resident } from '@/lib/types';
 import { ChevronRight, Trophy, PawPrint, Bird, Loader2, ShieldCheck, Zap } from 'lucide-react';
 import { useStorage } from '@/firebase';
-import { getResidentName } from '@/lib/utils';
+import { getResidentName, getBirdTypeAndSex } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { ref, getDownloadURL } from 'firebase/storage';
 
@@ -21,7 +21,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
   const [isLoadingImage, setIsLoadingImage] = useState(false);
 
   const displayName = getResidentName(resident);
-  const isDuck = !!resident.isDuck;
+  const birdInfo = getBirdTypeAndSex(resident);
   const isFounder = resident.isFoundingResident || resident.generation === 0 || resident.founder;
   const isLegend = ['bandit', 'moxie'].includes(resident.name?.toLowerCase().trim());
 
@@ -82,7 +82,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
             ) : (
               <>
                 <span className="text-7xl mb-4 transition-transform group-hover:scale-125 duration-500">
-                  {isDuck ? '🦆' : '🐾'}
+                  {birdInfo.type === 'TURKEY' ? '🦃' : birdInfo.type === 'GOOSE' ? '🦢' : '🦆'}
                 </span>
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Institutional Record</span>
               </>
@@ -97,13 +97,13 @@ export function ResidentCard({ resident }: { resident: Resident }) {
             </Badge>
           ) : (
             <Badge className="bg-background/90 backdrop-blur-md text-foreground border-border font-black text-[10px] uppercase tracking-wider px-3 py-1 flex items-center gap-1.5">
-              {isDuck ? <Bird className="h-3 w-3 text-primary" /> : <PawPrint className="h-3 w-3 text-secondary" />}
-              {resident.species || resident.breed}
+              <Bird className="h-3 w-3 text-primary" />
+              {birdInfo.type}
             </Badge>
           )}
         </div>
 
-        {isDuck && !isLegend && (
+        {!isLegend && (
           <div className="absolute top-4 right-4">
             {resident.generation === 0 || (resident.generation === undefined && isFounder) ? (
               <Badge className="bg-primary text-primary-foreground border-none font-black text-[10px] uppercase tracking-widest px-3 py-1 shadow-lg flex items-center gap-1.5">
@@ -121,7 +121,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
           <div>
             <h3 className="font-headline font-black text-3xl tracking-tighter leading-none">{displayName}</h3>
             <p className="text-[10px] text-white/60 font-black uppercase tracking-[0.2em] mt-2">
-              {resident.breed} • {resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Resident'}
+              {resident.breed} • {birdInfo.sexLabel}
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export function ResidentCard({ resident }: { resident: Resident }) {
            </span>
            <Link href={`/residents/${resident.id}`} className={cn(
              "w-8 h-8 rounded-full border border-border flex items-center justify-center transition-all duration-300",
-             isDuck ? "group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary" : "group-hover:bg-secondary group-hover:text-secondary-foreground group-hover:border-secondary"
+             birdInfo.type === 'DUCK' ? "group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary" : "group-hover:bg-secondary group-hover:text-secondary-foreground group-hover:border-secondary"
            )}>
              <ChevronRight className="h-4 w-4" />
            </Link>

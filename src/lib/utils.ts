@@ -30,3 +30,53 @@ export function getResidentName(bird?: { name: string; breed: string; id?: strin
   
   return bird.name;
 }
+
+export function getBirdTypeAndSex(resident?: {
+  breed?: string;
+  species?: string;
+  personalityTraits?: string;
+  backstory?: string;
+  bio?: string;
+  sex?: 'male' | 'female' | 'unknown';
+} | null) {
+  if (!resident) {
+    return { type: 'DUCK', sexLabel: 'Resident' };
+  }
+
+  const breed = (resident.breed || '').toLowerCase();
+  const species = (resident.species || '').toLowerCase();
+  const personality = (resident.personalityTraits || '').toLowerCase();
+  const backstory = (resident.backstory || '').toLowerCase();
+  const bio = (resident.bio || '').toLowerCase();
+
+  const isTurkey = breed.includes('turkey') || 
+                   species.includes('turkey') || 
+                   personality.includes('turkey') || 
+                   backstory.includes('turkey') || 
+                   bio.includes('turkey');
+
+  const isGoose = breed.includes('goose') || 
+                  species.includes('goose') || 
+                  personality.includes('goose') || 
+                  backstory.includes('goose') || 
+                  bio.includes('goose');
+
+  if (isTurkey) {
+    return {
+      type: 'TURKEY',
+      sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Tom' : 'Resident'
+    };
+  }
+
+  if (isGoose) {
+    return {
+      type: 'GOOSE',
+      sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Gander' : 'Resident'
+    };
+  }
+
+  return {
+    type: 'DUCK',
+    sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Resident'
+  };
+}

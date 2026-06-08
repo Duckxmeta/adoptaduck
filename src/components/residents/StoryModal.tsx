@@ -14,12 +14,13 @@ import { Heart, BookOpen, Sparkles, ArrowLeft, X } from "lucide-react";
 import { Resident } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
-import { cn, getResidentName } from "@/lib/utils";
+import { cn, getResidentName, getBirdTypeAndSex } from "@/lib/utils";
 
 export function StoryModal({ resident, trigger }: StoryModalProps) {
   const fullStory = resident.backstory || "A cherished resident of the Decent Ducks Sanctuary.";
   const hasImage = !!resident.primaryImageUrl && resident.primaryImageUrl.trim() !== "";
   const displayName = getResidentName(resident);
+  const birdInfo = getBirdTypeAndSex(resident);
 
   return (
     <Dialog>
@@ -53,7 +54,9 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
                 priority
               />
             ) : (
-              <span className="text-8xl">🦆</span>
+              <span className="text-8xl">
+                {birdInfo.type === 'TURKEY' ? '🦃' : birdInfo.type === 'GOOSE' ? '🦢' : '🦆'}
+              </span>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-8 right-8">
@@ -80,7 +83,7 @@ export function StoryModal({ resident, trigger }: StoryModalProps) {
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Heritage</p>
                <p className="text-sm text-muted-foreground leading-relaxed font-medium text-center">
-                 {resident.breed} • {resident.sex === 'female' ? 'Hen' : 'Drake'} • {resident.source || 'Rescue'}
+                 {resident.breed} • {birdInfo.sexLabel} • {resident.source || 'Rescue'}
                </p>
             </div>
           </div>
