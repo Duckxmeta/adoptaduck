@@ -193,8 +193,9 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         }
       }
 
+      const hasParents = !!(formData.motherId || formData.fatherId);
       const isRehomed = formData.source !== 'Hatched';
-      const finalGeneration = isRehomed ? 0 : calculateGeneration(formData.motherId, formData.fatherId);
+      const finalGeneration = hasParents ? calculateGeneration(formData.motherId, formData.fatherId) : 0;
 
       if (finalImageUrl && !finalGalleryUrls.includes(finalImageUrl)) {
         finalGalleryUrls.unshift(finalImageUrl);
@@ -207,12 +208,12 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
         ...cleanFormData,
         primaryImageUrl: finalImageUrl,
         galleryImageUrls: finalGalleryUrls,
-        motherId: isRehomed ? "" : (formData.motherId || ""),
-        fatherId: isRehomed ? "" : (formData.fatherId || ""),
-        isFoundingResident: isRehomed,
+        motherId: formData.motherId || "",
+        fatherId: formData.fatherId || "",
+        isFoundingResident: isRehomed && !hasParents,
         generation: finalGeneration,
         tier: `G${finalGeneration}` as any,
-        founder: isRehomed,
+        founder: isRehomed && !hasParents,
         updatedAt: new Date().toISOString()
       };
 
@@ -343,7 +344,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5" /> Registration Type
             </Label>
-            <RadioGroup value={formData.source} onValueChange={(v) => setFormData({...formData, source: v as any, isFoundingResident: v !== 'Hatched', founder: v !== 'Hatched', motherId: '', fatherId: ''})} className="grid grid-cols-2 gap-4">
+            <RadioGroup value={formData.source} onValueChange={(v) => setFormData({...formData, source: v as any})} className="grid grid-cols-2 gap-4">
               <div className="flex items-center space-x-2 bg-background p-4 rounded-xl border border-border cursor-pointer hover:border-primary/40 transition-colors">
                 <RadioGroupItem value="Rehomed" id="type-rehomed" />
                 <Label htmlFor="type-rehomed" className="font-black uppercase text-[10px] tracking-widest cursor-pointer">G0 Founder</Label>
@@ -355,10 +356,13 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
             </RadioGroup>
           </div>
 
-          {isHatched && (
-            <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="space-y-4 p-5 bg-muted/20 border border-border rounded-2xl">
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+              <TreePine className="h-3.5 w-3.5" /> Lineage (Optional)
+            </Label>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TreePine className="h-3 w-3 text-secondary" /> Mother</Label>
+                <Label htmlFor="mother" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">Mother</Label>
                 <Select value={formData.motherId || "unknown"} onValueChange={v => setFormData({...formData, motherId: v === "unknown" ? "" : v})}>
                   <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                     <SelectValue placeholder="Select mother" />
@@ -372,7 +376,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TreePine className="h-3 w-3 text-secondary" /> Father</Label>
+                <Label htmlFor="father" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">Father</Label>
                 <Select value={formData.fatherId || "unknown"} onValueChange={v => setFormData({...formData, fatherId: v === "unknown" ? "" : v})}>
                   <SelectTrigger className="bg-background border-border h-11 rounded-xl">
                     <SelectValue placeholder="Select father" />
@@ -386,7 +390,7 @@ export function ResidentDialog({ open, onOpenChange, onSave, resident }: Residen
                 </Select>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="sex" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Biological Sex</Label>

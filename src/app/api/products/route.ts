@@ -78,11 +78,11 @@ export async function GET() {
     };
 
     const [staples, seasonal, accessories, decentralized, og] = await Promise.all([
-      Promise.all(stapleProducts.map(p => hydrate(p, 1))),
-      Promise.all(seasonalProducts.map(p => hydrate(p, 2))),
-      Promise.all(accessoryProducts.map(p => hydrate(p, 3))),
-      Promise.all(decentralizedProducts.map(p => hydrate(p, 4))),
-      Promise.all(ogProducts.map(p => hydrate(p, 5)))
+      Promise.all(stapleProducts.map((p: any) => hydrate(p, 1))),
+      Promise.all(seasonalProducts.map((p: any) => hydrate(p, 2))),
+      Promise.all(accessoryProducts.map((p: any) => hydrate(p, 3))),
+      Promise.all(decentralizedProducts.map((p: any) => hydrate(p, 4))),
+      Promise.all(ogProducts.map((p: any) => hydrate(p, 5)))
     ]);
 
     const results = [

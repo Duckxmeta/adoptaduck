@@ -52,8 +52,8 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
 
   const TreeCard = ({ bird, label, genLabel, className }: { bird: Resident | null, label: string, genLabel?: string, className?: string }) => {
     if (!bird) return (
-      <div className={cn("w-[220px] h-[280px] rounded-2xl border-2 border-dashed border-border flex items-center justify-center bg-muted/5", className)}>
-        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40">{label} Unknown</span>
+      <div className={cn("w-[150px] sm:w-[180px] md:w-[220px] h-[200px] sm:h-[240px] md:h-[280px] rounded-2xl border-2 border-dashed border-border flex items-center justify-center bg-muted/5", className)}>
+        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 text-center px-2">{label} Unknown</span>
       </div>
     );
 
@@ -64,7 +64,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
     return (
       <div 
         onClick={() => setSelectedBird(bird)}
-        className={cn("w-[220px] h-[280px] cursor-pointer group relative shrink-0", className)}
+        className={cn("w-[150px] sm:w-[180px] md:w-[220px] h-[200px] sm:h-[240px] md:h-[280px] cursor-pointer group relative shrink-0", className)}
       >
         <div className={cn(
           "h-full w-full rounded-2xl overflow-hidden border-2 bg-card shadow-lg transition-all duration-300 group-hover:scale-105 flex flex-col",
@@ -76,7 +76,7 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
               alt={displayName} 
               fill 
               className="object-cover"
-              sizes="220px"
+              sizes="(max-width: 640px) 150px, (max-width: 768px) 180px, 220px"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
           </div>
@@ -90,8 +90,8 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
           )}
 
           <div className="absolute bottom-3 left-3 right-3 text-white">
-            <span className="text-[8px] font-black uppercase tracking-widest text-primary/80 mb-0.5 block">{label}</span>
-            <p className="font-headline font-black text-sm uppercase tracking-tight truncate">{displayName}</p>
+            <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-primary/80 mb-0.5 block">{label}</span>
+            <p className="font-headline font-black text-xs md:text-sm uppercase tracking-tight truncate">{displayName}</p>
           </div>
 
           {isFounder && (
@@ -106,42 +106,54 @@ export const HeritageTree: React.FC<HeritageTreeProps> = ({ rootResident, family
     );
   };
 
-  const isRootHatched = rootResident.source === 'Hatched' || !!(rootResident.motherId || rootResident.fatherId);
+  const isValidId = (idVal: any): idVal is string => {
+    if (typeof idVal !== 'string') return false;
+    const cleaned = idVal.trim().toLowerCase();
+    return cleaned !== '' && cleaned !== 'unknown' && cleaned !== 'undefined' && cleaned !== 'null';
+  };
+
+  const isRootHatched = rootResident.source === 'Hatched' || isValidId(rootResident.motherId) || isValidId(rootResident.fatherId);
 
   return (
     <div className="w-full">
-      <ScrollArea className="w-full whitespace-nowrap pb-12">
-        <div className="relative min-w-fit mx-auto py-12 px-24 flex flex-col items-center">
+      <ScrollArea className="w-full whitespace-nowrap pb-6 md:pb-12">
+        <div className="relative min-w-fit mx-auto py-6 md:py-12 px-6 md:px-24 flex flex-col items-center">
           {isRootHatched && (
             <>
               {/* Generation 0: Grandparents */}
-              <div className="flex justify-center gap-8 mb-24">
-                <div className="flex gap-4">
+              <div className="flex justify-center gap-4 md:gap-8">
+                <div className="flex gap-2 md:gap-4">
                   <TreeCard bird={mGrandma || null} label="M-Grandmother" genLabel="G0" />
                   <TreeCard bird={mGrandpa || null} label="M-Grandfather" genLabel="G0" />
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-2 md:gap-4">
                   <TreeCard bird={fGrandma || null} label="P-Grandmother" genLabel="G0" />
                   <TreeCard bird={fGrandpa || null} label="P-Grandfather" genLabel="G0" />
                 </div>
               </div>
 
+              {/* Connector from G0 to G1 */}
+              <div className="w-0.5 h-12 md:h-24 bg-border/40" />
+
               {/* Generation 1: Parents */}
-              <div className="flex justify-center gap-32 mb-24">
+              <div className="flex justify-center gap-16 md:gap-32">
                 <TreeCard bird={mother || null} label="Mother" genLabel="G1" />
                 <TreeCard bird={father || null} label="Father" genLabel="G1" />
               </div>
+
+              {/* Connector from G1 to Subject */}
+              <div className="w-0.5 h-12 md:h-24 bg-border/40" />
             </>
           )}
 
           {/* Current Bird - The focus node */}
-          <div className="relative">
+          <div className="relative animate-in zoom-in duration-300">
             <div className="absolute -inset-10 bg-primary/10 blur-[80px] rounded-full opacity-40" />
             <TreeCard 
               bird={rootResident} 
               label={isRootHatched ? "Subject" : "Founder"} 
               genLabel={`G${rootResident.generation || 0}`}
-              className="w-[260px] h-[340px] scale-110" 
+              className="w-[180px] sm:w-[220px] md:w-[260px] h-[240px] sm:h-[300px] md:h-[340px] scale-105 sm:scale-110" 
             />
           </div>
         </div>

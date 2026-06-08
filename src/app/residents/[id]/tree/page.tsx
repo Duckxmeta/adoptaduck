@@ -24,31 +24,35 @@ export default function LineageTreePage({ params }: { params: Promise<{ id: stri
   const firestore = useFirestore();
   const router = useRouter();
 
+  const isValidId = (idVal: any): idVal is string => {
+    if (typeof idVal !== 'string') return false;
+    const cleaned = idVal.trim().toLowerCase();
+    return cleaned !== '' && cleaned !== 'unknown' && cleaned !== 'undefined' && cleaned !== 'null';
+  };
+
   // Fetch the main resident by direct UID
   const birdRef = useMemoFirebase(() => (firestore && id ? doc(firestore, 'birds', id) : null), [firestore, id]);
   const { data: resident, isLoading: residentLoading } = useDoc<Resident>(birdRef);
 
   // Fetch Parents by UID
-  const { data: mother } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && resident?.motherId ? doc(firestore, 'birds', resident.motherId) : null), [firestore, resident?.motherId])
-  );
-  const { data: father } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && resident?.fatherId ? doc(firestore, 'birds', resident.fatherId) : null), [firestore, resident?.fatherId])
-  );
+  const motherRef = useMemoFirebase(() => (firestore && isValidId(resident?.motherId) ? doc(firestore, 'birds', resident.motherId) : null), [firestore, resident?.motherId]);
+  const { data: mother } = useDoc<Resident>(motherRef);
+
+  const fatherRef = useMemoFirebase(() => (firestore && isValidId(resident?.fatherId) ? doc(firestore, 'birds', resident.fatherId) : null), [firestore, resident?.fatherId]);
+  const { data: father } = useDoc<Resident>(fatherRef);
 
   // Fetch Grandparents by UID
-  const { data: mGrandma } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && mother?.motherId ? doc(firestore, 'birds', mother.motherId) : null), [firestore, mother?.motherId])
-  );
-  const { data: mGrandpa } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && mother?.fatherId ? doc(firestore, 'birds', mother.fatherId) : null), [firestore, mother?.fatherId])
-  );
-  const { data: fGrandma } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && father?.motherId ? doc(firestore, 'birds', father.motherId) : null), [firestore, father?.motherId])
-  );
-  const { data: fGrandpa } = useDoc<Resident>(
-    useMemoFirebase(() => (firestore && father?.fatherId ? doc(firestore, 'birds', father.fatherId) : null), [firestore, father?.fatherId])
-  );
+  const mGrandmaRef = useMemoFirebase(() => (firestore && mother && isValidId(mother.motherId) ? doc(firestore, 'birds', mother.motherId) : null), [firestore, mother?.motherId]);
+  const { data: mGrandma } = useDoc<Resident>(mGrandmaRef);
+
+  const mGrandpaRef = useMemoFirebase(() => (firestore && mother && isValidId(mother.fatherId) ? doc(firestore, 'birds', mother.fatherId) : null), [firestore, mother?.fatherId]);
+  const { data: mGrandpa } = useDoc<Resident>(mGrandpaRef);
+
+  const fGrandmaRef = useMemoFirebase(() => (firestore && father && isValidId(father.motherId) ? doc(firestore, 'birds', father.motherId) : null), [firestore, father?.motherId]);
+  const { data: fGrandma } = useDoc<Resident>(fGrandmaRef);
+
+  const fGrandpaRef = useMemoFirebase(() => (firestore && father && isValidId(father.fatherId) ? doc(firestore, 'birds', father.fatherId) : null), [firestore, father?.fatherId]);
+  const { data: fGrandpa } = useDoc<Resident>(fGrandpaRef);
 
   if (residentLoading) {
     return (
