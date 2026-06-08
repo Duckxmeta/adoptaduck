@@ -30,7 +30,6 @@ export default function BrowseFlock() {
 
   const activeBirds = birds
     ? [...birds]
-        .filter(b => ['bandit', 'moxie'].includes(b.name?.toLowerCase().trim()))
         .sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
