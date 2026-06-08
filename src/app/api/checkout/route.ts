@@ -2,9 +2,11 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-01-27.acacia',
-});
+const stripe = stripeSecretKey 
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2025-02-24.acacia',
+    })
+  : null;
 
 // Production Price ID mapping for mode detection
 const SUBSCRIPTION_PRICE_IDS = [
@@ -36,7 +38,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
 
-    if (!stripeSecretKey) {
+    const stripeInstance = stripe;
+    if (!stripeInstance || !stripeSecretKey) {
       console.error('Stripe Secret Key missing in environment');
       return NextResponse.json({ error: 'Sanctuary financial engine misconfigured' }, { status: 500 });
     }
@@ -60,7 +63,7 @@ export async function POST(request: Request) {
           quantity: 1,
         }];
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripeInstance.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items,
       mode: isSubscription ? 'subscription' : 'payment',
