@@ -43,11 +43,12 @@ export function getBirdTypeAndSex(resident?: {
     return { type: 'DUCK', sexLabel: 'Resident' };
   }
 
-  const breed = (resident.breed || '').toLowerCase();
-  const species = (resident.species || '').toLowerCase();
-  const personality = (resident.personalityTraits || '').toLowerCase();
-  const backstory = (resident.backstory || '').toLowerCase();
-  const bio = (resident.bio || '').toLowerCase();
+  const clean = (val?: string) => (val || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const breed = clean(resident.breed);
+  const species = clean(resident.species);
+  const personality = clean(resident.personalityTraits);
+  const backstory = clean(resident.backstory);
+  const bio = clean(resident.bio);
 
   const isTurkey = breed.includes('turkey') || 
                    species.includes('turkey') || 
@@ -64,19 +65,19 @@ export function getBirdTypeAndSex(resident?: {
   if (isTurkey) {
     return {
       type: 'TURKEY',
-      sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Tom' : 'Resident'
+      sexLabel: resident.sex === 'male' ? 'Tom' : 'Hen'
     };
   }
 
   if (isGoose) {
     return {
       type: 'GOOSE',
-      sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Gander' : 'Resident'
+      sexLabel: resident.sex === 'male' ? 'Gander' : 'Hen'
     };
   }
 
   return {
     type: 'DUCK',
-    sexLabel: resident.sex === 'female' ? 'Hen' : resident.sex === 'male' ? 'Drake' : 'Resident'
+    sexLabel: resident.sex === 'male' ? 'Drake' : 'Hen'
   };
 }
