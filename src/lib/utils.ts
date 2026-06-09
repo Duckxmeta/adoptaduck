@@ -43,24 +43,21 @@ export function getBirdTypeAndSex(resident?: {
     return { type: 'DUCK', sexLabel: 'Resident' };
   }
 
-  const clean = (val?: string) => (val || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const clean = (val?: string) => (val || '').toLowerCase().trim();
   const breed = clean(resident.breed);
   const species = clean(resident.species);
-  const personality = clean(resident.personalityTraits);
-  const backstory = clean(resident.backstory);
-  const bio = clean(resident.bio);
 
   const isTurkey = breed.includes('turkey') || 
-                   species.includes('turkey') || 
-                   personality.includes('turkey') || 
-                   backstory.includes('turkey') || 
-                   bio.includes('turkey');
+                   species.includes('turkey') ||
+                   clean(resident.personalityTraits).includes('turkey') ||
+                   clean(resident.backstory).includes('turkey') ||
+                   clean(resident.bio).includes('turkey');
 
   const isGoose = breed.includes('goose') || 
-                  species.includes('goose') || 
-                  personality.includes('goose') || 
-                  backstory.includes('goose') || 
-                  bio.includes('goose');
+                  species.includes('goose') ||
+                  clean(resident.personalityTraits).includes('goose') ||
+                  clean(resident.backstory).includes('goose') ||
+                  clean(resident.bio).includes('goose');
 
   if (isTurkey) {
     return {
