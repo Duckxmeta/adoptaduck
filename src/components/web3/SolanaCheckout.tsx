@@ -31,7 +31,7 @@ const USDC_MINT_STR = "EPjFW3dp5G7jE23PLy1wGP3nXnu35iXcrrwv3EXmFi5m";
 
 export function SolanaCheckout() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'one-time' | 'subscription'>('one-time');
+  const [activeTab, setActiveTab] = useState<'one-time' | 'monthly'>('one-time');
 
   // ONE-TIME DONATION STATE
   const [usdAmount, setUsdAmount] = useState<string>('10');
@@ -280,10 +280,10 @@ export function SolanaCheckout() {
               One-Time
             </button>
             <button
-              onClick={() => setActiveTab('subscription')}
+              onClick={() => setActiveTab('monthly')}
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1",
-                activeTab === 'subscription' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                activeTab === 'monthly' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Repeat className="h-3 w-3" /> Monthly
@@ -397,7 +397,7 @@ export function SolanaCheckout() {
         )}
 
         {/* RECURRING DONATIONS (SOLANA SUBSCRIPTIONS) */}
-        {activeTab === 'subscription' && (
+        {activeTab === 'monthly' && (
           <div className="space-y-6">
             <div className="text-center max-w-xl mx-auto space-y-2">
               <Badge variant="outline" className="border-secondary/40 text-secondary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest">
