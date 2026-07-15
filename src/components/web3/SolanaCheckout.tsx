@@ -271,7 +271,12 @@ export function SolanaCheckout() {
           {/* Tab toggles */}
           <div className="flex bg-background border border-border p-1 rounded-xl shrink-0">
             <button
-              onClick={() => setActiveTab('one-time')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveTab('one-time');
+              }}
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                 activeTab === 'one-time' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -280,7 +285,12 @@ export function SolanaCheckout() {
               One-Time
             </button>
             <button
-              onClick={() => setActiveTab('monthly')}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveTab('monthly');
+              }}
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1",
                 activeTab === 'monthly' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
