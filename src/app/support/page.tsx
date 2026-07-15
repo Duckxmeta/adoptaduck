@@ -36,7 +36,12 @@ import { PromoCodeInput } from '@/components/shared/PromoCodeInput';
 import { UserProfile } from '@/lib/types';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { SolanaCheckout } from '@/components/web3/SolanaCheckout';
+import dynamic from 'next/dynamic';
+
+const SolanaCheckout = dynamic(
+  () => import('@/components/web3/SolanaCheckout').then((mod) => mod.SolanaCheckout),
+  { ssr: false }
+);
 
 const STRIPE_PRICES = {
   SPLASH_5: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_5 || 'price_1THAi9GyzCRtb3HxMeGKzCeh',
