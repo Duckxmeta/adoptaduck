@@ -49,9 +49,12 @@ const STRIPE_PRICES = {
   SPLASH_25: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_25 || 'price_1THAj9GyzCRtb3HxxjI9L4Yg',
   SPLASH_CUSTOM: process.env.NEXT_PUBLIC_STRIPE_PRICE_SPLASH_CUSTOM || 'price_1THAmlGyzCRtb3HxiD9YcrR5',
   GUARDIAN_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_GUARDIAN_MONTHLY || 'price_1THAffGyzCRtb3Hx7RHfIdqC',
+  PROTECTOR_MONTHLY: process.env.NEXT_PUBLIC_STRIPE_PRICE_PROTECTOR_MONTHLY || 'price_1Ttbd4GyzCRtb3Hx0ssNQrJM',
 };
 
-const PACK_PROTECTOR_PAYMENT_LINK = 'https://buy.stripe.com/4gM14nbl66WA4U3dpD';
+const STRIPE_PRODUCTS = {
+  PROTECTOR: 'prod_UFfyopJ1UUtWvC',
+};
 const AMAZON_STOREFRONT_URL = 'https://www.amazon.com/shop/justtduckit/list/D8RL88I4288F?ref_=aip_sf_list_spv_ofs_m_lspvrd&ccs_id=ac2d438b-2c26-4bbb-8c7c-2d8eb617bb29';
 const DISCORD_INVITE = 'https://discord.gg/ERegmyNdcG';
 
@@ -275,12 +278,11 @@ function SupportContent() {
                   ))}
                 </ul>
                 <Button 
-                  asChild
+                  onClick={() => handleCheckout(STRIPE_PRICES.PROTECTOR_MONTHLY)}
+                  disabled={isRedirecting}
                   className="w-full min-h-[4rem] bg-secondary text-secondary-foreground font-black uppercase text-[11px] tracking-[0.2em] flex items-center justify-center rounded-xl shadow-lg hover:scale-[1.02] transition-transform whitespace-normal text-center px-4 leading-tight"
                 >
-                  <a href={PACK_PROTECTOR_PAYMENT_LINK} target="_blank" rel="noopener noreferrer">
-                    PROTECT THE PACK
-                  </a>
+                  {isRedirecting ? <Loader2 className="h-4 w-4 animate-spin" /> : "PROTECT THE PACK"}
                 </Button>
               </Card>
 

@@ -11,7 +11,8 @@ const stripe = stripeSecretKey
 // Production Price ID mapping for mode detection
 const SUBSCRIPTION_PRICE_IDS = [
   process.env.STRIPE_PRICE_GUARDIAN_MONTHLY || 'price_1THAffGyzCRtb3Hx7RHfIdqC',
-  process.env.STRIPE_PRICE_GUARDIAN_YEARLY || 'price_1THAccGyzCRtb3HxwQ1njXlS'
+  process.env.STRIPE_PRICE_GUARDIAN_YEARLY || 'price_1THAccGyzCRtb3HxwQ1njXlS',
+  process.env.STRIPE_PRICE_PROTECTOR_MONTHLY || 'price_1Ttbd4GyzCRtb3Hx0ssNQrJM'
 ];
 
 const SPLASH_PRODUCT_ID = 'prod_UFg401BhNEqMsY';
