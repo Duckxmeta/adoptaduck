@@ -277,11 +277,11 @@ export function SolanaCheckout() {
           </div>
           
           {/* Tab toggles */}
-          <div className="flex bg-background border border-border p-1 rounded-xl shrink-0">
+          <div className="flex bg-background border border-border p-1 rounded-xl shrink-0 w-full sm:w-auto">
             <button
               onClick={() => setCheckoutMode('one-time')}
               className={cn(
-                "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                "flex-1 sm:flex-initial px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-center",
                 checkoutMode === 'one-time' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -290,7 +290,7 @@ export function SolanaCheckout() {
             <button
               onClick={() => setCheckoutMode('monthly')}
               className={cn(
-                "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1",
+                "flex-1 sm:flex-initial px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1",
                 checkoutMode === 'monthly' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -377,7 +377,7 @@ export function SolanaCheckout() {
             </div>
 
             {/* QR Code column */}
-            <div className="md:col-span-5 flex flex-col items-center justify-center space-y-4">
+            <div className="hidden md:flex md:col-span-5 flex-col items-center justify-center space-y-4">
               <div className="relative p-4 bg-[#1A1A1A] border-4 border-primary/20 rounded-[2rem] overflow-hidden shadow-inner flex items-center justify-center w-56 h-56">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
