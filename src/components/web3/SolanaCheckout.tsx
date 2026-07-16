@@ -260,11 +260,11 @@ export function SolanaCheckout() {
   };
 
   return (
-    <Card className="border-2 border-primary/40 rounded-[2.5rem] bg-card p-4 sm:p-6 md:p-10 shadow-2xl relative overflow-hidden">
+    <Card className="border-2 border-primary/40 rounded-[2.5rem] bg-card p-4 sm:p-6 md:p-10 shadow-2xl relative overflow-hidden w-full max-w-full">
       {/* Background flare */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
       
-      <div className="flex flex-col items-center sm:items-stretch justify-center w-full space-y-6">
+      <div className="flex flex-col items-center sm:items-stretch justify-center w-full max-w-full overflow-hidden space-y-6">
         {/* Component Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6 w-full">
           <div className="space-y-1 text-center sm:text-left">
@@ -308,7 +308,7 @@ export function SolanaCheckout() {
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
                   Select Donation Amount (USD)
                 </Label>
-                <div className="grid grid-cols-2 gap-3 justify-items-center w-full max-w-md mx-auto md:mx-0">
+                <div className="grid grid-cols-2 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
                   {['5', '10', '25', '50'].map((val) => (
                     <button
                       key={val}
@@ -368,7 +368,7 @@ export function SolanaCheckout() {
                   Recipient Wallet Address
                 </span>
                 <div className="bg-background/50 border border-border px-4 py-3 rounded-xl flex items-center justify-between gap-2 overflow-hidden w-full">
-                  <code className="text-xs font-mono truncate text-muted-foreground flex-1 text-center md:text-left">{RECIPIENT_ADDRESS}</code>
+                  <code className="text-xs font-mono break-all break-words whitespace-normal text-muted-foreground flex-1 text-center md:text-left">{RECIPIENT_ADDRESS}</code>
                   <Button variant="ghost" size="icon" onClick={handleCopyAddress} className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0">
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
