@@ -40,6 +40,7 @@ const PLAN_PDAS = {
 export function SolanaCheckout() {
   const { toast } = useToast();
   const [checkoutMode, setCheckoutMode] = useState<'one-time' | 'monthly'>('one-time');
+  const [oneTimeAsset, setOneTimeAsset] = useState<'sol' | 'usdc'>('sol');
 
   // ONE-TIME DONATION STATE
   const [usdAmount, setUsdAmount] = useState<string>('10');
@@ -162,7 +163,7 @@ export function SolanaCheckout() {
     }
   };
 
-  // BUILD AND SEND NATIVE SOL ONE-TIME TRANSFER TRANSACTION
+  // BUILD AND SEND NATIVE SOL OR USDC ONE-TIME TRANSFER TRANSACTION
   const handleSendOneTimeDonation = async () => {
     const provider = getProvider();
     if (!provider || !walletConnected || !walletAddress) {
@@ -175,27 +176,73 @@ export function SolanaCheckout() {
     try {
       setTxStep("Loading Solana SDK...");
       const web3 = await import('@solana/web3.js');
-      const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+      const { Connection, PublicKey, Transaction, SystemProgram, TransactionInstruction, LAMPORTS_PER_SOL } = web3;
 
       const fromKey = new PublicKey(walletAddress);
       const toKey = new PublicKey(RECIPIENT_ADDRESS);
 
-      const solToTransfer = parseFloat(solAmount);
-      if (isNaN(solToTransfer) || solToTransfer <= 0) {
-        throw new Error("Invalid transfer amount");
-      }
-      const lamports = Math.round(solToTransfer * LAMPORTS_PER_SOL);
-
-      setTxStep("Building transaction...");
-      const transferInstruction = SystemProgram.transfer({
-        fromPubkey: fromKey,
-        toPubkey: toKey,
-        lamports: BigInt(lamports),
-      });
-
       const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
-      const transaction = new Transaction().add(transferInstruction);
+      const transaction = new Transaction();
       transaction.feePayer = fromKey;
+
+      if (oneTimeAsset === 'sol') {
+        const solToTransfer = parseFloat(solAmount);
+        if (isNaN(solToTransfer) || solToTransfer <= 0) {
+          throw new Error("Invalid transfer amount");
+        }
+        const lamports = Math.round(solToTransfer * LAMPORTS_PER_SOL);
+
+        setTxStep("Building transaction...");
+        const transferInstruction = SystemProgram.transfer({
+          fromPubkey: fromKey,
+          toPubkey: toKey,
+          lamports: BigInt(lamports),
+        });
+        transaction.add(transferInstruction);
+      } else {
+        // USDC payment
+        const usdcToTransfer = parseFloat(usdAmount);
+        if (isNaN(usdcToTransfer) || usdcToTransfer <= 0) {
+          throw new Error("Invalid donation amount");
+        }
+        const amountInUsdcUnits = Math.round(usdcToTransfer * 1_000_000);
+
+        setTxStep("Resolving token accounts...");
+        const USDC_MINT = new PublicKey(USDC_MINT_STR);
+        const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+        const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+
+        const [sourceAta] = PublicKey.findProgramAddressSync(
+          [fromKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+        const [destinationAta] = PublicKey.findProgramAddressSync(
+          [toKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+
+        setTxStep("Building USDC transfer...");
+        const data = new Uint8Array(9);
+        data[0] = 3; // Transfer instruction index
+        
+        let temp = BigInt(amountInUsdcUnits);
+        for (let i = 1; i <= 8; i++) {
+          data[i] = Number(temp & BigInt(0xff));
+          temp = temp >> BigInt(8);
+        }
+
+        const transferInstruction = new TransactionInstruction({
+          keys: [
+            { pubkey: sourceAta, isSigner: false, isWritable: true },
+            { pubkey: destinationAta, isSigner: false, isWritable: true },
+            { pubkey: fromKey, isSigner: true, isWritable: false },
+          ],
+          programId: TOKEN_PROGRAM_ID,
+          data: data,
+        });
+        transaction.add(transferInstruction);
+      }
 
       setTxStep("Fetching blockhash...");
       const { blockhash } = await connection.getLatestBlockhash();
@@ -214,7 +261,7 @@ export function SolanaCheckout() {
       setTxStep("Success");
       toast({
         title: "Donation Complete!",
-        description: `Successfully donated ${solAmount} SOL. Thank you!`,
+        description: `Successfully donated $${usdAmount} in ${oneTimeAsset.toUpperCase()}. Thank you!`,
       });
     } catch (err: any) {
       console.error("Solana One-Time Donation Failed:", err);
@@ -414,26 +461,57 @@ export function SolanaCheckout() {
                 </div>
               </div>
 
-              {/* Conversion Display */}
-              <div className="bg-background/40 border border-border p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-md mx-auto md:mx-0 text-center sm:text-left">
-                <div className="space-y-0.5">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">
-                    Solana Transfer Amount
-                  </span>
-                  <span className="text-lg font-headline font-black text-foreground block">
-                    {solAmount} SOL
-                  </span>
+              {/* Asset Selector */}
+              <div className="space-y-2 text-center md:text-left">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
+                  Select Donation Asset
+                </Label>
+                <div className="flex bg-background border border-border p-1 rounded-xl w-full max-w-md mx-auto md:mx-0">
+                  <button
+                    type="button"
+                    onClick={() => setOneTimeAsset('sol')}
+                    className={cn(
+                      "flex-1 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-center",
+                      oneTimeAsset === 'sol' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    SOL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOneTimeAsset('usdc')}
+                    className={cn(
+                      "flex-1 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all text-center",
+                      oneTimeAsset === 'usdc' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    USDC
+                  </button>
                 </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={fetchSolPrice}
-                  disabled={isFetchingPrice}
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
-                >
-                  <RefreshCw className={cn("h-4 w-4", isFetchingPrice && "animate-spin")} />
-                </Button>
               </div>
+
+              {/* Conversion Display - Hide if USDC */}
+              {oneTimeAsset === 'sol' && (
+                <div className="bg-background/40 border border-border p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-md mx-auto md:mx-0 text-center sm:text-left">
+                  <div className="space-y-0.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">
+                      Solana Transfer Amount
+                    </span>
+                    <span className="text-lg font-headline font-black text-foreground block">
+                      {solAmount} SOL
+                    </span>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={fetchSolPrice}
+                    disabled={isFetchingPrice}
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
+                  >
+                    <RefreshCw className={cn("h-4 w-4", isFetchingPrice && "animate-spin")} />
+                  </Button>
+                </div>
+              )}
 
               {/* Solana Recipient Block */}
               <div className="space-y-1 text-center md:text-left w-full max-w-md mx-auto md:mx-0">
@@ -460,7 +538,7 @@ export function SolanaCheckout() {
                       <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Processing..."}
                     </span>
                   ) : (
-                    <>SEND ${usdAmount} ONE-TIME DONATION <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></>
+                    <>SEND ${usdAmount} {oneTimeAsset.toUpperCase()} DONATION <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></>
                   )}
                 </Button>
 
@@ -558,6 +636,11 @@ export function SolanaCheckout() {
                 </button>
               ))}
             </div>
+
+            {/* Disclaimer Text */}
+            <p className="text-[10px] text-muted-foreground font-semibold leading-normal max-w-xl mx-auto text-center italic py-2">
+              Note: To ensure stable, predictable monthly adoptions, all recurring subscriptions are securely processed using USDC stablecoins.
+            </p>
 
             {/* Selected Plan PDA display */}
             <div className="hidden text-center text-[9px] font-black text-muted-foreground uppercase tracking-widest">
