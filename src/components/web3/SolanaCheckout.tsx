@@ -448,7 +448,7 @@ export function SolanaCheckout() {
             </div>
 
             {/* Selected Plan PDA display */}
-            <div className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+            <div className="hidden text-center text-[9px] font-black text-muted-foreground uppercase tracking-widest">
               Plan Address: <code className="text-foreground font-mono select-all break-all">{PLAN_PDAS[selectedTier as keyof typeof PLAN_PDAS]}</code>
             </div>
 
@@ -482,14 +482,18 @@ export function SolanaCheckout() {
                 <Button
                   onClick={handleApproveSubscription}
                   disabled={isProcessingTx}
-                  className="w-full max-w-sm h-14 bg-primary text-primary-foreground font-black text-xs tracking-widest uppercase rounded-xl shadow-xl hover:scale-[1.02] transition-transform"
+                  className="w-full max-w-sm min-h-[3.5rem] h-auto py-3 px-4 bg-primary text-primary-foreground font-black text-[10px] sm:text-xs tracking-widest uppercase rounded-xl shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center text-center break-words"
                 >
                   {isProcessingTx ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Processing..."}
                     </span>
                   ) : (
-                    <>APPROVE SUBSCRIPTION FOR ${selectedTier} USDC/MO <ArrowRight className="ml-2 h-4 w-4" /></>
+                    <span className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <span className="inline sm:hidden">APPROVE ${selectedTier} USDC/MO</span>
+                      <span className="hidden sm:inline">APPROVE SUBSCRIPTION FOR ${selectedTier} USDC/MO</span>
+                      <ArrowRight className="h-4 w-4 shrink-0" />
+                    </span>
                   )}
                 </Button>
 
@@ -498,7 +502,7 @@ export function SolanaCheckout() {
                     <div className="text-xs text-green-500 font-black flex items-center justify-center gap-1">
                       <ShieldCheck className="h-4 w-4" /> Subscription Approval Confirmed!
                     </div>
-                    <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                    <div className="hidden text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                       Active Plan PDA: <code className="text-foreground select-all break-all">{PLAN_PDAS[selectedTier as keyof typeof PLAN_PDAS]}</code>
                     </div>
                     <a 
@@ -521,7 +525,7 @@ export function SolanaCheckout() {
             </div>
 
             {/* Smart contract security disclosure */}
-            <div className="text-center text-[9px] font-bold text-muted-foreground uppercase tracking-widest max-w-md mx-auto">
+            <div className="hidden text-center text-[9px] font-bold text-muted-foreground uppercase tracking-widest max-w-md mx-auto">
               Subscriptions program auth ID: <code className="font-mono text-foreground break-all select-all">{SUBSCRIPTIONS_PROGRAM_ID_STR}</code>.
             </div>
           </div>
