@@ -29,6 +29,14 @@ const SUBSCRIPTIONS_PROGRAM_ID_STR = "De1egAFMkMWZSN5rYXRj9CAdheBamobVNubTsi9avR
 // USDC Mint Address on Solana Mainnet
 const USDC_MINT_STR = "EPjFW3dp5G7jE23PLy1wGP3nXnu35iXcrrwv3EXmFi5m";
 
+// Mainnet Plan PDA Mappings
+const PLAN_PDAS = {
+  5: "8xSDqCPB5G9ejVs84sFWxKZwxonMHNNEsyphVyW5jgM6",
+  10: "7cJt28atSPDsQNBqb2QxaXmAhvnbKQHcc86h3FhVtxMy",
+  25: "RQURhD8FfMXZLnkvgR2B3USNoLpzPgoSXcvcrkefghe",
+  35: "Fz6kePv6VshURDQapYqGeDaNP32er9CiGqRJCz7J7VaA",
+};
+
 export function SolanaCheckout() {
   const { toast } = useToast();
   const [checkoutMode, setCheckoutMode] = useState<'one-time' | 'monthly'>('one-time');
@@ -412,11 +420,12 @@ export function SolanaCheckout() {
             </div>
 
             {/* Subscription Tiers */}
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { level: 5, label: "Guardian", desc: "Covers snack funding" },
                 { level: 10, label: "Super Guardian", desc: "Covers habitat upkeep" },
-                { level: 20, label: "Sanctuary Hero", desc: "Covers rescue logistics" }
+                { level: 25, label: "Sanctuary Hero", desc: "Covers rescue logistics" },
+                { level: 35, label: "Flock Protector", desc: "Operational rescue support" }
               ].map((tier) => (
                 <button
                   key={tier.level}
@@ -436,6 +445,11 @@ export function SolanaCheckout() {
                   <span className="text-[10px] font-medium text-muted-foreground leading-normal">{tier.desc}</span>
                 </button>
               ))}
+            </div>
+
+            {/* Selected Plan PDA display */}
+            <div className="text-center text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+              Plan Address: <code className="text-foreground font-mono select-all break-all">{PLAN_PDAS[selectedTier as keyof typeof PLAN_PDAS]}</code>
             </div>
 
             {/* Wallet connection / delegation transaction box */}
@@ -483,6 +497,9 @@ export function SolanaCheckout() {
                   <div className="w-full text-center space-y-2 animate-in fade-in">
                     <div className="text-xs text-green-500 font-black flex items-center justify-center gap-1">
                       <ShieldCheck className="h-4 w-4" /> Subscription Approval Confirmed!
+                    </div>
+                    <div className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                      Active Plan PDA: <code className="text-foreground select-all break-all">{PLAN_PDAS[selectedTier as keyof typeof PLAN_PDAS]}</code>
                     </div>
                     <a 
                       href={`https://solscan.io/tx/${txSignature}`} 
