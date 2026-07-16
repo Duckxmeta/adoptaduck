@@ -301,21 +301,21 @@ export function SolanaCheckout() {
 
         {/* ONE-TIME DONATIONS (SOLANA PAY) */}
         {checkoutMode === 'one-time' && (
-          <div className="grid md:grid-cols-12 gap-8 items-center w-full">
+          <div className="grid md:grid-cols-12 gap-8 items-center w-full justify-items-center">
             {/* Input & details column */}
             <div className="md:col-span-7 space-y-6 w-full">
               <div className="space-y-2 text-center md:text-left">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
                   Select Donation Amount (USD)
                 </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-md mx-auto md:mx-0">
+                <div className="grid grid-cols-2 gap-3 justify-items-center w-full max-w-md mx-auto md:mx-0">
                   {['5', '10', '25', '50'].map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => setUsdAmount(val)}
                       className={cn(
-                        "flex-1 sm:flex-initial py-3 border rounded-xl text-sm font-black transition-all",
+                        "w-full py-3 border rounded-xl text-sm font-black transition-all",
                         usdAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
                       )}
                     >
