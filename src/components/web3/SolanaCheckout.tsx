@@ -238,76 +238,7 @@ export function SolanaCheckout() {
     }
   };
 
-  // BUILD AND MINT EGG NFT VIA CANDY MACHINE V2
-  const handleMintEgg = async () => {
-    const provider = getProvider();
-    if (!provider || !walletConnected || !walletAddress) {
-      await connectWallet();
-      return;
-    }
 
-    setIsProcessingTx(true);
-    setTxSignature('');
-    try {
-      setTxStep("Connecting Candy Machine...");
-      const web3 = await import('@solana/web3.js');
-      const { Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram, SYSVAR_RENT_PUBKEY } = web3;
-
-      const fromKey = new PublicKey(walletAddress);
-      
-      const CANDY_MACHINE_V2_PROGRAM = new PublicKey("cndy3Z4yapfJBwVSC5Vow4QLioTvZaCgGPuQCcoNJNV");
-      const CANDY_MACHINE_ID = new PublicKey("EGGsV2mn8XQJbY2vVwM5z7L1fW1eG3pQx7y9Z7t8W9aB");
-
-      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
-      const transaction = new Transaction();
-      transaction.feePayer = fromKey;
-
-      setTxStep("Formulating mint payload...");
-      const data = new Uint8Array([211, 57, 6, 167, 15, 219, 35, 251]); // V2 mint NFT discriminator
-      
-      const mintInstruction = new TransactionInstruction({
-        programId: CANDY_MACHINE_V2_PROGRAM,
-        keys: [
-          { pubkey: CANDY_MACHINE_ID, isSigner: false, isWritable: true },
-          { pubkey: fromKey, isSigner: true, isWritable: true },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        data: data
-      });
-      transaction.add(mintInstruction);
-
-      setTxStep("Fetching blockhash...");
-      const { blockhash } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-
-      setTxStep("Awaiting wallet approval...");
-      const signedTx = await provider.signTransaction(transaction);
-
-      setTxStep("Broadcasting mint request...");
-      const signature = await connection.sendRawTransaction(signedTx.serialize());
-
-      setTxStep("Confirming Egg hatch...");
-      await connection.confirmTransaction(signature, "confirmed");
-
-      setTxSignature(signature);
-      setTxStep("Success");
-      toast({
-        title: "Mint Successful!",
-        description: "Your digital egg has successfully minted! Check your wallet for the egg NFT.",
-      });
-    } catch (err: any) {
-      console.error("Solana Mint Egg V2 Failed:", err);
-      toast({
-        variant: "destructive",
-        title: "Mint Failed",
-        description: err.message || "Failed to execute Candy Machine mint transaction.",
-      });
-      setTxStep("");
-    } finally {
-      setIsProcessingTx(false);
-    }
-  };
 
   const disconnectWallet = async () => {
     const provider = getProvider();
@@ -471,22 +402,19 @@ export function SolanaCheckout() {
             
             <div className="shrink-0 w-full md:w-auto flex flex-col items-center gap-2">
               <Button
-                onClick={handleMintEgg}
-                disabled={isProcessingTx}
+                asChild
                 className="w-full md:w-auto px-8 min-h-[3.5rem] h-auto bg-secondary text-secondary-foreground hover:bg-secondary/90 font-black text-xs tracking-widest uppercase rounded-xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2"
               >
-                {isProcessingTx ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Minting..."}
-                  </>
-                ) : (
-                  <>
-                    <Egg className="h-4 w-4" /> MINT EGG
-                  </>
-                )}
+                <a 
+                  href="https://justduckeggs.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Egg className="h-4 w-4" /> MINT EGG
+                </a>
               </Button>
               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
-                Price: 0.05 SOL / Egg
+                Price: 0.2 SOL / Egg
               </span>
             </div>
           </div>
