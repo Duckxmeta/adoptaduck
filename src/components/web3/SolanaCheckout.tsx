@@ -63,6 +63,15 @@ export function SolanaCheckout() {
     setTxStep('');
   }, [checkoutMode]);
 
+  // Update default one-time amount when toggling between SOL and USDC assets
+  useEffect(() => {
+    if (oneTimeAsset === 'sol') {
+      setOneTimeAmount('0.05');
+    } else {
+      setOneTimeAmount('10');
+    }
+  }, [oneTimeAsset]);
+
   // SOLANA PAY LINK GENERATOR
   const solanaPayUri = useMemo(() => {
     const label = encodeURIComponent("Decent Ducks Sanctuary");
@@ -458,18 +467,18 @@ export function SolanaCheckout() {
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
                   Select Donation Amount ({oneTimeAsset.toUpperCase()})
                 </Label>
-                <div className="grid grid-cols-2 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
-                  {['5', '10', '25', '50'].map((val) => (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
+                  {(oneTimeAsset === 'usdc' ? ['5', '10', '25', '50'] : ['0.05', '0.1', '0.25', '0.5']).map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => setOneTimeAmount(val)}
                       className={cn(
-                        "w-full py-3 border rounded-xl text-sm font-black transition-all",
+                        "w-full py-3 border rounded-xl text-xs sm:text-sm font-black transition-all",
                         oneTimeAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
                       )}
                     >
-                      {val} {oneTimeAsset.toUpperCase()}
+                      {oneTimeAsset === 'usdc' ? `$${val}` : `${val} SOL`}
                     </button>
                   ))}
                 </div>
