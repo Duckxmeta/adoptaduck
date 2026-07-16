@@ -5,8 +5,9 @@ import { initializeFirebase } from '@/firebase/init';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Heart, ClipboardList, TrendingUp } from 'lucide-react';
+import { Coins, Heart, ClipboardList, TrendingUp, ShieldAlert } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { useUser } from '@/firebase';
 
 interface Purchase {
   id: string;
@@ -22,6 +23,7 @@ interface TransparencyTotals {
 }
 
 export function SanctuaryLedger() {
+  const { user, isUserLoading } = useUser();
   const [totals, setTotals] = useState<TransparencyTotals>({
     total_donations_count: 0,
     total_usd_value_received: 0,
@@ -30,6 +32,7 @@ export function SanctuaryLedger() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     const { firestore } = initializeFirebase();
 
     // 1. Listen to transparency aggregates
@@ -72,7 +75,29 @@ export function SanctuaryLedger() {
       unsubscribeTotals();
       unsubscribePurchases();
     };
-  }, []);
+  }, [user]);
+
+  if (isUserLoading) {
+    return (
+      <div className="py-12 text-center text-muted-foreground text-xs uppercase tracking-widest animate-pulse font-black">
+        Syncing Ledger Pulse...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="bg-card border-border border-2 rounded-3xl p-8 text-center space-y-4 max-w-4xl mx-auto">
+        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mx-auto">
+          <ShieldAlert className="h-6 w-6" />
+        </div>
+        <h4 className="font-headline font-black text-sm uppercase tracking-wider">Access Locked</h4>
+        <p className="text-[10px] text-muted-foreground max-w-sm mx-auto leading-relaxed">
+          Please log in to view the live transparency ledger.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl w-full max-w-4xl mx-auto">

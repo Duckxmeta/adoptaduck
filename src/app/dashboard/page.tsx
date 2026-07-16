@@ -29,7 +29,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { format, formatDistanceToNow } from 'date-fns';
-import { SanctuaryCostCard } from '@/components/ledger/SanctuaryCostCard';
+import { SanctuaryLedger } from '@/components/ledger/SanctuaryLedger';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
@@ -58,10 +58,10 @@ export default function MemberDashboard() {
   const isGuardian = userProfile?.role === 'guardian' || isAdmin;
 
   useEffect(() => {
-    if (isMounted && !isUserLoading && !profileLoading && user && userProfile) {
-      if (!isGuardian && userProfile.role !== 'admin') router.replace('/support');
+    if (isMounted && !isUserLoading) {
+      if (!user) router.replace('/login');
     }
-  }, [user, userProfile, isGuardian, isUserLoading, profileLoading, isMounted, router]);
+  }, [user, isUserLoading, isMounted, router]);
 
   useEffect(() => {
     if (!firestore) return;
@@ -123,7 +123,7 @@ export default function MemberDashboard() {
     );
   }
 
-  if (!user || (!isGuardian && !isAdmin)) return null;
+  if (!user) return null;
 
   const liveStatusBirds = (birds || []).filter(b => b?.liveStatus).sort((a,b) => (b?.statusLastUpdated || '').localeCompare(a?.statusLastUpdated || '')).slice(0, 4);
 
@@ -136,69 +136,92 @@ export default function MemberDashboard() {
               <div className="flex items-center gap-3 text-primary"><LayoutDashboard className="h-6 w-6" /><span className="text-[10px] font-black uppercase tracking-[0.4em]">Guardian Hub</span></div>
               <h1 className="text-4xl md:text-6xl font-headline font-black tracking-tighter uppercase leading-[0.8]">WELCOME, <span className="text-primary">{user?.displayName?.split(' ')[0] || 'GUARDIAN'}</span></h1>
            </div>
-           <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary"><ShieldCheck className="h-6 w-6" /></div>
-              <div><p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Tier</p><p className="text-sm font-headline font-black text-secondary uppercase leading-tight">Verified Guardian</p></div>
-           </Card>
-        </section>
+            <Card className="bg-secondary/5 border-secondary/20 rounded-2xl p-6 md:w-64 shadow-lg flex items-center gap-4">
+               <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary"><ShieldCheck className="h-6 w-6" /></div>
+               <div>
+                 <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Tier</p>
+                 <p className="text-sm font-headline font-black text-secondary uppercase leading-tight">
+                   {isGuardian || isAdmin ? "Verified Guardian" : "Free Member"}
+                 </p>
+               </div>
+            </Card>
+         </section>
 
-        {bulletins.length > 0 && (
-          <section className="animate-in fade-in duration-1000 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg"><Megaphone className="h-5 w-5 text-primary" /></div>
-              <h2 className="text-sm font-headline font-black uppercase tracking-widest">The Sanctuary Bulletin</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {bulletins.map(b => (
-                <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all flex flex-col">
-                  {b.imageUrl && <div className="relative aspect-video w-full border-b border-border"><Image src={b.imageUrl} alt={b.title} fill className="object-cover" /></div>}
-                  <div className="p-6 space-y-4 flex-1">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
-                      <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60"><Clock className="h-2.5 w-2.5" />{b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago</div>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-3 font-medium leading-relaxed">{b.content}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+         {!(isGuardian || isAdmin) ? (
+           <section className="bg-secondary/5 border-2 border-secondary/20 rounded-[2rem] p-8 text-center space-y-4 max-w-2xl mx-auto shadow-xl animate-in fade-in duration-500">
+             <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center text-secondary mx-auto">
+               <ShieldAlert className="h-8 w-8" />
+             </div>
+             <h2 className="text-xl font-headline font-black uppercase tracking-widest text-secondary">
+               Guardian Access Required
+             </h2>
+             <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+               Unlock daily routine updates, egg production history, live duck status logs, and naming requests by subscribing as a verified Sanctuary Guardian.
+             </p>
+             <div className="pt-2">
+               <Button asChild className="bg-secondary text-secondary-foreground hover:bg-secondary/90 font-black text-xs tracking-widest uppercase rounded-xl shadow-lg px-8 py-4 h-auto hover:scale-105 transition-transform">
+                 <Link href="/support">Become a Guardian</Link>
+               </Button>
+             </div>
+           </section>
+         ) : (
+           <>
+             {bulletins.length > 0 && (
+               <section className="animate-in fade-in duration-1000 space-y-6">
+                 <div className="flex items-center gap-3">
+                   <div className="p-2 bg-primary/10 rounded-lg"><Megaphone className="h-5 w-5 text-primary" /></div>
+                   <h2 className="text-sm font-headline font-black uppercase tracking-widest">The Sanctuary Bulletin</h2>
+                 </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   {bulletins.map(b => (
+                     <Card key={b.id} className="bg-card border-border border-2 rounded-3xl overflow-hidden hover:border-primary/30 transition-all flex flex-col">
+                       {b.imageUrl && <div className="relative aspect-video w-full border-b border-border"><Image src={b.imageUrl} alt={b.title} fill className="object-cover" /></div>}
+                       <div className="p-6 space-y-4 flex-1">
+                         <div className="space-y-1">
+                           <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-2">{b.title}</h3>
+                           <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-60"><Clock className="h-2.5 w-2.5" />{b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recent'} ago</div>
+                         </div>
+                         <p className="text-xs text-muted-foreground line-clamp-3 font-medium leading-relaxed">{b.content}</p>
+                       </div>
+                     </Card>
+                   ))}
+                 </div>
+               </section>
+             )}
 
-        <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
-        <EggCounter initialCount={eggHistory?.count || 0} readOnly />
+             <DailyRoutine dailyStatus={dailyStatus || null} readOnly />
+             <EggCounter initialCount={eggHistory?.count || 0} readOnly />
 
-        <section className="space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse"><Zap className="h-5 w-5 text-primary-foreground fill-current" /></div>
-            <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {liveStatusBirds?.map(bird => (
-              <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
-                <span className="text-2xl">🦆</span>
-                <div className="min-w-0 flex-1"><p className="text-[10px] font-black uppercase text-primary truncate">{bird.name}</p><p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p></div>
-              </Card>
-            ))}
-          </div>
-        </section>
+             <section className="space-y-8">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center animate-pulse"><Zap className="h-5 w-5 text-primary-foreground fill-current" /></div>
+                 <h2 className="text-sm font-headline font-black uppercase tracking-widest">Live Pulse</h2>
+               </div>
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                 {liveStatusBirds?.map(bird => (
+                   <Card key={bird.id} className="bg-background/50 rounded-2xl border border-primary/10 p-4 flex items-center gap-4">
+                     <span className="text-2xl">🦆</span>
+                     <div className="min-w-0 flex-1"><p className="text-[10px] font-black uppercase text-primary truncate">{bird.name}</p><p className="text-xs font-bold truncate">{bird.liveStatus || 'Chilling 🌿'}</p></div>
+                   </Card>
+                 ))}
+               </div>
+             </section>
 
-        <section className="space-y-8">
-           <div className="flex items-center justify-between border-b border-border pb-4">
-              <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2"><Bird className="h-4 w-4" /> THE SANCTUARY FLOCK</h2>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {birds?.map((bird) => <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} />)}
-           </div>
-        </section>
+             <section className="space-y-8">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                   <h2 className="font-headline font-black text-xs uppercase tracking-[0.4em] text-primary flex items-center gap-2"><Bird className="h-4 w-4" /> THE SANCTUARY FLOCK</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {birds?.map((bird) => <ResidentDashboardCard key={bird.id} bird={bird} dailyStatusProgress={globalHealth} />)}
+                </div>
+             </section>
+           </>
+         )}
 
-        <section className="space-y-8 pt-12 border-t border-border">
-           <div className="flex items-center gap-3"><ScrollText className="h-5 w-5 text-primary" /><h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Archives</h2></div>
-           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2"><SanctuaryCostCard expenses={expenses} /></div>
-              <ItemizedLedger expenses={expenses} />
-           </div>
-        </section>
+         <section className="space-y-8 pt-12 border-t border-border">
+            <div className="flex items-center gap-3"><ScrollText className="h-5 w-5 text-primary" /><h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Transparency</h2></div>
+            <SanctuaryLedger />
+         </section>
 
         <section className="pt-12 border-t border-border flex justify-center">
            <Button variant="ghost" onClick={async () => { await signOut(auth!); router.push('/'); }} className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground hover:text-destructive"><LogOut className="h-4 w-4 mr-2" /> Log Out of Sanctuary</Button>
