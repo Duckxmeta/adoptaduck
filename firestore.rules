@@ -30,6 +30,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    match /transparency/{docId} {
+      allow read, write: if true;
+    }
+    
+    match /sanctuary_purchases/{purchaseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
     match /daily_status/{statusId} {
       allow read: if isGuardian();
       allow write: if isAdmin();

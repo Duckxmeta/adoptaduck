@@ -230,6 +230,11 @@ export function SolanaCheckout() {
 
       setTxSignature(signature);
       setTxStep("Success");
+      
+      // Update running aggregates in database
+      const usdValue = oneTimeAsset === 'sol' ? parseFloat(oneTimeAmount) * 150 : parseFloat(oneTimeAmount);
+      await recordSolanaDonation(usdValue);
+
       toast({
         title: "Donation Complete!",
         description: `Successfully donated ${oneTimeAmount} ${oneTimeAsset.toUpperCase()}. Thank you!`,
@@ -244,6 +249,23 @@ export function SolanaCheckout() {
       setTxStep("");
     } finally {
       setIsProcessingTx(false);
+    }
+  };
+
+  // Update running aggregates in firestore transparency tracking
+  const recordSolanaDonation = async (usdValue: number) => {
+    try {
+      const { initializeFirebase } = await import('@/firebase/init');
+      const { doc, setDoc, increment } = await import('firebase/firestore');
+      const { firestore } = initializeFirebase();
+
+      const totalsRef = doc(firestore, 'transparency', 'totals');
+      await setDoc(totalsRef, {
+        total_donations_count: increment(1),
+        total_usd_value_received: increment(usdValue)
+      }, { merge: true });
+    } catch (e) {
+      console.error("Failed to update aggregates on Solana payment completion:", e);
     }
   };
 
@@ -335,6 +357,10 @@ export function SolanaCheckout() {
 
       setTxSignature(signature);
       setTxStep("Success");
+
+      // Update running aggregates in database
+      await recordSolanaDonation(selectedTier);
+
       toast({
         title: "Subscription Pre-approved!",
         description: `Successfully authorized $${selectedTier}/mo USDC recurring subscription.`,

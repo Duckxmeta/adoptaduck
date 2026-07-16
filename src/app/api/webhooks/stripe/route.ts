@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { initializeFirebase } from '@/firebase/init';
-import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, collection, addDoc, setDoc, increment } from 'firebase/firestore';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
 const stripe = stripeSecretKey 
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Log the donation for 501(c)(3) records
+    // Log the donation for 501(c)(3) records and increment aggregates
     try {
       await addDoc(collection(firestore, 'donations'), {
         amount: amount,
@@ -66,8 +66,14 @@ export async function POST(request: Request) {
         uid: userId && userId !== 'anonymous' ? userId : null,
         metadata: 'Sanctuary Support'
       });
+
+      const totalsRef = doc(firestore, 'transparency', 'totals');
+      await setDoc(totalsRef, {
+        total_donations_count: increment(1),
+        total_usd_value_received: increment(amount)
+      }, { merge: true });
     } catch (e) {
-      console.error('Failed to log donation:', e);
+      console.error('Failed to log donation or update aggregates:', e);
     }
   }
 
