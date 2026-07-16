@@ -31,7 +31,7 @@ const USDC_MINT_STR = "EPjFW3dp5G7jE23PLy1wGP3nXnu35iXcrrwv3EXmFi5m";
 
 export function SolanaCheckout() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'one-time' | 'monthly'>('one-time');
+  const [checkoutMode, setCheckoutMode] = useState<'one-time' | 'monthly'>('one-time');
 
   // ONE-TIME DONATION STATE
   const [usdAmount, setUsdAmount] = useState<string>('10');
@@ -271,29 +271,19 @@ export function SolanaCheckout() {
           {/* Tab toggles */}
           <div className="flex bg-background border border-border p-1 rounded-xl shrink-0">
             <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveTab('one-time');
-              }}
+              onClick={() => setCheckoutMode('one-time')}
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                activeTab === 'one-time' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                checkoutMode === 'one-time' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               One-Time
             </button>
             <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveTab('monthly');
-              }}
+              onClick={() => setCheckoutMode('monthly')}
               className={cn(
                 "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center gap-1",
-                activeTab === 'monthly' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                checkoutMode === 'monthly' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Repeat className="h-3 w-3" /> Monthly
@@ -302,7 +292,7 @@ export function SolanaCheckout() {
         </div>
 
         {/* ONE-TIME DONATIONS (SOLANA PAY) */}
-        {activeTab === 'one-time' && (
+        {checkoutMode === 'one-time' && (
           <div className="grid md:grid-cols-12 gap-8 items-center">
             {/* Input & details column */}
             <div className="md:col-span-7 space-y-6">
@@ -407,7 +397,7 @@ export function SolanaCheckout() {
         )}
 
         {/* RECURRING DONATIONS (SOLANA SUBSCRIPTIONS) */}
-        {activeTab === 'monthly' && (
+        {checkoutMode === 'monthly' && (
           <div className="space-y-6">
             <div className="text-center max-w-xl mx-auto space-y-2">
               <Badge variant="outline" className="border-secondary/40 text-secondary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest">
