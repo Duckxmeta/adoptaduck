@@ -264,11 +264,11 @@ export function SolanaCheckout() {
       {/* Background flare */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
       
-      <div className="flex flex-col space-y-6">
+      <div className="flex flex-col items-center sm:items-stretch justify-center w-full space-y-6">
         {/* Component Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
-          <div className="space-y-1">
-            <h3 className="text-xl md:text-2xl font-headline font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6 w-full">
+          <div className="space-y-1 text-center sm:text-left">
+            <h3 className="text-xl md:text-2xl font-headline font-black uppercase tracking-tight text-foreground flex items-center justify-center sm:justify-start gap-2">
               <Coins className="h-6 w-6 text-primary" /> Solana Pay & Subscriptions
             </h3>
             <p className="text-[10px] font-black text-primary uppercase tracking-widest">
@@ -301,21 +301,21 @@ export function SolanaCheckout() {
 
         {/* ONE-TIME DONATIONS (SOLANA PAY) */}
         {checkoutMode === 'one-time' && (
-          <div className="grid md:grid-cols-12 gap-8 items-center">
+          <div className="grid md:grid-cols-12 gap-8 items-center w-full">
             {/* Input & details column */}
-            <div className="md:col-span-7 space-y-6">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="md:col-span-7 space-y-6 w-full">
+              <div className="space-y-2 text-center md:text-left">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
                   Select Donation Amount (USD)
                 </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-md mx-auto md:mx-0">
                   {['5', '10', '25', '50'].map((val) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => setUsdAmount(val)}
                       className={cn(
-                        "py-3 border rounded-xl text-sm font-black transition-all",
+                        "flex-1 sm:flex-initial py-3 border rounded-xl text-sm font-black transition-all",
                         usdAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
                       )}
                     >
@@ -325,29 +325,29 @@ export function SolanaCheckout() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <div className="space-y-2 text-center md:text-left">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
                   Or Custom USD Amount
                 </Label>
-                <div className="relative">
+                <div className="relative w-full max-w-md mx-auto md:mx-0">
                   <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground font-black text-sm">$</span>
                   <Input
                     type="number"
                     min="1"
                     value={usdAmount}
                     onChange={(e) => setUsdAmount(e.target.value)}
-                    className="pl-8 bg-background border-border h-12 rounded-xl font-black text-sm"
+                    className="pl-8 bg-background border-border h-12 rounded-xl font-black text-sm text-center md:text-left"
                   />
                 </div>
               </div>
 
               {/* Conversion Display */}
-              <div className="bg-background/40 border border-border p-4 rounded-2xl flex items-center justify-between gap-4">
+              <div className="bg-background/40 border border-border p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-md mx-auto md:mx-0 text-center sm:text-left">
                 <div className="space-y-0.5">
                   <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">
                     Solana Transfer Amount
                   </span>
-                  <span className="text-lg font-headline font-black text-foreground">
+                  <span className="text-lg font-headline font-black text-foreground block">
                     {solAmount} SOL
                   </span>
                 </div>
@@ -363,12 +363,12 @@ export function SolanaCheckout() {
               </div>
 
               {/* Solana Recipient Block */}
-              <div className="space-y-1">
+              <div className="space-y-1 text-center md:text-left w-full max-w-md mx-auto md:mx-0">
                 <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">
                   Recipient Wallet Address
                 </span>
-                <div className="bg-background/50 border border-border px-4 py-3 rounded-xl flex items-center justify-between gap-2 overflow-hidden">
-                  <code className="text-xs font-mono truncate text-muted-foreground">{RECIPIENT_ADDRESS}</code>
+                <div className="bg-background/50 border border-border px-4 py-3 rounded-xl flex items-center justify-between gap-2 overflow-hidden w-full">
+                  <code className="text-xs font-mono truncate text-muted-foreground flex-1 text-center md:text-left">{RECIPIENT_ADDRESS}</code>
                   <Button variant="ghost" size="icon" onClick={handleCopyAddress} className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0">
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -406,21 +406,21 @@ export function SolanaCheckout() {
 
         {/* RECURRING DONATIONS (SOLANA SUBSCRIPTIONS) */}
         {checkoutMode === 'monthly' && (
-          <div className="space-y-6">
+          <div className="space-y-6 w-full flex flex-col items-center sm:items-stretch">
             <div className="text-center max-w-xl mx-auto space-y-2">
-              <Badge variant="outline" className="border-secondary/40 text-secondary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest">
+              <Badge variant="outline" className="border-secondary/40 text-secondary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest mx-auto block w-max">
                 Solana Subscriptions Protocol
               </Badge>
-              <h4 className="text-lg font-headline font-black uppercase text-foreground">
+              <h4 className="text-lg font-headline font-black uppercase text-foreground text-center">
                 Become a Monthly Flock Guardian
               </h4>
-              <p className="text-xs text-muted-foreground font-medium">
+              <p className="text-[10px] text-muted-foreground font-bold leading-normal max-w-md mx-auto text-center">
                 Delegate an allowance of USDC directly to our subscription executor on-chain. You can revoke it anytime directly from your wallet settings.
               </p>
             </div>
 
             {/* Subscription Tiers */}
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
               {[
                 { level: 5, label: "Guardian", desc: "Covers snack funding" },
                 { level: 10, label: "Super Guardian", desc: "Covers habitat upkeep" },
@@ -453,9 +453,9 @@ export function SolanaCheckout() {
             </div>
 
             {/* Wallet connection / delegation transaction box */}
-            <div className="bg-background/40 border border-border p-6 rounded-3xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/30 pb-4">
-                <div className="flex items-center gap-2">
+            <div className="bg-background/40 border border-border p-6 rounded-3xl space-y-4 w-full max-w-xl mx-auto">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/30 pb-4 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
                   <Wallet className="h-5 w-5 text-primary" />
                   <div>
                     <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">On-Chain Wallet Status</span>
@@ -467,11 +467,11 @@ export function SolanaCheckout() {
                   </div>
                 </div>
                 {walletConnected ? (
-                  <Button variant="ghost" size="sm" onClick={disconnectWallet} className="text-[10px] font-black uppercase tracking-widest text-red-500 h-8 px-3">
+                  <Button variant="outline" size="sm" onClick={disconnectWallet} className="border-destructive/30 text-destructive hover:bg-destructive/10 rounded-xl h-9 text-[9px] font-black uppercase tracking-widest w-full sm:w-auto">
                     Disconnect
                   </Button>
                 ) : (
-                  <Button onClick={connectWallet} className="bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest h-9 px-4 rounded-xl hover:scale-105 transition-transform">
+                  <Button onClick={connectWallet} className="bg-primary text-primary-foreground hover:scale-105 transition-transform rounded-xl h-9 px-4 text-[9px] font-black uppercase tracking-widest w-full sm:w-auto">
                     Connect Wallet
                   </Button>
                 )}
