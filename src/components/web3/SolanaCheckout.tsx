@@ -43,9 +43,9 @@ export function SolanaCheckout() {
 
   // ONE-TIME DONATION STATE
   const [usdAmount, setUsdAmount] = useState<string>('10');
-  const [solPrice, setSolPrice] = useState<number | null>(null);
+  const [solPrice, setSolPrice] = useState<number>(150); // Fallback standard price
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
-  const [solAmount, setSolAmount] = useState<string>('0.07');
+  const [solAmount, setSolAmount] = useState<string>('0.0667');
 
   // SUBSCRIPTION STATE
   const [selectedTier, setSelectedTier] = useState<number>(10); // $5, $10, or $20
@@ -92,6 +92,12 @@ export function SolanaCheckout() {
       setSolAmount('0.00');
     }
   }, [usdAmount, solPrice]);
+
+  // Reset transaction status on tab switch
+  useEffect(() => {
+    setTxSignature('');
+    setTxStep('');
+  }, [checkoutMode]);
 
   // SOLANA PAY LINK GENERATOR
   const solanaPayUri = useMemo(() => {
@@ -153,6 +159,73 @@ export function SolanaCheckout() {
         title: "Connection Failed",
         description: err.message || "User rejected the request.",
       });
+    }
+  };
+
+  // BUILD AND SEND NATIVE SOL ONE-TIME TRANSFER TRANSACTION
+  const handleSendOneTimeDonation = async () => {
+    const provider = getProvider();
+    if (!provider || !walletConnected || !walletAddress) {
+      await connectWallet();
+      return;
+    }
+
+    setIsProcessingTx(true);
+    setTxSignature('');
+    try {
+      setTxStep("Loading Solana SDK...");
+      const web3 = await import('@solana/web3.js');
+      const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = web3;
+
+      const fromKey = new PublicKey(walletAddress);
+      const toKey = new PublicKey(RECIPIENT_ADDRESS);
+
+      const solToTransfer = parseFloat(solAmount);
+      if (isNaN(solToTransfer) || solToTransfer <= 0) {
+        throw new Error("Invalid transfer amount");
+      }
+      const lamports = Math.round(solToTransfer * LAMPORTS_PER_SOL);
+
+      setTxStep("Building transaction...");
+      const transferInstruction = SystemProgram.transfer({
+        fromPubkey: fromKey,
+        toPubkey: toKey,
+        lamports: BigInt(lamports),
+      });
+
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const transaction = new Transaction().add(transferInstruction);
+      transaction.feePayer = fromKey;
+
+      setTxStep("Fetching blockhash...");
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      setTxStep("Awaiting wallet approval...");
+      const signedTx = await provider.signTransaction(transaction);
+
+      setTxStep("Broadcasting transaction...");
+      const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+      setTxStep("Confirming payment...");
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setTxSignature(signature);
+      setTxStep("Success");
+      toast({
+        title: "Donation Complete!",
+        description: `Successfully donated ${solAmount} SOL. Thank you!`,
+      });
+    } catch (err: any) {
+      console.error("Solana One-Time Donation Failed:", err);
+      toast({
+        variant: "destructive",
+        title: "Transaction Failed",
+        description: err.message || "Failed to submit donation.",
+      });
+      setTxStep("");
+    } finally {
+      setIsProcessingTx(false);
     }
   };
 
@@ -373,6 +446,45 @@ export function SolanaCheckout() {
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
+              </div>
+
+              {/* Action Button for One-Time */}
+              <div className="flex flex-col items-center gap-4 pt-2">
+                <Button
+                  onClick={handleSendOneTimeDonation}
+                  disabled={isProcessingTx}
+                  className="w-full max-w-md min-h-[3.5rem] h-auto py-3 px-4 bg-primary text-primary-foreground font-black text-[10px] sm:text-xs tracking-widest uppercase rounded-xl shadow-xl hover:scale-[1.02] transition-transform flex items-center justify-center text-center break-words"
+                >
+                  {isProcessingTx ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Processing..."}
+                    </span>
+                  ) : (
+                    <>SEND ${usdAmount} ONE-TIME DONATION <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></>
+                  )}
+                </Button>
+
+                {txSignature && (
+                  <div className="w-full text-center space-y-2 animate-in fade-in">
+                    <div className="text-xs text-green-500 font-black flex items-center justify-center gap-1">
+                      <ShieldCheck className="h-4 w-4" /> Donation Confirmed!
+                    </div>
+                    <a 
+                      href={`https://solscan.io/tx/${txSignature}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-black text-primary hover:underline uppercase tracking-widest flex items-center justify-center gap-1"
+                    >
+                      Verify Transaction on Solscan <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+
+                {txStep && !txSignature && (
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest animate-pulse">
+                    Current Step: {txStep}
+                  </div>
+                )}
               </div>
             </div>
 
