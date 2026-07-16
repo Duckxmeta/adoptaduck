@@ -713,6 +713,36 @@ export function SolanaCheckout() {
             </div>
           </div>
         )}
+        {/* Decent Ducks V1 Collection Showcase */}
+        <div className="mt-12 pt-8 border-t border-zinc-800 text-center w-full max-w-full">
+          <div className="space-y-2 mb-4">
+            <h4 className="text-lg md:text-xl font-headline font-black uppercase text-foreground">
+              Decent Ducks V1 Collection
+            </h4>
+            <p className="text-[11px] text-muted-foreground font-semibold leading-relaxed max-w-md mx-auto">
+              Check out our legacy collection on the secondary market!
+            </p>
+          </div>
+          
+          <a 
+            href="https://magiceden.us/marketplace/decent_ducks" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-block group"
+          >
+            <img 
+              src="https://i.imgur.com/K7CdYVS.png" 
+              alt="Decent Ducks V1 Logo" 
+              className="w-32 h-32 mx-auto rounded-xl shadow-lg mb-4 hover:scale-105 transition-transform duration-200"
+            />
+            <Button
+              variant="outline"
+              className="border-primary/40 text-primary hover:bg-primary/10 font-black text-xs tracking-widest uppercase rounded-xl h-10 px-6 mt-2"
+            >
+              Trade on Magic Eden <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          </a>
+        </div>
       </div>
     </Card>
   );
