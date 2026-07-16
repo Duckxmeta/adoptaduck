@@ -89,25 +89,33 @@ export function ExpenseDialog({ open, onOpenChange, expense }: ExpenseDialogProp
         updatedAt: new Date().toISOString()
       };
 
+      const purchaseData = {
+        date: formData.date,
+        item_description: formData.itemName,
+        amount_usd: Number(formData.cost),
+        category: formData.category,
+        updatedAt: new Date().toISOString()
+      };
+
       if (expense) {
-        await updateDoc(doc(firestore, 'ledger', expense.id), data);
-        toast({ title: "Expense Updated" });
+        await updateDoc(doc(firestore, 'sanctuary_purchases', expense.id), purchaseData);
+        toast({ title: "Purchase Updated" });
       } else {
-        await addDoc(collection(firestore, 'ledger'), {
-          ...data,
+        await addDoc(collection(firestore, 'sanctuary_purchases'), {
+          ...purchaseData,
           createdAt: new Date().toISOString()
         });
-        toast({ title: "Expense Recorded" });
+        toast({ title: "Purchase Recorded" });
       }
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to save expense." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to save purchase." });
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = ["Ducks", "Canine", "Feline", "Horse", "Habitat", "General"];
+  const categories = ["Feed & Nutrition", "Medical Care", "Sanctuary Infrastructure", "General Operations"];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

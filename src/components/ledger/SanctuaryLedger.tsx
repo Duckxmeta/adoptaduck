@@ -28,6 +28,12 @@ export function SanctuaryLedger() {
     total_donations_count: 0,
     total_usd_value_received: 0,
   });
+  const [allocationStats, setAllocationStats] = useState<Record<string, { count: number, totalAmount: number }>>({
+    "Feed & Nutrition": { count: 0, totalAmount: 0 },
+    "Medical Care": { count: 0, totalAmount: 0 },
+    "Sanctuary Infrastructure": { count: 0, totalAmount: 0 },
+    "General Operations": { count: 0, totalAmount: 0 }
+  });
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,9 +77,35 @@ export function SanctuaryLedger() {
       setLoading(false);
     });
 
+    // 3. Listen to all donations to aggregate allocations
+    const donationsRef = collection(firestore, 'donations');
+    const unsubscribeDonations = onSnapshot(donationsRef, (querySnap) => {
+      const stats: Record<string, { count: number, totalAmount: number }> = {
+        "Feed & Nutrition": { count: 0, totalAmount: 0 },
+        "Medical Care": { count: 0, totalAmount: 0 },
+        "Sanctuary Infrastructure": { count: 0, totalAmount: 0 },
+        "General Operations": { count: 0, totalAmount: 0 }
+      };
+
+      querySnap.forEach((docSnap) => {
+        const data = docSnap.data();
+        const category = data.allocation || "General Operations";
+        const amt = Number(data.amount) || 0;
+        
+        if (stats[category]) {
+          stats[category].count += 1;
+          stats[category].totalAmount += amt;
+        }
+      });
+      setAllocationStats(stats);
+    }, (err) => {
+      console.error("Error listening to donations for allocations:", err);
+    });
+
     return () => {
       unsubscribeTotals();
       unsubscribePurchases();
+      unsubscribeDonations();
     };
   }, [user]);
 
@@ -147,6 +179,48 @@ export function SanctuaryLedger() {
           </div>
         </div>
 
+        {/* Allocation Breakdown Progress Stack */}
+        <div className="bg-background/40 border border-border p-6 rounded-3xl space-y-6">
+          <div className="space-y-1">
+            <h4 className="font-headline font-black text-xs uppercase tracking-widest text-foreground">
+              Donation Allocation Breakdown
+            </h4>
+            <p className="text-[10px] text-muted-foreground font-semibold">
+              Supporter-directed allocation of incoming funds across our primary operations
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {Object.entries(allocationStats).map(([category, data]) => {
+              const totalUsd = totals.total_usd_value_received || 1;
+              const percentage = Math.min((data.totalAmount / totalUsd) * 100, 100);
+              
+              return (
+                <div key={category} className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                    <span>{category}</span>
+                    <span className="text-foreground">
+                      ${data.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({data.count} don.)
+                    </span>
+                  </div>
+                  <div className="w-full bg-border/40 h-2.5 rounded-full overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        category === "Feed & Nutrition" && "bg-amber-500",
+                        category === "Medical Care" && "bg-red-500",
+                        category === "Sanctuary Infrastructure" && "bg-blue-500",
+                        category === "General Operations" && "bg-emerald-500"
+                      )}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Sanctuary Purchases / Expense Log */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b border-border pb-2">
@@ -180,10 +254,11 @@ export function SanctuaryLedger() {
                           variant="secondary" 
                           className={cn(
                             "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
-                            purchase.category === 'Feed' && "bg-amber-500/10 text-amber-500 border border-amber-500/20",
-                            purchase.category === 'Rescue Logistics' && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
-                            purchase.category === 'Medical' && "bg-red-500/10 text-red-500 border border-red-500/20",
-                            !['Feed', 'Rescue Logistics', 'Medical'].includes(purchase.category) && "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
+                            purchase.category === 'Feed & Nutrition' && "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+                            purchase.category === 'Medical Care' && "bg-red-500/10 text-red-500 border border-red-500/20",
+                            purchase.category === 'Sanctuary Infrastructure' && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+                            purchase.category === 'General Operations' && "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+                            !['Feed & Nutrition', 'Medical Care', 'Sanctuary Infrastructure', 'General Operations'].includes(purchase.category) && "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
                           )}
                         >
                           {purchase.category}
