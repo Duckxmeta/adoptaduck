@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Coins,
-  Repeat
+  Repeat,
+  Egg
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -140,7 +141,6 @@ export function SolanaCheckout() {
     setIsProcessingTx(true);
     setTxSignature('');
     try {
-      setTxStep("Loading Solana SDK...");
       const web3 = await import('@solana/web3.js');
       const { Connection, PublicKey, Transaction, SystemProgram, TransactionInstruction, LAMPORTS_PER_SOL } = web3;
 
@@ -167,7 +167,6 @@ export function SolanaCheckout() {
         });
         transaction.add(transferInstruction);
       } else {
-        // USDC payment (USDC has 6 decimals)
         const amountInUsdcUnits = Math.round(amountToTransfer * 1_000_000);
 
         setTxStep("Resolving token accounts...");
@@ -187,7 +186,7 @@ export function SolanaCheckout() {
 
         setTxStep("Building USDC transfer...");
         const data = new Uint8Array(9);
-        data[0] = 3; // Transfer instruction index
+        data[0] = 3;
         
         let temp = BigInt(amountInUsdcUnits);
         for (let i = 1; i <= 8; i++) {
@@ -232,6 +231,77 @@ export function SolanaCheckout() {
         variant: "destructive",
         title: "Transaction Failed",
         description: err.message || "Failed to submit donation.",
+      });
+      setTxStep("");
+    } finally {
+      setIsProcessingTx(false);
+    }
+  };
+
+  // BUILD AND MINT EGG NFT VIA CANDY MACHINE V2
+  const handleMintEgg = async () => {
+    const provider = getProvider();
+    if (!provider || !walletConnected || !walletAddress) {
+      await connectWallet();
+      return;
+    }
+
+    setIsProcessingTx(true);
+    setTxSignature('');
+    try {
+      setTxStep("Connecting Candy Machine...");
+      const web3 = await import('@solana/web3.js');
+      const { Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram, SYSVAR_RENT_PUBKEY } = web3;
+
+      const fromKey = new PublicKey(walletAddress);
+      
+      const CANDY_MACHINE_V2_PROGRAM = new PublicKey("cndy3Z4yapfJBwVSC5Vow4QLioTvZaCgGPuQCcoNJNV");
+      const CANDY_MACHINE_ID = new PublicKey("EGGsV2mn8XQJbY2vVwM5z7L1fW1eG3pQx7y9Z7t8W9aB");
+
+      const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+      const transaction = new Transaction();
+      transaction.feePayer = fromKey;
+
+      setTxStep("Formulating mint payload...");
+      const data = new Uint8Array([211, 57, 6, 167, 15, 219, 35, 251]); // V2 mint NFT discriminator
+      
+      const mintInstruction = new TransactionInstruction({
+        programId: CANDY_MACHINE_V2_PROGRAM,
+        keys: [
+          { pubkey: CANDY_MACHINE_ID, isSigner: false, isWritable: true },
+          { pubkey: fromKey, isSigner: true, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        data: data
+      });
+      transaction.add(mintInstruction);
+
+      setTxStep("Fetching blockhash...");
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      setTxStep("Awaiting wallet approval...");
+      const signedTx = await provider.signTransaction(transaction);
+
+      setTxStep("Broadcasting mint request...");
+      const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+      setTxStep("Confirming Egg hatch...");
+      await connection.confirmTransaction(signature, "confirmed");
+
+      setTxSignature(signature);
+      setTxStep("Success");
+      toast({
+        title: "Mint Successful!",
+        description: "Your digital egg has successfully minted! Check your wallet for the egg NFT.",
+      });
+    } catch (err: any) {
+      console.error("Solana Mint Egg V2 Failed:", err);
+      toast({
+        variant: "destructive",
+        title: "Mint Failed",
+        description: err.message || "Failed to execute Candy Machine mint transaction.",
       });
       setTxStep("");
     } finally {
@@ -379,6 +449,46 @@ export function SolanaCheckout() {
             >
               <Repeat className="h-3 w-3" /> Monthly
             </button>
+          </div>
+        </div>
+
+        {/* Promotional Mint Card */}
+        <div className="border border-secondary/30 rounded-[2rem] bg-secondary/5 p-5 md:p-6 w-full max-w-full overflow-hidden mb-8 relative">
+          <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-secondary/10 rounded-full blur-2xl" />
+          
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+            <div className="space-y-2 text-center md:text-left flex-1">
+              <Badge variant="outline" className="border-secondary/40 text-secondary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest mx-auto md:mx-0 block w-max">
+                Decent Ducks V2 Egg Collection
+              </Badge>
+              <h4 className="text-lg md:text-xl font-headline font-black uppercase text-foreground">
+                Mint an Egg & Support the Sanctuary
+              </h4>
+              <p className="text-[11px] text-muted-foreground font-semibold leading-relaxed max-w-xl">
+                Donations go directly toward funding our offline duck sanctuary operations, and in return, you will receive one of 1,776 unique, collectible on-chain digital eggs that will hatch into a sanctuary duck!
+              </p>
+            </div>
+            
+            <div className="shrink-0 w-full md:w-auto flex flex-col items-center gap-2">
+              <Button
+                onClick={handleMintEgg}
+                disabled={isProcessingTx}
+                className="w-full md:w-auto px-8 min-h-[3.5rem] h-auto bg-secondary text-secondary-foreground hover:bg-secondary/90 font-black text-xs tracking-widest uppercase rounded-xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2"
+              >
+                {isProcessingTx ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Minting..."}
+                  </>
+                ) : (
+                  <>
+                    <Egg className="h-4 w-4" /> MINT EGG
+                  </>
+                )}
+              </Button>
+              <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                Price: 0.05 SOL / Egg
+              </span>
+            </div>
           </div>
         </div>
 
