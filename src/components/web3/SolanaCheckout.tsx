@@ -43,10 +43,7 @@ export function SolanaCheckout() {
   const [oneTimeAsset, setOneTimeAsset] = useState<'sol' | 'usdc'>('sol');
 
   // ONE-TIME DONATION STATE
-  const [usdAmount, setUsdAmount] = useState<string>('10');
-  const [solPrice, setSolPrice] = useState<number>(150); // Fallback standard price
-  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
-  const [solAmount, setSolAmount] = useState<string>('0.0667');
+  const [oneTimeAmount, setOneTimeAmount] = useState<string>('10');
 
   // SUBSCRIPTION STATE
   const [selectedTier, setSelectedTier] = useState<number>(10); // $5, $10, or $20
@@ -59,41 +56,6 @@ export function SolanaCheckout() {
   // COPY ADDRESS STATE
   const [copied, setCopied] = useState(false);
 
-  // FETCH SOL PRICE FROM JUPITER API
-  const fetchSolPrice = async () => {
-    setIsFetchingPrice(true);
-    try {
-      const res = await fetch('https://api.jup.ag/price/v2?ids=SOL');
-      const json = await res.json();
-      const price = parseFloat(json?.data?.SOL?.price);
-      if (price && !isNaN(price)) {
-        setSolPrice(price);
-        const amount = parseFloat(usdAmount);
-        if (!isNaN(amount) && amount > 0) {
-          setSolAmount((amount / price).toFixed(4));
-        }
-      }
-    } catch (e) {
-      console.error("Failed to fetch SOL price from Jupiter:", e);
-    } finally {
-      setIsFetchingPrice(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSolPrice();
-  }, []);
-
-  // UPDATE SOL AMOUNT WHEN USD AMOUNT CHANGES
-  useEffect(() => {
-    const amount = parseFloat(usdAmount);
-    if (solPrice && !isNaN(amount) && amount > 0) {
-      setSolAmount((amount / solPrice).toFixed(4));
-    } else if (isNaN(amount) || amount <= 0) {
-      setSolAmount('0.00');
-    }
-  }, [usdAmount, solPrice]);
-
   // Reset transaction status on tab switch
   useEffect(() => {
     setTxSignature('');
@@ -103,9 +65,13 @@ export function SolanaCheckout() {
   // SOLANA PAY LINK GENERATOR
   const solanaPayUri = useMemo(() => {
     const label = encodeURIComponent("Decent Ducks Sanctuary");
-    const message = encodeURIComponent(`One-Time Donation ($${usdAmount})`);
-    return `solana:${RECIPIENT_ADDRESS}?amount=${solAmount}&label=${label}&message=${message}`;
-  }, [solAmount, usdAmount]);
+    const message = encodeURIComponent(`One-Time Donation (${oneTimeAmount} ${oneTimeAsset.toUpperCase()})`);
+    let uri = `solana:${RECIPIENT_ADDRESS}?amount=${oneTimeAmount}&label=${label}&message=${message}`;
+    if (oneTimeAsset === 'usdc') {
+      uri += `&spl-token=${USDC_MINT_STR}`;
+    }
+    return uri;
+  }, [oneTimeAmount, oneTimeAsset]);
 
   // QR CODE IMAGE URL
   const qrCodeUrl = useMemo(() => {
@@ -185,12 +151,13 @@ export function SolanaCheckout() {
       const transaction = new Transaction();
       transaction.feePayer = fromKey;
 
+      const amountToTransfer = parseFloat(oneTimeAmount);
+      if (isNaN(amountToTransfer) || amountToTransfer <= 0) {
+        throw new Error("Invalid transfer amount");
+      }
+
       if (oneTimeAsset === 'sol') {
-        const solToTransfer = parseFloat(solAmount);
-        if (isNaN(solToTransfer) || solToTransfer <= 0) {
-          throw new Error("Invalid transfer amount");
-        }
-        const lamports = Math.round(solToTransfer * LAMPORTS_PER_SOL);
+        const lamports = Math.round(amountToTransfer * LAMPORTS_PER_SOL);
 
         setTxStep("Building transaction...");
         const transferInstruction = SystemProgram.transfer({
@@ -200,12 +167,8 @@ export function SolanaCheckout() {
         });
         transaction.add(transferInstruction);
       } else {
-        // USDC payment
-        const usdcToTransfer = parseFloat(usdAmount);
-        if (isNaN(usdcToTransfer) || usdcToTransfer <= 0) {
-          throw new Error("Invalid donation amount");
-        }
-        const amountInUsdcUnits = Math.round(usdcToTransfer * 1_000_000);
+        // USDC payment (USDC has 6 decimals)
+        const amountInUsdcUnits = Math.round(amountToTransfer * 1_000_000);
 
         setTxStep("Resolving token accounts...");
         const USDC_MINT = new PublicKey(USDC_MINT_STR);
@@ -261,7 +224,7 @@ export function SolanaCheckout() {
       setTxStep("Success");
       toast({
         title: "Donation Complete!",
-        description: `Successfully donated $${usdAmount} in ${oneTimeAsset.toUpperCase()}. Thank you!`,
+        description: `Successfully donated ${oneTimeAmount} ${oneTimeAsset.toUpperCase()}. Thank you!`,
       });
     } catch (err: any) {
       console.error("Solana One-Time Donation Failed:", err);
@@ -424,43 +387,6 @@ export function SolanaCheckout() {
           <div className="grid md:grid-cols-12 gap-8 items-center w-full justify-items-center">
             {/* Input & details column */}
             <div className="md:col-span-7 space-y-6 w-full">
-              <div className="space-y-2 text-center md:text-left">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
-                  Select Donation Amount (USD)
-                </Label>
-                <div className="grid grid-cols-2 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
-                  {['5', '10', '25', '50'].map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setUsdAmount(val)}
-                      className={cn(
-                        "w-full py-3 border rounded-xl text-sm font-black transition-all",
-                        usdAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
-                      )}
-                    >
-                      ${val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2 text-center md:text-left">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
-                  Or Custom USD Amount
-                </Label>
-                <div className="relative w-full max-w-md mx-auto md:mx-0">
-                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground font-black text-sm">$</span>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={usdAmount}
-                    onChange={(e) => setUsdAmount(e.target.value)}
-                    className="pl-8 bg-background border-border h-12 rounded-xl font-black text-sm text-center md:text-left"
-                  />
-                </div>
-              </div>
-
               {/* Asset Selector */}
               <div className="space-y-2 text-center md:text-left">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
@@ -490,28 +416,43 @@ export function SolanaCheckout() {
                 </div>
               </div>
 
-              {/* Conversion Display - Hide if USDC */}
-              {oneTimeAsset === 'sol' && (
-                <div className="bg-background/40 border border-border p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 w-full max-w-md mx-auto md:mx-0 text-center sm:text-left">
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block">
-                      Solana Transfer Amount
-                    </span>
-                    <span className="text-lg font-headline font-black text-foreground block">
-                      {solAmount} SOL
-                    </span>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={fetchSolPrice}
-                    disabled={isFetchingPrice}
-                    className="h-9 w-9 text-muted-foreground hover:text-foreground shrink-0"
-                  >
-                    <RefreshCw className={cn("h-4 w-4", isFetchingPrice && "animate-spin")} />
-                  </Button>
+              <div className="space-y-2 text-center md:text-left">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
+                  Select Donation Amount ({oneTimeAsset.toUpperCase()})
+                </Label>
+                <div className="grid grid-cols-2 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
+                  {['5', '10', '25', '50'].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setOneTimeAmount(val)}
+                      className={cn(
+                        "w-full py-3 border rounded-xl text-sm font-black transition-all",
+                        oneTimeAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
+                      )}
+                    >
+                      {val} {oneTimeAsset.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-2 text-center md:text-left">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground block text-center md:text-left">
+                  Or Custom {oneTimeAsset.toUpperCase()} Amount
+                </Label>
+                <div className="relative w-full max-w-md mx-auto md:mx-0">
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-muted-foreground font-black text-xs uppercase tracking-wider">{oneTimeAsset}</span>
+                  <Input
+                    type="number"
+                    min="0.001"
+                    step="any"
+                    value={oneTimeAmount}
+                    onChange={(e) => setOneTimeAmount(e.target.value)}
+                    className="pl-16 bg-background border-border h-12 rounded-xl font-black text-sm text-center md:text-left"
+                  />
+                </div>
+              </div>
 
               {/* Solana Recipient Block */}
               <div className="space-y-1 text-center md:text-left w-full max-w-md mx-auto md:mx-0">
@@ -538,7 +479,7 @@ export function SolanaCheckout() {
                       <Loader2 className="h-4 w-4 animate-spin" /> {txStep || "Processing..."}
                     </span>
                   ) : (
-                    <>SEND ${usdAmount} {oneTimeAsset.toUpperCase()} DONATION <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></>
+                    <>SEND {oneTimeAmount} {oneTimeAsset.toUpperCase()} DONATION <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></>
                   )}
                 </Button>
 
