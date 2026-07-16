@@ -49,6 +49,7 @@ export function SolanaCheckout() {
   // SUBSCRIPTION STATE
   const [selectedTier, setSelectedTier] = useState<number>(10); // $5, $10, or $20
   const [allocation, setAllocation] = useState<string>("General Operations");
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string>('');
   const [isProcessingTx, setIsProcessingTx] = useState(false);
@@ -265,9 +266,10 @@ export function SolanaCheckout() {
         amount: usdValue,
         designation: designation,
         allocation: allocation, // Attach selected choice as metadata attribute
+        isAnonymous: isAnonymous,
         timestamp: new Date().toISOString(),
-        donorDisplayName: walletAddress ? `Solana Wallet (${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)})` : 'Sanctuary Supporter',
-        uid: walletAddress || null,
+        donorDisplayName: isAnonymous ? 'Anonymous' : (walletAddress ? `Solana Wallet (${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)})` : 'Sanctuary Supporter'),
+        uid: isAnonymous ? null : (walletAddress || null),
         metadata: 'Solana Web3 Donation'
       });
 
@@ -570,6 +572,23 @@ export function SolanaCheckout() {
                 </select>
               </div>
 
+              {/* Anonymity Toggle */}
+              <div className="flex items-center gap-2 pt-2 justify-center md:justify-start w-full max-w-md mx-auto md:mx-0">
+                <input
+                  type="checkbox"
+                  id="anonymous-toggle"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4 bg-background"
+                />
+                <label 
+                  htmlFor="anonymous-toggle" 
+                  className="text-[10px] font-bold text-muted-foreground uppercase cursor-pointer select-none"
+                >
+                  Hide my name on the public member dashboard ledger
+                </label>
+              </div>
+
               {/* Action Button for One-Time */}
               <div className="flex flex-col items-center gap-4 pt-2">
                 <Button
@@ -731,6 +750,23 @@ export function SolanaCheckout() {
                   <option value="Sanctuary Infrastructure">Sanctuary Infrastructure</option>
                   <option value="General Operations">General Operations</option>
                 </select>
+              </div>
+
+              {/* Anonymity Toggle */}
+              <div className="flex items-center gap-2 pt-2 justify-center w-full max-w-sm mx-auto">
+                <input
+                  type="checkbox"
+                  id="anonymous-toggle-monthly"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="rounded border-border text-primary focus:ring-primary h-4 w-4 bg-background"
+                />
+                <label 
+                  htmlFor="anonymous-toggle-monthly" 
+                  className="text-[10px] font-bold text-muted-foreground uppercase cursor-pointer select-none"
+                >
+                  Hide my name on the public member dashboard ledger
+                </label>
               </div>
 
               {/* Action Button */}
