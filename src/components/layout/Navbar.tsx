@@ -1,10 +1,11 @@
 
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home, Loader2, BookOpen } from 'lucide-react';
+import { Heart, LogOut, LayoutDashboard, ArrowLeft, Lock, Bird, Home, Loader2, BookOpen, Menu, X } from 'lucide-react';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
@@ -21,6 +22,7 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const userProfileRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: userProfile, isLoading: profileLoading } = useDoc<UserProfile>(userProfileRef);
@@ -113,51 +115,90 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-3">
             {!isAdmin && (
               <Button size="sm" asChild className="bg-primary text-primary-foreground font-black rounded-lg h-10 px-4 text-[10px] tracking-widest uppercase shadow-lg">
                  <Link href="/support#adopt">ADOPT</Link>
               </Button>
             )}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+              className="h-10 w-10 text-foreground shrink-0 relative z-50 hover:bg-transparent"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
           </div>
         </div>
       </nav>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/95 backdrop-blur-xl border-t border-white/5 pb-safe shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center justify-around h-16 px-2">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            
-            if (link.onClick) {
-              return (
-                <button 
-                  key={link.label}
-                  onClick={link.onClick}
-                  className="flex flex-col items-center justify-center gap-1 w-full h-full text-muted-foreground active:scale-95 transition-transform"
+      {/* Mobile Drawer Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden bg-background/98 backdrop-blur-xl animate-in fade-in slide-in-from-top duration-200">
+          <div className="flex flex-col h-full pt-24 px-6 pb-8 space-y-6">
+            <Link 
+              href="/" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn("text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 block", pathname === '/' && "text-primary")}
+            >
+              Home
+            </Link>
+            <Link 
+              href="/adopt" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn("text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 flex items-center gap-2 block", pathname === '/adopt' && "text-primary")}
+            >
+              <Heart className="h-5 w-5" /> Adoption Hub
+            </Link>
+            <Link 
+              href="/our-story" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={cn("text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 block", pathname === '/our-story' && "text-primary")}
+            >
+              Our Story
+            </Link>
+            {user ? (
+              <>
+                <Link 
+                  href={getDashboardHref()} 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn("text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 flex items-center gap-2 block", isInDashboard && "text-primary")}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-[8px] font-black uppercase tracking-widest">{link.label}</span>
+                  <LayoutDashboard className="h-5 w-5" /> {isAdmin ? 'Manager Portal' : 'My Dashboard'}
+                </Link>
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 text-left text-destructive flex items-center gap-2 w-full"
+                >
+                  <LogOut className="h-5 w-5" /> Logout
                 </button>
-              );
-            }
-
-            return (
-              <Link 
-                key={link.label}
-                href={link.href!}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 w-full h-full transition-all active:scale-95",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", isActive && "fill-primary/20")} />
-                <span className="text-[8px] font-black uppercase tracking-widest">{link.label}</span>
-              </Link>
-            );
-          })}
+              </>
+            ) : (
+              <>
+                <Link 
+                  href="/login" 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn("text-lg font-headline font-black uppercase tracking-widest py-4 border-b border-border/50 flex items-center gap-2 block", pathname === '/login' && "text-primary")}
+                >
+                  <Lock className="h-5 w-5 text-muted-foreground" /> Member Login
+                </Link>
+                <div className="pt-6">
+                  <Button asChild className="w-full bg-primary text-primary-foreground font-black rounded-xl py-6 text-xs tracking-widest uppercase shadow-lg">
+                    <Link href="/support#adopt" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Heart className="mr-2 h-5 w-5 fill-current" />
+                      ADOPT NOW
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

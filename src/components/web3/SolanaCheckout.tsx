@@ -260,7 +260,7 @@ export function SolanaCheckout() {
   };
 
   return (
-    <Card className="border-2 border-primary/40 rounded-[2.5rem] bg-card p-6 md:p-10 shadow-2xl relative overflow-hidden">
+    <Card className="border-2 border-primary/40 rounded-[2.5rem] bg-card p-4 sm:p-6 md:p-10 shadow-2xl relative overflow-hidden">
       {/* Background flare */}
       <div className="absolute -top-12 -right-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
       
@@ -308,7 +308,7 @@ export function SolanaCheckout() {
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   Select Donation Amount (USD)
                 </Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {['5', '10', '25', '50'].map((val) => (
                     <button
                       key={val}

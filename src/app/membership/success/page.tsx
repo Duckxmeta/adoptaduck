@@ -32,7 +32,7 @@ function SuccessContent() {
       <Navbar />
       
       <main className="flex-1 py-20 px-4">
-        <div className="container mx-auto max-w-4xl text-center space-y-12">
+        <div className="container mx-auto max-w-4xl text-center space-y-12 px-4 md:px-8">
           
           {/* Header Animation */}
           <div className="space-y-6 animate-in fade-in slide-in-from-top-8 duration-1000">
