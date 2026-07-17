@@ -5,7 +5,7 @@ import { initializeFirebase } from '@/firebase/init';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Heart, ClipboardList, TrendingUp, ShieldAlert } from 'lucide-react';
+import { Coins, Heart, ClipboardList, TrendingUp, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useUser } from '@/firebase';
 
@@ -109,6 +109,9 @@ export function SanctuaryLedger() {
     };
   }, [user]);
 
+  const totalExpenses = purchases.reduce((sum, p) => sum + p.amount_usd, 0);
+  const netBalance = totals.total_usd_value_received - totalExpenses;
+
   if (isUserLoading) {
     return (
       <div className="py-12 text-center text-muted-foreground text-xs uppercase tracking-widest animate-pulse font-black">
@@ -132,159 +135,218 @@ export function SanctuaryLedger() {
   }
 
   return (
-    <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl w-full max-w-4xl mx-auto">
-      <CardHeader className="p-6 md:p-8 border-b border-border bg-primary/5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1.5 text-center md:text-left flex-1">
-            <Badge variant="outline" className="border-primary/40 text-primary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest block w-max mx-auto md:mx-0">
-              Live Transparency Ledger
-            </Badge>
-            <CardTitle className="text-xl md:text-2xl font-headline font-black uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
-              <ClipboardList className="h-6 w-6 text-primary" /> SANCTUARY LEDGER
-            </CardTitle>
-            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Real-time audit tracking for all incoming donations and care costs
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-6 md:p-8 space-y-8">
-        {/* Transparency Stat Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Total USD Received */}
-          <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <Coins className="h-6 w-6" />
+    <div className="space-y-8 w-full max-w-4xl mx-auto">
+      {/* CARD 1: LIVE DONATIONS POOL */}
+      <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl w-full">
+        <CardHeader className="p-6 md:p-8 border-b border-border bg-primary/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1.5 text-center md:text-left flex-1">
+              <Badge variant="outline" className="border-primary/40 text-primary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest block w-max mx-auto md:mx-0">
+                Live Transparency Ledger
+              </Badge>
+              <CardTitle className="text-xl md:text-2xl font-headline font-black uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
+                <Coins className="h-6 w-6 text-primary" /> LIVE DONATIONS POOL
+              </CardTitle>
+              <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Real-time audit tracking for all incoming donations
+              </CardDescription>
             </div>
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total USD Received</p>
-              <p className="text-2xl md:text-3xl font-headline font-black text-foreground leading-none mt-1">
-                ${totals.total_usd_value_received.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6 md:p-8 space-y-8">
+          {/* Transparency Stat Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Total USD Received */}
+            <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Coins className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Donations Received</p>
+                <p className="text-2xl md:text-3xl font-headline font-black text-foreground leading-none mt-1">
+                  ${totals.total_usd_value_received.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+
+            {/* Total Donations Count */}
+            <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Heart className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Donations Count</p>
+                <p className="text-2xl md:text-3xl font-headline font-black text-foreground leading-none mt-1">
+                  {totals.total_donations_count.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Allocation Breakdown Progress Stack */}
+          <div className="bg-background/40 border border-border p-6 rounded-3xl space-y-6">
+            <div className="space-y-1">
+              <h4 className="font-headline font-black text-xs uppercase tracking-widest text-foreground">
+                Donation Allocation Breakdown
+              </h4>
+              <p className="text-[10px] text-muted-foreground font-semibold">
+                Supporter-directed allocation of incoming funds across our primary operations
               </p>
             </div>
-          </div>
-
-          {/* Total Donations Count */}
-          <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <Heart className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Donations Count</p>
-              <p className="text-2xl md:text-3xl font-headline font-black text-foreground leading-none mt-1">
-                {totals.total_donations_count.toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Allocation Breakdown Progress Stack */}
-        <div className="bg-background/40 border border-border p-6 rounded-3xl space-y-6">
-          <div className="space-y-1">
-            <h4 className="font-headline font-black text-xs uppercase tracking-widest text-foreground">
-              Donation Allocation Breakdown
-            </h4>
-            <p className="text-[10px] text-muted-foreground font-semibold">
-              Supporter-directed allocation of incoming funds across our primary operations
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(allocationStats).map(([category, data]) => {
-              const totalUsd = totals.total_usd_value_received || 1;
-              const percentage = Math.min((data.totalAmount / totalUsd) * 100, 100);
-              
-              return (
-                <div key={category} className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                    <span>{category}</span>
-                    <span className="text-foreground">
-                      ${data.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({data.count} don.)
-                    </span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(allocationStats).map(([category, data]) => {
+                const totalUsd = totals.total_usd_value_received || 1;
+                const percentage = Math.min((data.totalAmount / totalUsd) * 100, 100);
+                
+                return (
+                  <div key={category} className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                      <span>{category}</span>
+                      <span className="text-foreground">
+                        ${data.totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })} ({data.count} don.)
+                      </span>
+                    </div>
+                    <div className="w-full bg-border/40 h-2.5 rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full rounded-full transition-all duration-500",
+                          category === "Feed & Nutrition" && "bg-amber-500",
+                          category === "Medical Care" && "bg-red-500",
+                          category === "Sanctuary Infrastructure" && "bg-blue-500",
+                          category === "General Operations" && "bg-emerald-500"
+                        )}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-border/40 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        category === "Feed & Nutrition" && "bg-amber-500",
-                        category === "Medical Care" && "bg-red-500",
-                        category === "Sanctuary Infrastructure" && "bg-blue-500",
-                        category === "General Operations" && "bg-emerald-500"
-                      )}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Sanctuary Purchases / Expense Log */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-border pb-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <h4 className="font-headline font-black text-sm uppercase tracking-wider text-foreground">
-              Recent Sanctuary Purchases
-            </h4>
-          </div>
-
-          {loading ? (
-            <div className="py-12 text-center text-muted-foreground text-xs uppercase tracking-widest animate-pulse font-bold">
-              Loading transparency logs...
+                );
+              })}
             </div>
-          ) : purchases.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                  <tr className="border-b border-border/60 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
-                    <th className="py-3 px-2">Date</th>
-                    <th className="py-3 px-2">Category</th>
-                    <th className="py-3 px-2">Description</th>
-                    <th className="py-3 px-2 text-right">Amount (USD)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/40 text-xs font-semibold text-foreground">
-                  {purchases.map((purchase) => (
-                    <tr key={purchase.id} className="hover:bg-primary/5 transition-colors">
-                      <td className="py-3 px-2 text-muted-foreground font-mono">{purchase.date}</td>
-                      <td className="py-3 px-2">
-                        <Badge 
-                          variant="secondary" 
-                          className={cn(
-                            "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
-                            purchase.category === 'Feed & Nutrition' && "bg-amber-500/10 text-amber-500 border border-amber-500/20",
-                            purchase.category === 'Medical Care' && "bg-red-500/10 text-red-500 border border-red-500/20",
-                            purchase.category === 'Sanctuary Infrastructure' && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
-                            purchase.category === 'General Operations' && "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
-                            !['Feed & Nutrition', 'Medical Care', 'Sanctuary Infrastructure', 'General Operations'].includes(purchase.category) && "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
-                          )}
-                        >
-                          {purchase.category}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">{purchase.item_description}</td>
-                      <td className="py-3 px-2 text-right font-headline font-black text-foreground">
-                        ${purchase.amount_usd.toFixed(2)}
-                      </td>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* CARD 2: LIVE EXPENSES POOL */}
+      <Card className="bg-card border-border border-2 rounded-3xl overflow-hidden shadow-2xl w-full">
+        <CardHeader className="p-6 md:p-8 border-b border-border bg-primary/5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1.5 text-center md:text-left flex-1">
+              <Badge variant="outline" className="border-primary/40 text-primary px-3 py-0.5 text-[9px] font-black uppercase tracking-widest block w-max mx-auto md:mx-0">
+                Care Costs Ledger
+              </Badge>
+              <CardTitle className="text-xl md:text-2xl font-headline font-black uppercase tracking-tight flex items-center justify-center md:justify-start gap-2">
+                <TrendingUp className="h-6 w-6 text-primary" /> LIVE EXPENSES POOL
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold text-muted-foreground leading-relaxed max-w-2xl">
+                As a future non-profit organization, our objective is to balance our live incoming donations directly against our real-world care costs to achieve 100% transparent operations.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6 md:p-8 space-y-8">
+          {/* Expenses Stat Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Total Expenses Logged */}
+            <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Total Expenses Logged</p>
+                <p className="text-2xl md:text-3xl font-headline font-black text-foreground leading-none mt-1">
+                  ${totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+
+            {/* Net Operating Balance */}
+            <div className="bg-background/50 border border-border p-5 rounded-2xl flex items-center gap-4 shadow-sm hover:border-primary/20 transition-all duration-200">
+              <div className={cn(
+                "w-12 h-12 rounded-full flex items-center justify-center",
+                netBalance >= 0 ? "bg-emerald-500/10 text-emerald-500" : "bg-amber-500/10 text-amber-500"
+              )}>
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Net Operating Balance</p>
+                <p className={cn(
+                  "text-2xl md:text-3xl font-headline font-black leading-none mt-1",
+                  netBalance >= 0 ? "text-emerald-500" : "text-amber-500"
+                )}>
+                  ${netBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sanctuary Purchases / Expense Log */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <h4 className="font-headline font-black text-sm uppercase tracking-wider text-foreground">
+                Recent Sanctuary Purchases
+              </h4>
+            </div>
+
+            {loading ? (
+              <div className="py-12 text-center text-muted-foreground text-xs uppercase tracking-widest animate-pulse font-bold">
+                Loading transparency logs...
+              </div>
+            ) : purchases.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="border-b border-border/60 text-muted-foreground text-[10px] font-black uppercase tracking-widest">
+                      <th className="py-3 px-2">Date</th>
+                      <th className="py-3 px-2">Category</th>
+                      <th className="py-3 px-2">Description</th>
+                      <th className="py-3 px-2 text-right">Amount (USD)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="border border-dashed border-border rounded-2xl p-8 text-center space-y-2 bg-primary/5">
-              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                No purchases logged yet
-              </p>
-              <p className="text-[10px] text-muted-foreground font-semibold max-w-md mx-auto leading-relaxed">
-                All incoming donations are reserved for immediate care and rescue logistics. Purchases will appear here in real-time as expense audits are processed.
-              </p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                  </thead>
+                  <tbody className="divide-y divide-border/40 text-xs font-semibold text-foreground">
+                    {purchases.map((purchase) => (
+                      <tr key={purchase.id} className="hover:bg-primary/5 transition-colors">
+                        <td className="py-3 px-2 text-muted-foreground font-mono">{purchase.date}</td>
+                        <td className="py-3 px-2">
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider",
+                              purchase.category === 'Feed & Nutrition' && "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+                              purchase.category === 'Medical Care' && "bg-red-500/10 text-red-500 border border-red-500/20",
+                              purchase.category === 'Sanctuary Infrastructure' && "bg-blue-500/10 text-blue-500 border border-blue-500/20",
+                              purchase.category === 'General Operations' && "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+                              !['Feed & Nutrition', 'Medical Care', 'Sanctuary Infrastructure', 'General Operations'].includes(purchase.category) && "bg-zinc-500/10 text-zinc-400 border border-zinc-500/20"
+                            )}
+                          >
+                            {purchase.category}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">{purchase.item_description}</td>
+                        <td className="py-3 px-2 text-right font-headline font-black text-foreground">
+                          ${purchase.amount_usd.toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="border border-dashed border-border rounded-2xl p-8 text-center space-y-2 bg-primary/5">
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                  No purchases logged yet
+                </p>
+                <p className="text-[10px] text-muted-foreground font-semibold max-w-md mx-auto leading-relaxed">
+                  All incoming donations are reserved for immediate care and rescue logistics. Purchases will appear here in real-time as expense audits are processed.
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
