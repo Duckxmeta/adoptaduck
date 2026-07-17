@@ -514,10 +514,12 @@ export function SolanaCheckout() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
                   {(oneTimeAsset === 'usdc' ? ['5', '10', '25', '50'] : ['0.05', '0.1', '0.25', '0.5']).map((val, idx) => {
                     let sublabel = "";
-                    if (idx === 0) sublabel = "4lbs of Peas";
-                    else if (idx === 1) sublabel = "2 Watermelons / Pumpkins";
-                    else if (idx === 2) sublabel = "1 Bag of Flock Feed";
-                    else if (idx === 3) sublabel = "Flock Care Pack";
+                    if (oneTimeAsset === 'usdc') {
+                      if (idx === 0) sublabel = "4lbs of Peas";
+                      else if (idx === 1) sublabel = "2 Watermelons / Pumpkins";
+                      else if (idx === 2) sublabel = "1 Bag of Flock Feed";
+                      else if (idx === 3) sublabel = "Flock Care Pack";
+                    }
 
                     return (
                       <button
