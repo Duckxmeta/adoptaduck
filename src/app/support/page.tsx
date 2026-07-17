@@ -311,9 +311,9 @@ function SupportContent() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
-                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: 'Tech Feed' },
-                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: 'Habitat Upkeep' },
-                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: 'Rescue Logistics' }
+                  { price: STRIPE_PRICES.SPLASH_5, val: '5', label: '4lbs of Peas' },
+                  { price: STRIPE_PRICES.SPLASH_10, val: '10', label: '2 Watermelons / Pumpkins' },
+                  { price: STRIPE_PRICES.SPLASH_25, val: '25', label: '1 Bag of Flock Feed' }
                 ].map((tier) => (
                   <button 
                     key={tier.val}
