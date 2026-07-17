@@ -235,7 +235,7 @@ export function SolanaCheckout() {
       
       // Update running aggregates in database
       const usdValue = oneTimeAsset === 'sol' ? parseFloat(oneTimeAmount) * 150 : parseFloat(oneTimeAmount);
-      await recordSolanaDonation(usdValue, `One-Time ${oneTimeAsset.toUpperCase()} Support`);
+      await recordSolanaDonation(usdValue, `One-Time ${oneTimeAsset.toUpperCase()} Support`, signature);
 
       toast({
         title: "Donation Complete!",
@@ -255,7 +255,7 @@ export function SolanaCheckout() {
   };
 
   // Update running aggregates in firestore transparency tracking
-  const recordSolanaDonation = async (usdValue: number, designation: string) => {
+  const recordSolanaDonation = async (usdValue: number, designation: string, signature: string) => {
     try {
       const { initializeFirebase } = await import('@/firebase/init');
       const { doc, setDoc, increment, collection, addDoc } = await import('firebase/firestore');
@@ -270,7 +270,10 @@ export function SolanaCheckout() {
         timestamp: new Date().toISOString(),
         donorDisplayName: isAnonymous ? 'Anonymous' : (walletAddress ? `Solana Wallet (${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)})` : 'Sanctuary Supporter'),
         uid: isAnonymous ? null : (walletAddress || null),
-        metadata: 'Solana Web3 Donation'
+        senderWallet: walletAddress || null, // Sender wallet string
+        signature: signature, // Transaction data / signature
+        metadata: 'Solana Web3 Donation',
+        status: 'completed'
       });
 
       // 2. Increment aggregates
@@ -374,7 +377,7 @@ export function SolanaCheckout() {
       setTxStep("Success");
 
       // Update running aggregates in database
-      await recordSolanaDonation(selectedTier, 'Guardian Subscription');
+      await recordSolanaDonation(selectedTier, 'Guardian Subscription', signature);
 
       toast({
         title: "Subscription Pre-approved!",

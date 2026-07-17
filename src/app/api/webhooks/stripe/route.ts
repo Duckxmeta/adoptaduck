@@ -58,13 +58,18 @@ export async function POST(request: Request) {
 
     // Log the donation for 501(c)(3) records and increment aggregates
     try {
+      const isAnonymous = session.metadata?.isAnonymous === 'true';
+      const allocation = session.metadata?.allocation || 'General Operations';
+
       await addDoc(collection(firestore, 'donations'), {
         amount: amount,
         designation: session.mode === 'subscription' ? 'Guardian Subscription' : 'One-Time Support',
+        allocation: allocation,
+        isAnonymous: isAnonymous,
         timestamp: new Date().toISOString(),
-        donorDisplayName: session.customer_details?.name || 'Sanctuary Supporter',
-        uid: userId && userId !== 'anonymous' ? userId : null,
-        metadata: 'Sanctuary Support'
+        donorDisplayName: isAnonymous ? 'Anonymous' : (session.customer_details?.name || 'Sanctuary Supporter'),
+        uid: isAnonymous ? null : (userId && userId !== 'anonymous' ? userId : null),
+        metadata: session.metadata || 'Sanctuary Support'
       });
 
       const totalsRef = doc(firestore, 'transparency', 'totals');

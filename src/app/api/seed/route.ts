@@ -4,15 +4,15 @@ import { collection, addDoc, doc, setDoc, increment } from 'firebase/firestore';
 
 const legacyDonations = [
   // Fiat
-  { amount: 100, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true },
-  { amount: 75, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true },
-  { amount: 50, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true },
-  { amount: 40, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true },
-  { amount: 1, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true },
-  // SOL (converted to USD using our checkout SOL conversion factor of $150/SOL)
-  { amount: 75, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true }, // 0.5 SOL
-  { amount: 75, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true }, // 0.5 SOL
-  { amount: 7.5, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true } // 0.05 SOL
+  { amount: 100, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true, status: "completed" },
+  { amount: 75, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true, status: "completed" },
+  { amount: 50, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true, status: "completed" },
+  { amount: 40, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true, status: "completed" },
+  { amount: 1, designation: "Legacy Support", allocation: "General Operations", isAnonymous: true, status: "completed" },
+  // SOL (converted to USD using our checkout SOL conversion factor of $76/SOL)
+  { amount: 38, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true, status: "completed" }, // 0.5 SOL
+  { amount: 38, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true, status: "completed" }, // 0.5 SOL
+  { amount: 3.8, designation: "Legacy SOL Support", allocation: "General Operations", isAnonymous: true, status: "completed" } // 0.05 SOL
 ];
 
 export async function GET() {
