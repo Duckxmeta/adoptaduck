@@ -512,19 +512,34 @@ export function SolanaCheckout() {
                   Select Donation Amount ({oneTimeAsset.toUpperCase()})
                 </Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 justify-items-center w-full px-0 max-w-md mx-auto md:mx-0">
-                  {(oneTimeAsset === 'usdc' ? ['5', '10', '25', '50'] : ['0.05', '0.1', '0.25', '0.5']).map((val) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setOneTimeAmount(val)}
-                      className={cn(
-                        "w-full py-3 border rounded-xl text-xs sm:text-sm font-black transition-all",
-                        oneTimeAmount === val ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/30"
-                      )}
-                    >
-                      {oneTimeAsset === 'usdc' ? `$${val}` : `${val} SOL`}
-                    </button>
-                  ))}
+                  {(oneTimeAsset === 'usdc' ? ['5', '10', '25', '50'] : ['0.05', '0.1', '0.25', '0.5']).map((val, idx) => {
+                    let sublabel = "";
+                    if (idx === 0) sublabel = "4lbs of Peas";
+                    else if (idx === 1) sublabel = "2 Watermelons / Pumpkins";
+                    else if (idx === 2) sublabel = "1 Bag of Flock Feed";
+                    else if (idx === 3) sublabel = "Flock Care Pack";
+
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setOneTimeAmount(val)}
+                        className={cn(
+                          "w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-1.5 transition-all text-center min-h-[5.5rem]",
+                          oneTimeAmount === val ? "border-primary bg-primary/10 text-primary scale-105" : "border-border hover:border-primary/30"
+                        )}
+                      >
+                        <span className="font-headline font-black text-xs sm:text-sm">
+                          {oneTimeAsset === 'usdc' ? `$${val}` : `${val} SOL`}
+                        </span>
+                        {sublabel && (
+                          <span className="text-[9px] leading-tight text-muted-foreground font-semibold font-sans">
+                            {sublabel}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -678,9 +693,9 @@ export function SolanaCheckout() {
             {/* Subscription Tiers */}
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
               {[
-                { level: 5, label: "Guardian", desc: "Covers snack funding" },
-                { level: 10, label: "Super Guardian", desc: "Covers habitat upkeep" },
-                { level: 25, label: "Sanctuary Hero", desc: "Covers rescue logistics" },
+                { level: 5, label: "Guardian", desc: "4lbs of Peas" },
+                { level: 10, label: "Super Guardian", desc: "2 Watermelons / Pumpkins" },
+                { level: 25, label: "Sanctuary Hero", desc: "1 Bag of Flock Feed" },
                 { level: 35, label: "Flock Protector", desc: "Operational rescue support" }
               ].map((tier) => (
                 <button
