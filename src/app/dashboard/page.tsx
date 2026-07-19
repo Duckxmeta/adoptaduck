@@ -30,6 +30,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SanctuaryLedger } from '@/components/ledger/SanctuaryLedger';
+import { PremiumFeed } from '@/components/members/PremiumFeed';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { DailyRoutine } from '@/components/DailyRoutine';
@@ -217,6 +218,8 @@ export default function MemberDashboard() {
              </section>
            </>
          )}
+
+         <PremiumFeed />
 
          <section className="space-y-8 pt-12 border-t border-border">
             <div className="flex items-center gap-3"><ScrollText className="h-5 w-5 text-primary" /><h2 className="text-xl font-headline font-black uppercase tracking-[0.3em]">Sanctuary Transparency</h2></div>
