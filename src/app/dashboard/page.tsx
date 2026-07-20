@@ -66,9 +66,24 @@ export default function MemberDashboard() {
 
   useEffect(() => {
     if (!firestore) return;
-    const q = query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'), limit(3));
+    const q = query(collection(firestore, 'subscriber_posts'), orderBy('timestamp', 'desc'), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as BulletinEntry[];
+      const docs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const timestampVal = data.timestamp;
+        let formattedTime: any = timestampVal;
+        if (typeof timestampVal === 'string') {
+          formattedTime = { toDate: () => new Date(timestampVal) };
+        }
+        return {
+          id: doc.id,
+          title: data.content_text ? (data.content_text.length > 40 ? `${data.content_text.substring(0, 40)}...` : data.content_text) : (data.source_platform ? `${data.source_platform} Post` : 'Sanctuary Post'),
+          content: data.content_text || data.content || '',
+          imageUrl: Array.isArray(data.media_urls) && data.media_urls.length > 0 ? data.media_urls[0] : (data.imageUrl || null),
+          timestamp: formattedTime,
+          source: data.source_platform || 'X'
+        };
+      }) as BulletinEntry[];
       setBulletins(docs);
     });
     return () => unsubscribe();

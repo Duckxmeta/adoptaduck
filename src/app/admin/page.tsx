@@ -115,7 +115,7 @@ function ManagerPortal({ user }: { user: any }) {
 
   const bulletinQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'bulletin'), orderBy('timestamp', 'desc'));
+    return query(collection(firestore, 'subscriber_posts'), orderBy('timestamp', 'desc'));
   }, [firestore]);
 
   const { data: birds } = useCollection<Resident>(birdsQuery);
@@ -211,7 +211,7 @@ function ManagerPortal({ user }: { user: any }) {
   const handleDeleteBulletin = async (bulletinId: string) => {
     if (!firestore) return;
     try {
-      await deleteDoc(doc(firestore, 'bulletin', bulletinId));
+      await deleteDoc(doc(firestore, 'subscriber_posts', bulletinId));
       toast({ title: "Update Removed" });
     } catch (e) {
       console.error("Delete bulletin error:", e);
@@ -223,12 +223,17 @@ function ManagerPortal({ user }: { user: any }) {
     if (!firestore) return;
     try {
       const { id, ...payload } = data;
-      const cleanPayload = { ...payload, timestamp: serverTimestamp() };
+      const cleanPayload = {
+        content_text: payload.content || payload.title || '',
+        source_platform: 'Manual Broadcast',
+        media_urls: payload.imageUrl ? [payload.imageUrl] : [],
+        timestamp: new Date().toISOString()
+      };
       if (id) {
-        await updateDoc(doc(firestore, 'bulletin', id), cleanPayload);
+        await updateDoc(doc(firestore, 'subscriber_posts', id), cleanPayload);
         toast({ title: "Update Edited" });
       } else {
-        await addDoc(collection(firestore, 'bulletin'), cleanPayload);
+        await addDoc(collection(firestore, 'subscriber_posts'), cleanPayload);
         toast({ title: "Update Published" });
       }
       setIsBulletinDialogOpen(false);
@@ -331,26 +336,42 @@ function ManagerPortal({ user }: { user: any }) {
             <Button onClick={() => { setEditingBulletin(null); setIsBulletinDialogOpen(true); }} className="bg-primary text-primary-foreground font-black uppercase text-[10px] h-10 px-6 rounded-xl shadow-lg"><Plus className="h-4 w-4 mr-2" /> New Broadcast</Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bulletins?.map((b) => (
-              <Card key={b.id} className="bg-card border-border border-2 rounded-2xl p-6 space-y-4 shadow-xl">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-1">{b.title}</h3>
-                    {b.source === 'X' && (
+            {bulletins?.map((b: any) => {
+              const platform = b.source_platform || b.source || 'X';
+              const titleText = b.title || (b.content_text ? (b.content_text.length > 30 ? `${b.content_text.substring(0, 30)}...` : b.content_text) : `${platform} Update`);
+              const contentText = b.content_text || b.content || '';
+              const timestampVal = b.timestamp;
+
+              let timeAgoStr = 'Recently';
+              if (typeof timestampVal === 'string') {
+                try {
+                  timeAgoStr = `${formatDistanceToNow(new Date(timestampVal))} ago`;
+                } catch (e) {}
+              } else if (timestampVal?.toDate) {
+                try {
+                  timeAgoStr = `${formatDistanceToNow(timestampVal.toDate())} ago`;
+                } catch (e) {}
+              }
+
+              return (
+                <Card key={b.id} className="bg-card border-border border-2 rounded-2xl p-6 space-y-4 shadow-xl">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-1">{titleText}</h3>
                       <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 shrink-0">
-                        X Sync
+                        {platform}
                       </Badge>
-                    )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground"><Clock className="h-3 w-3" /> {timeAgoStr}</div>
                   </div>
-                  <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground"><Clock className="h-3 w-3" /> {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recently'} ago</div>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-3 font-medium">{b.content}</p>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[10px] font-black border-border hover:bg-primary hover:text-primary-foreground" onClick={() => { setEditingBulletin(b); setIsBulletinDialogOpen(true); }}><Edit3 className="h-3.5 w-3.5 mr-1.5" /> Edit</Button>
-                  <Button variant="outline" size="sm" className="h-9 w-9 rounded-xl border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeleteBulletin(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                </div>
-              </Card>
-            ))}
+                  <p className="text-xs text-muted-foreground line-clamp-3 font-medium">{contentText}</p>
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="flex-1 h-9 rounded-xl text-[10px] font-black border-border hover:bg-primary hover:text-primary-foreground" onClick={() => { setEditingBulletin({ id: b.id, title: titleText, content: contentText, imageUrl: Array.isArray(b.media_urls) && b.media_urls.length > 0 ? b.media_urls[0] : b.imageUrl, timestamp: b.timestamp }); setIsBulletinDialogOpen(true); }}><Edit3 className="h-3.5 w-3.5 mr-1.5" /> Edit</Button>
+                    <Button variant="outline" size="sm" className="h-9 w-9 rounded-xl border-border text-destructive hover:bg-destructive/10" onClick={() => handleDeleteBulletin(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
