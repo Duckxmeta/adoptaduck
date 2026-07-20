@@ -30,8 +30,8 @@ export function PromoCodeInput() {
     setIsValidating(true);
     try {
       await runTransaction(firestore, async (transaction) => {
-        // God Code Shielding: SPRINGDUCKS and SPRINGDUCKS-JDI-G0
-        const isGodCode = promoCodeInput === 'SPRINGDUCKS-JDI-G0' || promoCodeInput === 'SPRINGDUCKS';
+        // God Code Shielding: SPRINGDUCKS, SPRINGDUCKS-JDI-G0, DUCKSONXSUBS
+        const isGodCode = promoCodeInput === 'SPRINGDUCKS-JDI-G0' || promoCodeInput === 'SPRINGDUCKS' || promoCodeInput === 'DUCKSONXSUBS';
         const promoRef = doc(firestore, 'promo_codes', promoCodeInput);
         const userRef = doc(firestore, 'users', user.uid);
         
