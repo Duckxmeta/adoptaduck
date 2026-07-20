@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     // 2. Parse payload JSON
     const body = await request.json();
-    const { content_text, media_urls, source_platform } = body;
+    const { content_text, media_urls, source_platform, platform } = body;
 
     if (!content_text) {
       return NextResponse.json({ error: 'Missing content_text parameter' }, { status: 400 });
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
       content_text: content_text,
       media_urls: Array.isArray(media_urls) ? media_urls : [],
-      source_platform: source_platform || 'X',
+      source_platform: source_platform || platform || 'X',
       timestamp: new Date().toISOString()
     });
 
