@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase/init';
 import { collection, addDoc } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
 
 const SYNC_SECRET = process.env.SYNC_SECRET || 'adopt-a-duck-sync-token-2026';
 
@@ -28,8 +29,17 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
-    // 3. Write cleanly into Firestore
-    const { firestore } = initializeFirebase();
+    // 3. Ensure authenticated context for Firestore SDK
+    const { auth, firestore } = initializeFirebase();
+    if (!auth.currentUser) {
+      try {
+        await signInAnonymously(auth);
+      } catch (authErr) {
+        console.warn('Anonymous auth sign-in warning:', authErr);
+      }
+    }
+
+    // 4. Write cleanly into Firestore
     const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
       content_text: content_text,
       media_urls: Array.isArray(media_urls) ? media_urls : [],
