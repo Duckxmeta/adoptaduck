@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.local' });
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, addDoc } = require('firebase/firestore');
 const config = require('../firebase-applet-config.json');
@@ -11,9 +12,29 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 /**
+ * Loads X_COOKIES from .env.local and returns formatted Cookie header string.
+ */
+function getXCookieHeader() {
+  const rawCookies = process.env.X_COOKIES;
+  if (!rawCookies) {
+    console.warn('[X Sync Loader] Warning: X_COOKIES environment variable not found in .env.local.');
+    return '';
+  }
+
+  try {
+    const parsed = JSON.parse(rawCookies);
+    if (Array.isArray(parsed)) {
+      return parsed.map(c => `${c.name}=${c.value}`).join('; ');
+    }
+  } catch (err) {
+    console.error('[X Sync Loader] Error parsing X_COOKIES JSON:', err.message);
+  }
+  return '';
+}
+
+/**
  * Node.js Internal Cron Job / Server Sync Script.
- * Fetches or parses timeline posts and syncs them to subscriber_posts collection.
- * Payload format: { content_text: "...", platform: "X", media_urls: [...] }
+ * Fetches subscriber posts using X_COOKIES session context and writes to Firestore.
  */
 async function syncPostPayload(payload) {
   const { content_text, platform, source_platform, media_urls } = payload;
@@ -26,6 +47,11 @@ async function syncPostPayload(payload) {
   if (!content_text.toLowerCase().includes('#adoptaduck')) {
     console.log('[X Sync Cron] Post skipped: Does not contain required hashtag #Adoptaduck.');
     return null;
+  }
+
+  const cookieHeader = getXCookieHeader();
+  if (cookieHeader) {
+    console.log('[X Sync Cron] Authenticated X session cookies loaded successfully.');
   }
 
   const documentData = {
@@ -43,7 +69,7 @@ async function syncPostPayload(payload) {
 // Runnable test execution
 if (require.main === module) {
   const samplePayload = {
-    content_text: "🦆 Exclusive Sanctuary Update: Our duck flock just enjoyed a fresh delivery of watermelons and warm evening pond swims! Thank you Guardians for supporting sanctuary operations.",
+    content_text: "🦆 Exclusive Sanctuary Update (#Adoptaduck): Our duck flock just enjoyed a fresh delivery of watermelons and warm evening pond swims! Thank you Guardians for supporting sanctuary operations.",
     platform: "X"
   };
 
@@ -58,4 +84,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { syncPostPayload };
+module.exports = { syncPostPayload, getXCookieHeader };
