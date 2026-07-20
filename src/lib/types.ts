@@ -116,6 +116,7 @@ export type BulletinEntry = {
   content: string;
   imageUrl?: string;
   timestamp: any;
+  source?: string;
 };
 
 export type PromoCode = {

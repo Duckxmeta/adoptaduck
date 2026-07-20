@@ -54,15 +54,30 @@ async function syncPostPayload(payload) {
     console.log('[X Sync Cron] Authenticated X session cookies loaded successfully.');
   }
 
+  const platformName = source_platform || platform || 'X';
   const documentData = {
     content_text: content_text,
-    source_platform: source_platform || platform || 'X',
+    source_platform: platformName,
     media_urls: Array.isArray(media_urls) ? media_urls : [],
     timestamp: new Date().toISOString()
   };
 
   const docRef = await addDoc(collection(db, 'subscriber_posts'), documentData);
-  console.log(`[X Sync Cron] Post synced successfully to Firestore! Doc ID: ${docRef.id}`);
+  console.log(`[X Sync Cron] Post synced successfully to subscriber_posts! Doc ID: ${docRef.id}`);
+
+  try {
+    await addDoc(collection(db, 'bulletin'), {
+      title: `X Update: #${platformName}`,
+      content: content_text,
+      imageUrl: Array.isArray(media_urls) && media_urls.length > 0 ? media_urls[0] : null,
+      timestamp: new Date().toISOString(),
+      source: 'X'
+    });
+    console.log(`[X Sync Cron] Post mirrored successfully to bulletin collection for /admin portal.`);
+  } catch (bErr) {
+    console.warn('[X Sync Cron] Mirror write to bulletin collection warning:', bErr.message);
+  }
+
   return docRef.id;
 }
 

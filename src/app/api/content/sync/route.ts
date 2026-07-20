@@ -44,14 +44,28 @@ export async function POST(request: Request) {
       authMethod = 'existing';
     }
 
-    // 4. Write cleanly into Firestore
+    // 4. Write cleanly into Firestore (subscriber_posts & bulletin collections)
     try {
+      const platformName = source_platform || platform || 'X';
       const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
         content_text: content_text,
         media_urls: Array.isArray(media_urls) ? media_urls : [],
-        source_platform: source_platform || platform || 'X',
+        source_platform: platformName,
         timestamp: new Date().toISOString()
       });
+
+      // Mirror to bulletin collection for /admin portal display under Sanctuary Updates
+      try {
+        await addDoc(collection(firestore, 'bulletin'), {
+          title: `X Update: #${platformName}`,
+          content: content_text,
+          imageUrl: Array.isArray(media_urls) && media_urls.length > 0 ? media_urls[0] : null,
+          timestamp: new Date().toISOString(),
+          source: 'X'
+        });
+      } catch (bErr) {
+        console.warn('Mirror write to bulletin collection warning:', bErr);
+      }
 
       return NextResponse.json({
         success: true,

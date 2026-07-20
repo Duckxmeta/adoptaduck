@@ -334,7 +334,14 @@ function ManagerPortal({ user }: { user: any }) {
             {bulletins?.map((b) => (
               <Card key={b.id} className="bg-card border-border border-2 rounded-2xl p-6 space-y-4 shadow-xl">
                 <div className="space-y-1">
-                  <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-1">{b.title}</h3>
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-lg font-headline font-black text-primary uppercase leading-tight line-clamp-1">{b.title}</h3>
+                    {b.source === 'X' && (
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 shrink-0">
+                        X Sync
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-muted-foreground"><Clock className="h-3 w-3" /> {b.timestamp?.toDate ? formatDistanceToNow(b.timestamp.toDate()) : 'Recently'} ago</div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-3 font-medium">{b.content}</p>
