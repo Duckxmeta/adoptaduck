@@ -31,27 +31,42 @@ export async function POST(request: Request) {
 
     // 3. Ensure authenticated context for Firestore SDK
     const { auth, firestore } = initializeFirebase();
+    let authMethod = 'none';
     if (!auth.currentUser) {
       try {
         await signInAnonymously(auth);
-      } catch (authErr) {
-        console.warn('Anonymous auth sign-in warning:', authErr);
+        authMethod = 'anonymous';
+      } catch (authErr: any) {
+        console.warn('Anonymous auth sign-in warning:', authErr?.message || authErr);
+        authMethod = `failed: ${authErr?.message || authErr}`;
       }
+    } else {
+      authMethod = 'existing';
     }
 
     // 4. Write cleanly into Firestore
-    const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
-      content_text: content_text,
-      media_urls: Array.isArray(media_urls) ? media_urls : [],
-      source_platform: source_platform || platform || 'X',
-      timestamp: new Date().toISOString()
-    });
+    try {
+      const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
+        content_text: content_text,
+        media_urls: Array.isArray(media_urls) ? media_urls : [],
+        source_platform: source_platform || platform || 'X',
+        timestamp: new Date().toISOString()
+      });
 
-    return NextResponse.json({
-      success: true,
-      postId: docRef.id,
-      message: 'Subscriber update post synchronized successfully.'
-    });
+      return NextResponse.json({
+        success: true,
+        postId: docRef.id,
+        authMethod,
+        message: 'Subscriber update post synchronized successfully.'
+      });
+    } catch (dbErr: any) {
+      console.error('Firestore addDoc error:', dbErr);
+      return NextResponse.json({
+        error: dbErr?.message || dbErr,
+        code: dbErr?.code,
+        authMethod
+      }, { status: 500 });
+    }
   } catch (err: any) {
     console.error('Failed to sync subscriber post:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
