@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { initializeFirebase } from '@/firebase/init';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { signInAnonymously } from 'firebase/auth';
 
 const SYNC_SECRET = process.env.SYNC_SECRET || 'adopt-a-duck-sync-token-2026';
@@ -42,6 +42,23 @@ export async function POST(request: Request) {
       }
     } else {
       authMethod = 'existing';
+    }
+
+    // Deduplication check: skip write if post with exact content_text already exists
+    try {
+      const postsRef = collection(firestore, 'subscriber_posts');
+      const dupeQuery = query(postsRef, where('content_text', '==', content_text));
+      const dupeSnap = await getDocs(dupeQuery);
+      if (!dupeSnap.empty) {
+        return NextResponse.json({
+          success: true,
+          skipped: true,
+          postId: dupeSnap.docs[0].id,
+          message: 'Duplicate post detected. Skipping write.'
+        });
+      }
+    } catch (checkErr) {
+      console.warn('Deduplication check warning:', checkErr);
     }
 
     // 4. Write cleanly into Firestore (subscriber_posts & bulletin collections)

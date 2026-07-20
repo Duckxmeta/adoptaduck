@@ -1,6 +1,6 @@
 require('dotenv').config({ path: '.env.local' });
 const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, addDoc } = require('firebase/firestore');
+const { getFirestore, collection, addDoc, query, where, getDocs } = require('firebase/firestore');
 const config = require('../firebase-applet-config.json');
 
 const firebaseConfig = {
@@ -52,6 +52,19 @@ async function syncPostPayload(payload) {
   const cookieHeader = getXCookieHeader();
   if (cookieHeader) {
     console.log('[X Sync Cron] Authenticated X session cookies loaded successfully.');
+  }
+
+  // Strict Deduplication Check: Skip write if post with exact content_text already exists
+  try {
+    const postsRef = collection(db, 'subscriber_posts');
+    const dupeQuery = query(postsRef, where('content_text', '==', content_text));
+    const dupeSnap = await getDocs(dupeQuery);
+    if (!dupeSnap.empty) {
+      console.log(`[X Sync Cron] Duplicate post detected (ID: ${dupeSnap.docs[0].id}). Skipping write.`);
+      return dupeSnap.docs[0].id;
+    }
+  } catch (checkErr) {
+    console.warn('[X Sync Cron] Deduplication check warning:', checkErr.message);
   }
 
   const platformName = source_platform || platform || 'X';
