@@ -20,6 +20,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing content_text parameter' }, { status: 400 });
     }
 
+    // Strict Hashtag Filter: Only sync updates that explicitly include #Adoptaduck
+    if (!content_text.toLowerCase().includes('#adoptaduck')) {
+      return NextResponse.json({
+        skipped: true,
+        message: 'Post skipped: Content does not contain required hashtag #Adoptaduck'
+      }, { status: 200 });
+    }
+
     // 3. Write cleanly into Firestore
     const { firestore } = initializeFirebase();
     const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {

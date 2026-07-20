@@ -22,6 +22,12 @@ async function syncPostPayload(payload) {
     throw new Error("Missing content_text parameter");
   }
 
+  // Strict Hashtag Filter: Only pull/sync posts containing #Adoptaduck
+  if (!content_text.toLowerCase().includes('#adoptaduck')) {
+    console.log('[X Sync Cron] Post skipped: Does not contain required hashtag #Adoptaduck.');
+    return null;
+  }
+
   const documentData = {
     content_text: content_text,
     source_platform: source_platform || platform || 'X',
