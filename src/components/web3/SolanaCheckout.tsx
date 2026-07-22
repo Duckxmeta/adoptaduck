@@ -466,6 +466,14 @@ export function SolanaCheckout() {
                   <Egg className="h-4 w-4" /> MINT EGG
                 </a>
               </Button>
+              <a 
+                href="https://duckxmeta.github.io/Ducklopedia/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[10px] font-black uppercase tracking-widest text-secondary hover:underline transition-all mt-1"
+              >
+                Ducklopedia
+              </a>
               <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">
                 Price: 0.2 SOL / Egg
               </span>
@@ -871,6 +879,16 @@ export function SolanaCheckout() {
               Trade on Magic Eden <ExternalLink className="ml-2 h-4 w-4" />
             </Button>
           </a>
+          <div className="mt-2">
+            <a 
+              href="https://duckxmeta.github.io/Ducklopedia/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline transition-all"
+            >
+              Ducklopedia
+            </a>
+          </div>
         </div>
       </div>
     </Card>

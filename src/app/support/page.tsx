@@ -437,18 +437,28 @@ function SupportContent() {
                           Support our mission directly with a digital asset receipt that only ever gains value.
                         </p>
                       </div>
-                      <Button 
-                        asChild 
-                        className="w-full md:w-auto h-12 px-6 bg-primary text-primary-foreground font-black text-xs tracking-widest uppercase rounded-xl hover:scale-105 transition-transform"
-                      >
+                      <div className="flex flex-col items-center gap-2 w-full md:w-auto">
+                        <Button 
+                          asChild 
+                          className="w-full md:w-auto h-12 px-6 bg-primary text-primary-foreground font-black text-xs tracking-widest uppercase rounded-xl hover:scale-105 transition-transform"
+                        >
+                          <a 
+                            href="https://justduckeggs.com" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                          >
+                            Support via Decent Ducks
+                          </a>
+                        </Button>
                         <a 
-                          href="https://justduckeggs.com" 
+                          href="https://duckxmeta.github.io/Ducklopedia/" 
                           target="_blank" 
                           rel="noopener noreferrer"
+                          className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline transition-all mt-1"
                         >
-                          Support via Decent Ducks
+                          Ducklopedia
                         </a>
-                      </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
