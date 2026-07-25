@@ -29,6 +29,12 @@ export async function POST(request: Request) {
       }, { status: 200 });
     }
 
+    // Clean prefix boilerplate and hashtags from stored text
+    const cleanedContent = content_text
+      .replace(/🦆\s*Exclusive\s*Sanctuary\s*Update\s*\(#Adoptaduck\):?/gi, '')
+      .replace(/#Adoptaduck/gi, '')
+      .trim();
+
     // 3. Ensure authenticated context for Firestore SDK
     const { auth, firestore } = initializeFirebase();
     let authMethod = 'none';
@@ -47,7 +53,7 @@ export async function POST(request: Request) {
     // Deduplication check: skip write if post with exact content_text already exists
     try {
       const postsRef = collection(firestore, 'subscriber_posts');
-      const dupeQuery = query(postsRef, where('content_text', '==', content_text));
+      const dupeQuery = query(postsRef, where('content_text', '==', cleanedContent));
       const dupeSnap = await getDocs(dupeQuery);
       if (!dupeSnap.empty) {
         return NextResponse.json({
@@ -65,7 +71,7 @@ export async function POST(request: Request) {
     try {
       const platformName = source_platform || platform || 'X';
       const docRef = await addDoc(collection(firestore, 'subscriber_posts'), {
-        content_text: content_text,
+        content_text: cleanedContent,
         media_urls: Array.isArray(media_urls) ? media_urls : [],
         source_platform: platformName,
         timestamp: new Date().toISOString()

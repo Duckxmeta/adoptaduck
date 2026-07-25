@@ -338,8 +338,9 @@ function ManagerPortal({ user }: { user: any }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {bulletins?.map((b: any) => {
               const platform = b.source_platform || b.source || 'X';
-              const titleText = b.title || (b.content_text ? (b.content_text.length > 30 ? `${b.content_text.substring(0, 30)}...` : b.content_text) : `${platform} Update`);
               const contentText = b.content_text || b.content || '';
+              const words = contentText.split(/\s+/).filter(Boolean);
+              const titleText = words.length > 0 ? (words.slice(0, 6).join(' ') + (words.length > 6 ? '...' : '')) : 'SANCTUARY UPDATE';
               const timestampVal = b.timestamp;
 
               let timeAgoStr = 'Recently';

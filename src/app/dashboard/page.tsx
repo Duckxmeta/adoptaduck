@@ -75,10 +75,14 @@ export default function MemberDashboard() {
         if (typeof timestampVal === 'string') {
           formattedTime = { toDate: () => new Date(timestampVal) };
         }
+        const rawContent = data.content_text || data.content || '';
+        const words = rawContent.split(/\s+/).filter(Boolean);
+        const dynamicTitle = words.length > 0 ? (words.slice(0, 6).join(' ') + (words.length > 6 ? '...' : '')) : 'SANCTUARY UPDATE';
+
         return {
           id: doc.id,
-          title: data.content_text ? (data.content_text.length > 40 ? `${data.content_text.substring(0, 40)}...` : data.content_text) : (data.source_platform ? `${data.source_platform} Post` : 'Sanctuary Post'),
-          content: data.content_text || data.content || '',
+          title: dynamicTitle,
+          content: rawContent,
           imageUrl: Array.isArray(data.media_urls) && data.media_urls.length > 0 ? data.media_urls[0] : (data.imageUrl || null),
           timestamp: formattedTime,
           source: data.source_platform || 'X'

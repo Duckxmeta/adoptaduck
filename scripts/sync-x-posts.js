@@ -49,6 +49,11 @@ async function syncPostPayload(payload) {
     return null;
   }
 
+  const cleanedContent = content_text
+    .replace(/🦆\s*Exclusive\s*Sanctuary\s*Update\s*\(#Adoptaduck\):?/gi, '')
+    .replace(/#Adoptaduck/gi, '')
+    .trim();
+
   const cookieHeader = getXCookieHeader();
   if (cookieHeader) {
     console.log('[X Sync Cron] Authenticated X session cookies loaded successfully.');
@@ -57,7 +62,7 @@ async function syncPostPayload(payload) {
   // Strict Deduplication Check: Skip write if post with exact content_text already exists
   try {
     const postsRef = collection(db, 'subscriber_posts');
-    const dupeQuery = query(postsRef, where('content_text', '==', content_text));
+    const dupeQuery = query(postsRef, where('content_text', '==', cleanedContent));
     const dupeSnap = await getDocs(dupeQuery);
     if (!dupeSnap.empty) {
       console.log(`[X Sync Cron] Duplicate post detected (ID: ${dupeSnap.docs[0].id}). Skipping write.`);
@@ -69,7 +74,7 @@ async function syncPostPayload(payload) {
 
   const platformName = source_platform || platform || 'X';
   const documentData = {
-    content_text: content_text,
+    content_text: cleanedContent,
     source_platform: platformName,
     media_urls: Array.isArray(media_urls) ? media_urls : [],
     timestamp: new Date().toISOString()
