@@ -155,7 +155,7 @@ function SupportContent() {
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body pb-32">
       <Navbar />
 
-      <main className="flex-1 pt-12">
+      <main id="main-content" className="flex-1 pt-12">
         <section className="container mx-auto px-4 text-center space-y-6 mb-20">
           <div className="flex flex-col items-center gap-3">
             <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">Membership Hub</Badge>

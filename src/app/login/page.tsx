@@ -112,7 +112,7 @@ export default function MemberLogin() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background selection:bg-primary selection:text-primary-foreground animate-in fade-in duration-700">
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-background selection:bg-primary selection:text-primary-foreground animate-in fade-in duration-700">
       <Link href="/" className="mb-8 flex items-center gap-2 text-primary hover:underline font-bold text-[10px] tracking-[0.3em] uppercase">
         <ArrowLeft className="h-3 w-3" /> BACK TO SANCTUARY
       </Link>
@@ -123,7 +123,7 @@ export default function MemberLogin() {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-2">
             <Bird className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-headline font-black uppercase tracking-tight">MEMBER LOGIN</CardTitle>
+          <h1 className="text-3xl font-headline font-black uppercase tracking-tight">MEMBER LOGIN</h1>
           <CardDescription className="text-muted-foreground font-medium">Access your dashboard to follow the flock.</CardDescription>
         </CardHeader>
         <CardContent className="pb-10 space-y-6">
@@ -197,7 +197,7 @@ export default function MemberLogin() {
             </p>
           </div>
         </CardContent>
-      </Card>
-    </div>
+     </Card>
+    </main>
   );
 }

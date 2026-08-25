@@ -45,7 +45,7 @@ export default function AdoptionPage() {
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
 
-      <main className="flex-1 container mx-auto px-4 py-20 space-y-32">
+      <main id="main-content" className="flex-1 container mx-auto px-4 py-20 space-y-32">
         {/* Header Section */}
         <section className="text-center space-y-6 max-w-3xl mx-auto">
           <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">

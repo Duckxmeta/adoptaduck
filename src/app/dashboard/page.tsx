@@ -150,7 +150,7 @@ export default function MemberDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground font-body pb-32">
       <Navbar />
-      <main className="container mx-auto px-4 py-12 space-y-16">
+      <main id="main-content" className="container mx-auto px-4 py-12 space-y-16">
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
            <div className="space-y-4">
               <div className="flex items-center gap-3 text-primary"><LayoutDashboard className="h-6 w-6" /><span className="text-[10px] font-black uppercase tracking-[0.4em]">Guardian Hub</span></div>

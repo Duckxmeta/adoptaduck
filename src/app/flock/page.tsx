@@ -164,7 +164,7 @@ export default function BrowseFlock() {
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body">
       <Navbar />
 
-      <main className="flex-1 container mx-auto px-4 py-20 space-y-24">
+      <main id="main-content" className="flex-1 container mx-auto px-4 py-20 space-y-24">
         <section className="text-center space-y-4 max-w-3xl mx-auto">
           <Badge variant="outline" className="text-primary border-primary px-4 py-1 font-black text-[10px] tracking-[0.4em] uppercase">
             The Sanctuary Flock

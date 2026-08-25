@@ -72,8 +72,14 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 md:py-4">
-        <div className="container mx-auto flex items-center justify-between">
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:font-black focus:uppercase focus:text-xs focus:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+      >
+        Skip to main content
+      </a>
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-xl px-4 py-3 md:py-4">
+        <nav className="container mx-auto flex items-center justify-between" aria-label="Main Navigation">
           <div className="flex items-center gap-4">
             <Logo />
             {isInDashboard && isAdmin && (
@@ -126,12 +132,14 @@ export function Navbar() {
               size="icon" 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className="h-10 w-10 text-foreground shrink-0 relative z-50 hover:bg-transparent"
+              aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+              aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Mobile Drawer Overlay */}
       {isMobileMenuOpen && (

@@ -292,7 +292,7 @@ function ManagerPortal({ user }: { user: any }) {
   return (
     <div className="min-h-screen bg-background text-foreground pb-32">
       <Navbar />
-      <main className="container mx-auto p-4 space-y-12 mt-8">
+      <main id="main-content" className="container mx-auto p-4 space-y-12 mt-8">
         
         <div className="flex items-center justify-between pb-4 border-b border-border">
           <h1 className="font-headline font-black text-2xl uppercase tracking-tighter">MANAGER PORTAL</h1>

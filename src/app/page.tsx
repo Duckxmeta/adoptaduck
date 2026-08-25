@@ -113,7 +113,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-background text-foreground animate-in fade-in duration-1000">
       <Navbar />
       
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
         <section className="relative h-[90vh] flex items-center justify-center overflow-hidden w-full bg-[#1A1A1A]">
           <Image 
@@ -194,7 +194,7 @@ export default function Home() {
                       <item.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <h4 className="font-headline font-black text-sm uppercase tracking-tight">{item.title}</h4>
+                      <h3 className="font-headline font-black text-sm uppercase tracking-tight">{item.title}</h3>
                       <p className="text-xs text-muted-foreground font-medium">{item.desc}</p>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export default function Home() {
         {/* Partners of the Sanctuary */}
         <section className="py-24 container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">OUR SUPPORTIVE ECOSYSTEM</h3>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground">OUR SUPPORTIVE ECOSYSTEM</p>
             <h2 className="text-3xl font-headline font-black uppercase tracking-tight">Partners of the Sanctuary</h2>
           </div>
           

@@ -138,12 +138,16 @@ export function ResidentCard({ resident }: { resident: Resident }) {
            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-50">
              {resident.category}
            </span>
-           <Link href={`/residents/${resident.id}`} className={cn(
-             "w-8 h-8 rounded-full border border-border flex items-center justify-center transition-all duration-300",
-             birdInfo.type === 'DUCK' ? "group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary" : "group-hover:bg-secondary group-hover:text-secondary-foreground group-hover:border-secondary"
-           )}>
-             <ChevronRight className="h-4 w-4" />
-           </Link>
+            <Link 
+              href={`/residents/${resident.id}`} 
+              aria-label={`View full profile for ${displayName}`}
+              className={cn(
+                "w-8 h-8 rounded-full border border-border flex items-center justify-center transition-all duration-300",
+                birdInfo.type === 'DUCK' ? "group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary" : "group-hover:bg-secondary group-hover:text-secondary-foreground group-hover:border-secondary"
+              )}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Link>
          </div>
       </CardContent>
     </Card>

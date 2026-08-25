@@ -37,7 +37,7 @@ export default function OurStoryPage() {
     <div className="min-h-screen flex flex-col bg-background text-foreground font-body selection:bg-primary selection:text-primary-foreground">
       <Navbar />
 
-      <main className="flex-1 pb-32">
+      <main id="main-content" className="flex-1 pb-32">
         {/* Hero Section */}
         <section className="relative py-32 bg-secondary/5 border-b border-border overflow-hidden">
           <div className="container mx-auto px-4 text-center space-y-6 relative z-10">
