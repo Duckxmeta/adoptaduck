@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Heart } from 'lucide-react';
+import { Heart, ExternalLink } from 'lucide-react';
 
 export function Footer() {
   const logoUrl = "https://firebasestorage.googleapis.com/v0/b/studio-7482167027-804c1.firebasestorage.app/o/DDSlogo.png?alt=media";
@@ -64,10 +64,33 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col items-center gap-4 text-[9px] text-muted-foreground uppercase tracking-[0.4em] font-black">
-          <p>© {new Date().getFullYear()} DECENT DUCKS SANCTUARY. BUILT FOR THE BIRDS.</p>
+        <div className="pt-8 border-t border-border/30 flex flex-col items-center gap-3 text-center">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-[0.4em] font-black">
+            © {new Date().getFullYear()} DECENT DUCKS SANCTUARY. BUILT FOR THE BIRDS.
+          </p>
+          <div className="text-xs text-muted-foreground/80 font-medium flex items-center justify-center flex-wrap gap-1.5 pt-1">
+            <span>Website created by</span>
+            <a 
+              href="https://www.justduckit.xyz/work" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary hover:underline font-semibold transition-colors inline-flex items-center gap-1"
+            >
+              Kyle Kinkin <ExternalLink className="h-3 w-3 inline" />
+            </a>
+            <span className="text-muted-foreground/40">•</span>
+            <a 
+              href="https://www.justduckit.xyz/work" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-primary/90 hover:text-primary hover:underline font-medium transition-colors"
+            >
+              Get in touch to build your website
+            </a>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+

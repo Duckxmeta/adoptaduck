@@ -43,6 +43,23 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Created-By',
+            value: 'Kyle Kinkin (https://www.justduckit.xyz/work)',
+          },
+          {
+            key: 'X-Developer',
+            value: 'Kyle Kinkin (https://www.justduckit.xyz/work)',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

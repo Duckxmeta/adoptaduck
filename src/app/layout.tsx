@@ -2,11 +2,19 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { Analytics } from "@vercel/analytics/next";
 import React from 'react';
 
 export const metadata: Metadata = {
   title: 'Virtual Sanctuary | Decent Ducks',
   description: 'A modern, virtual adoption sanctuary for birds.',
+  authors: [{ name: 'Kyle Kinkin', url: 'https://www.justduckit.xyz/work' }],
+  creator: 'Kyle Kinkin (https://www.justduckit.xyz/work)',
+  publisher: 'Kyle Kinkin',
+  other: {
+    'developer': 'Kyle Kinkin',
+    'developer-url': 'https://www.justduckit.xyz/work',
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +34,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </FirebaseClientProvider>
+        <Analytics />
       </body>
     </html>
   );
