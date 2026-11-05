@@ -94,7 +94,7 @@ export default function Home() {
       name: "Broken Fence Farms", 
       url: getPartnerUrl("partners/brokenfencefarms.jpg"),
       websiteUrl: "https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr",
-      desc: "Our primary regional partner for large-scale rescue logistics and habitat protection."
+      desc: "Our grounds partner in DeKalb Co, TN. Handles physical animal care, intake, and rehoming."
     }
   ];
 
@@ -134,10 +134,10 @@ export default function Home() {
             </h1>
             <div className="max-w-3xl mx-auto mb-10 space-y-4">
               <p className="text-xl md:text-2xl text-white font-bold uppercase tracking-tight">
-                A modern, transparent, and stress-free sanctuary for ducks and animals alike.
+                Support ducks and animals with virtual adoption. Physical care by our grounds partner in DeKalb Co, TN.
               </p>
               <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed px-4">
-                Providing a peaceful, high-quality home where every creature deserves a safe spot to chill and thrive.
+                Providing a peaceful home where every creature deserves a safe spot to chill and thrive. Local found animals or rehoming: contact Broken Fence Farms.
               </p>
             </div>
             
@@ -178,7 +178,7 @@ export default function Home() {
                   The Digital Flock: <span className="text-primary">No Pond Required 🦆</span>
                 </h2>
                 <p className="text-lg md:text-xl text-muted-foreground font-medium leading-relaxed">
-                  Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Moxie. Forget the standard pet—adopt a feathered resident as your digital companion.
+                  Join our virtual adoption program and get instant access to the Guardian Dashboard. Dive into every update, photo, and story from our residents like Bandit and Moxie. Forget the standard pet—adopt a feathered resident as your digital companion. Physical care is handled by Broken Fence Farms, our grounds partner in DeKalb Co, TN.
                 </p>
               </div>
 

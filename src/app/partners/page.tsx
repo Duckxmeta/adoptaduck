@@ -38,8 +38,8 @@ export default function PartnersPage() {
     },
     {
       name: "Broken Fence Farms",
-      role: "Local Host Partner",
-      desc: "Our primary regional partner for large-scale rescue logistics and habitat protection.",
+      role: "Grounds Partner",
+      desc: "Our grounds partner in DeKalb Co, TN. Manages the animals IRL, handles intake for found ducks, and provides rehoming options. Preferred contact is their Facebook page.",
       logoUrl: getPartnerUrl("partners/brokenfencefarms.jpg"),
       websiteUrl: "https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr",
       color: "border-[#14F195]/20"
@@ -61,7 +61,7 @@ export default function PartnersPage() {
               OFFICIAL <span className="text-primary">PARTNERS</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-              We collaborate with mission-aligned organizations to scale our impact across rescue, education, and ecology.
+              We collaborate with mission-aligned organizations to scale our impact across rescue, education, and ecology. Physical animal care is led by our grounds partner in DeKalb Co, TN.
             </p>
           </div>
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/5 blur-[120px] rounded-full" />

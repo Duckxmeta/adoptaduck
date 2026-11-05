@@ -39,7 +39,7 @@ export default function FoundADuckPage() {
               I FOUND A <span className="text-destructive">DUCK</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-medium">
-              Immediate identification and rescue protocol. Time is critical for domestic ducks in the wild.
+              Immediate identification and rescue protocol. Time is critical for domestic ducks in the wild. Local intake handled by our grounds partner in DeKalb Co, TN.
             </p>
           </div>
         </section>
@@ -129,9 +129,9 @@ export default function FoundADuckPage() {
                </div>
                <div className="md:col-span-11 space-y-8">
                   <div className="space-y-4">
-                    <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight">CONTACT OUR <span className="text-primary">INTAKE PARTNER</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-headline font-black uppercase tracking-tight">CONTACT OUR <span className="text-primary">GROUNDS PARTNER</span></h2>
                     <p className="text-muted-foreground text-lg font-medium leading-relaxed">
-                      Broken Fence Farms is our primary facility for new arrivals. We accept abandoned or unwanted Ducks, Chickens, Turkeys, and Peafowl.
+                      Broken Fence Farms (DeKalb Co, TN) is our primary facility for new arrivals and rehoming. We accept abandoned or unwanted Ducks, Chickens, Turkeys, and Peafowl. Preferred contact is their Facebook page.
                     </p>
                   </div>
 
@@ -139,7 +139,7 @@ export default function FoundADuckPage() {
                      <div className="space-y-4">
                         <Button size="lg" className="h-20 w-full bg-primary text-primary-foreground font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform" asChild>
                            <a href="https://www.facebook.com/share/18N75G8YJm/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer">
-                              CONTACT FOR INTAKE <ArrowRight className="ml-2 h-6 w-6" />
+                              CONTACT ON FACEBOOK <ArrowRight className="ml-2 h-6 w-6" />
                            </a>
                         </Button>
                         <Button variant="ghost" className="w-full text-muted-foreground font-black text-[10px] tracking-widest uppercase" asChild>
@@ -157,9 +157,9 @@ export default function FoundADuckPage() {
                            />
                         </div>
                         <div className="space-y-1">
-                           <p className="text-[10px] font-black uppercase tracking-widest text-primary">Intake Hub</p>
+                           <p className="text-[10px] font-black uppercase tracking-widest text-primary">Grounds Partner</p>
                            <h4 className="font-headline font-black uppercase text-lg leading-none">Broken Fence Farms</h4>
-                           <p className="text-[9px] font-bold text-muted-foreground uppercase">Middle Tennessee Region</p>
+                           <p className="text-[9px] font-bold text-muted-foreground uppercase">DeKalb Co, TN</p>
                         </div>
                      </Card>
                   </div>
